@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block head_extra %}
+{% endblock %}
+{% block title %}Login{%endblock%}
+{% block body %}
+<form action="/login" method="post" enctype="multipart/form-data">
+	<div class="form-group">
+		<label>用户名</label>
+		<input style="width:50%" placeholder="不能为空, 填写公司邮箱前缀" required type="text" name="username" class="form-control">
+	</div>
+	<p>登陆有效期（1个月）</p>
+	<input class="btn btn-default" type="submit" value="登陆">
+</form>
+<hr/>
+{% endblock %}

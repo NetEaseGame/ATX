@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block head %}
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"/>
+    <meta name="author" content="hzsunshx" />
+    <meta name="description" content="airtest web gui" />
+    <meta name="keywords" content="airtest">
+    <!-- Stylesheets -->
+
+    {%if production %}
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    {%else%}
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <script src="/static/js/jquery-1.10.1.min.js"></script>
+	<script src="/static/js/bootstrap.min.js"></script>
+    {%endif%}
+
+    <link  href="/static/css/cropper.css" rel="stylesheet">
+    <script src="/static/js/cropper.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="/static/js/app.js"></script>
+    <title>{% block title %}{% endblock %} - AirTest-GUI</title>
+    {% endblock %}
+	{% block head_extra %}{% endblock %}
+  </head>
+  <body>
+    {% block nav %}
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+		  <a class="navbar-brand" href="/"><span style="color:red">Air</span><span style="color:green">Test</span> <small>WEB GUI alpha</small></a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-navbar-collapse">
+          <ul class="nav navbar-nav">
+			  <li><a href="/">Home</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+			  {%block user_login%}
+			  {%endblock%}
+			<!--
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+              </ul>
+            </li>
+			-->
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <script>
+    $(function(){
+    var select = "a[href="+location.pathname.replace(/\//g, '')+"]";
+	console.log(location.pathname);
+    $(select).parent("li").addClass("active");
+    })
+    </script>
+    {% endblock %}
+    <noscript>Please enable JavaScript in your browser!</noscript>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="container">
+      <div class="alert alert-warning alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        {{ message }}
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    
+    {% if error %}
+    <div class="container">
+      <div class="alert alert-danger alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <strong>ERROR:</strong> {{ error }}
+      </div>
+      {% endif %}
+    </div>
+    <div id="content" class="container">{% block body %}{% endblock %}</div>
+    <div id="footer" class="container">
+      {% block footer %}
+      &copy; Copyright 2014 by <a href="https://github.com/codeskyblue">hzsunshx</a>.
+      {% endblock %}
+    </div>
+	<!-- tongji -->
+  </body>
+</html>

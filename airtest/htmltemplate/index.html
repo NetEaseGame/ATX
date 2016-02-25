@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AirTest</title>
+    <!-- Bootstrap -->
+    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="js/jquery.min.js"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    // <script src="js/bootstrap.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="js/highstock.js"></script>
+    <script src="js/lightbox.min.js"></script>
+    <link href="css/lightbox.css" rel="stylesheet" />
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="app.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#top">Air Test Report</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="#cpu">CPU</a></li>
+            <li><a href="#">Other</a></li> <!-- can use js to control active class -->
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="https://github.com/netease/airtest">Official Site</a></li>
+          </div>
+        </div>
+      </nav>
+      <script>
+      $(function(){
+      // var select = "a[href=\\"+location.pathname+"]";
+      // $(select).parent("li").addClass("active");
+          $("a").click(function(){
+              var name =  $(this).attr("href");
+              if (name.match(/^#/)){  
+                  var y = $("a[name="+name.slice(1)+"]").offset().top - 40;
+                  console.log(y);
+                  $("html,body").animate({scrollTop: y}, 100);
+                  return false;
+              }
+          });
+      });
+      </script>
+      
+      <noscript>Please enable JavaScript in your browser!</noscript>
+      <div style="margin-top: 40px" class="container">
+        <a name="top"></a>
+       <!--  <h1>你好，世界!</h1> -->
+<!-- 		 <a href="img/demo.jpg" data-lightbox="roadtrip"><img src="img/demo.jpg" height="100px" class="img-rounded"/></a>
+ -->
+        <h2>操作</h2>
+        <div>
+          {{#records}}
+            <div class="row">
+              <div class="col-md-3">
+                <pre><u>{{time}}</u></pre>
+              </div>
+              <div class="col-md-2">
+                <pre>{{tag}}</pre>
+              </div>
+              <div class="col-md-7">
+                <pre>{{message}}</pre>
+              </div>
+            </div>
+          {{/records}}
+        </div>
+        <div>
+		<pre>cpu average: {{cpu_average}}
+mem average: {{mem_average}}
+		</pre>
+	    <pre>
+{{#images}}
+{{filename}} <a href="{{filename}}" data-lightbox="roadtrip"><img src="{{filename}}" height="100px" class="img-rounded"/></a>
+{{/images}}
+		  </pre>
+        </div>
+        <div style="height:300px"></div>
+        <a name="cpu"></a>
+        <div class="highstock" role="cpu" max="100" unit="%" style="height:200px"></div>
+        <a name="mem"></a>
+        <div class="highstock" role="mem" unit="M" style="height:200px"></div>
+      </div>
+    </body>
+  </html>

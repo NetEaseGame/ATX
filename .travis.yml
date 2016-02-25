@@ -1,0 +1,10 @@
+language: python
+
+install:
+  - "pip install --pre -r test/requirements.txt"
+  - "python setup.py install"
+
+python:
+  - "2.7"
+script:
+  - bash test/runtest.sh

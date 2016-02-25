@@ -1,0 +1,252 @@
+{% extends "layout.html" %}
+{% block body %}
+<div>
+    <div class="row">
+        <div class="col-md-3">
+            <select id="slt-device" class="form-control">
+                <option value="android">Android</option>
+                <option value="androidwifi">AndroidWIFI</option>
+                <!--                 <option value="windows">Windows</option>
+                <option value="ios">IOS</option> -->
+            </select>
+        </div>
+        <div class="col-md-6">
+            <input id="ipt-devno" class="form-control" placeholder="Device Number [ 电脑只连接一个设备时可以为空]" />
+        </div>
+        <div class="col-md-3">
+            <button id="btn-connect" class="btn btn-default btn-info">
+            连接
+            </button>
+            <button id="btn-setting" class="btn btn-default btn-info">
+            配置
+            </button>
+        </div>
+    </div>
+</div>
+<hr/>
+<h4>=== <span id="message"></span></h4>
+<div class="row">
+    <div class="col-md-1">
+        <div class="list-group">
+            <a href="#" class="list-group-item">-</a>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <img id="img-screen" class="img-responsive" />
+    </div>
+    <div class="col-md-6">
+        <div class="well">
+            <div class="row">
+                <div class="col-md-8" style="background-color: gray;height:150px; vertical-align: middle">
+                    <div class="img-preview"
+                        style="overflow:hidden;max-height:150px;max-width:300px;margin:0 auto">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    X: <span id="dataX"></span><br/>
+                    Y: <span id="dataY"></span><br/>
+                    Width: <span id="dataWidth"></span><br/>
+                    Height: <span id="dataHeight"></span><br/>
+                    Middle: <span id="dataMiddle"></span><br/>
+                    特征点数量: <span id="dataSiftCount"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <button id="btn-refresh" class="btn btn-default btn-success">
+                刷新界面</button>
+            </div>
+            <div class="col-md-10" style="width:50%">
+                <div class="input-group">
+                    <input id="ipt-cropname" class="form-control click-select" value="filename" />
+                    <span class="input-group-addon">.PNG</span>
+                    <span class="input-group-btn">
+                        <button id="btn-crop" class="btn btn-default btn-success">
+                        保存截图</button>
+                    </span>
+                </div>
+            </div>
+            <button id="btn-click-point" class="btn btn-default btn-success">
+            坐标点击</button>
+        </div>
+        <hr/>
+        <h4>代码生成</h4>
+        <div class="input-group" style="width:50%">
+            <input id="ipt-code" class="form-control click-select"/>
+            <span class="input-group-btn">
+            <button id="btn-run" class="btn btn-default" type="button">
+            Run
+            </button>
+            </span>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+$(function(){
+    var $screen = $("#img-screen");
+    var $message =  $("#message");
+    var $codearea = $("#ipt-code");
+    var $cropname = $("#ipt-cropname");
+
+    var $connect = $("#btn-connect");
+
+    var $dataX = $("#dataX"), 
+        $dataY = $("#dataY"),
+        $dataWidth = $("#dataWidth"),
+        $dataHeight = $("#dataHeight"),
+        $dataMiddle = $("#dataMiddle"),
+        $dataSiftCount = $("#dataSiftCount");
+
+    var cropperData = {};
+    var screenFilename = null;
+
+    var updateSiftCount = function(data){
+        $.ajax({
+            url: "/api/cropcheck",
+            dataType: "json",
+            data: $.extend(data, 
+                {screen: screenFilename}),
+            success: function(e){
+                console.log(e);
+                $dataSiftCount.text(e.siftcnt);
+            },
+            error: function(e){
+                console.log(e);
+            }
+        });
+    };
+    var cropperImage = function(source){
+        // $screen.cropper("reset");
+        screenFilename = source;
+        $screen.attr("src", source);
+        $screen.cropper({
+            resizable: true,
+            preview: ".img-preview",
+            autoCropArea: 0.3,
+            data: cropperData,
+            done: function(data) {
+                var $preview = $(".img-preview");
+                $preview.css("width", 150*data.width/data.height+"px");
+                $preview.css("height", 300*data.height/data.width+"px");
+                $dataX.text(data.x);
+                $dataY.text(data.y);
+                $dataWidth.text(data.width);
+                $dataHeight.text(data.height);
+                var middle = {
+                    x: parseInt(data.x+data.width/2),
+                    y: parseInt(data.y+data.height/2)
+                };
+                $dataMiddle.text('{0}, {1}'.format(middle.x, middle.y));
+                cropperData = {x: data.x, y: data.y, 
+                    width: data.width, height: data.height,
+                    middle: middle
+                }
+            },
+            dragend: function(data){
+                updateSiftCount(cropperData);
+            }
+        });    
+    };
+
+    cropperImage("/static/imgs/init.png");
+
+    refresh = function(){
+        $message.text("taking snapshot");
+        $.ajax({
+            url: "/api/snapshot",
+            dataType: "json",
+            success: function(e){
+                $screen.cropper("destroy");
+                cropperImage("/tmp/"+e.filename);
+                $message.text("");
+            },
+            error: function(e){
+                $message.text("take snapshot failed for some reason")
+            }
+        });
+    };
+    $("#btn-refresh").click(refresh);
+
+    $cropname.keydown(function(e){
+        if (e.keyCode==13) {  /* when press enter trigger crop */
+            var e = document.createEvent('MouseEvent');
+            e.initEvent('click', false, false);
+            $("#btn-crop")[0].dispatchEvent(e);
+        }
+    });
+    $("#btn-crop").click(function(){
+        var filename = $.trim($cropname.val());
+        if (filename == ""){
+            console.log("canceled");
+            $message.text("empty filename");
+            return
+        }
+        if (!(filename.indexOf(".") > -1)) {
+            filename = filename + ".png"
+            $cropname.val(filename);
+        }
+        $.ajax({
+            url: "/api/crop",
+            dataType: "json",
+            data: $.extend(cropperData, 
+                {screen: screenFilename, filename: filename}),
+            success: function(e){
+                $message.text(e.message);
+                $codearea.val("app.click(u'{0}')".format($cropname.val()));
+            },
+            error: function(e){
+                $message.text("crop image failed for some reason");
+            }
+        })
+    });
+
+    $("#btn-click-point").click(function(){
+        var x = cropperData.middle.x;
+        var y = cropperData.middle.y;
+        $codearea.val("app.click(({0}, {1}))".format(x, y));
+    });
+
+    $("#btn-run").click(function(){
+        $message.text("run in background ...");
+        $.ajax({
+            url: "/api/run",
+            data: {code: $codearea.val()},
+            dataType: "json",
+            success: function(e){
+                $message.text(e.message);
+            },
+            error: function(e){
+                $message.text("run failed for some reason");
+            }
+        });
+    });
+
+    var $devno = $("#ipt-devno");
+    var $device = $("#slt-device");
+    $connect.click(function(){
+        $message.text("connecting ...");
+        $.ajax({
+            url: "/api/connect",
+            data: {devno: $devno.val(), device: $device.val()},
+            dataType: "json",
+            success: function(e){
+                $message.text(e.message);
+                $connect.text("重新连接");
+
+                /* take snapshot */
+                // FIXME(ssx): code is urgly, better trigger other function
+                refresh();
+
+            },
+            error: function(e){
+                $message.text("connect failed for some reason");
+            }
+        });
+    });
+
+});
+</script>
+{% endblock %}
