@@ -1,10 +1,16 @@
 # Airtest
 
 # 代码重构中（不要着急）
+另外软件的更新也需要
 
 ## 为什么要重构
 很多的代码不符合pytohn编码规范, 还有一些很冗余的功能夹杂在里面，很不好维护。
 为了能够重现该软件昔日的光芒，是时候擦亮代码，重出江湖了。
+
+## Contribute
+如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。
+
+有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
 
 ## 主要更新内容
 * 截图方式从adb screencap转成使用uiautomator
@@ -25,7 +31,34 @@ filename | string | **Required** 保存的文件名
 
 无
 
+### 点击图片(制作中)
+`touch_image(img)`
 
+img support two types string(file path) or TouchImage 
+
+from airtest.types import TouchImage
+
+Parameters
+
+Name      | Type      | Description
+----------|-----------|------------
+img       |string or TouchImage  | 需要点击的图片
+
+Example
+
+```
+touch_image('start.png')
+
+# or
+touch_image(TouchImage(file='start.png', offset=(0, 0)))
+```
+
+## 代码导读
+`connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
+
+图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还酬和能用吧
+
+其他待补充
 
 ## 历史文档 (below)
 Python lib for **android** app test. (Not for ios)

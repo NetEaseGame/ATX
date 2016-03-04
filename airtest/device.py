@@ -25,6 +25,9 @@ from .image import template as imttemplate
 
 log = base.getLogger('devsuit')
 
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+__tmp__ = os.path.join(__dir__, '__cache__')
+
 class AndroidDevice(UiaDevice):
     def __init__(self, serialno=None):
         super(AndroidDevice, self).__init__(serialno)
@@ -78,7 +81,14 @@ class AndroidDevice(UiaDevice):
         @return string: (filename that really save to)
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
-        self.snapshot(filename)
+        return self.snapshot(filename)
+
+    def touch_image(self, img):
+        tmp_file = os.path.join(__dir__, 'img-%s.png' %(time.time()))
+        self.snapshot(tmp_file)
+        os.remove(tmp_file)
+        
+
         # savefile = self._save_screen(filename, random_name=False, tempdir=False)
         # return savefile
 

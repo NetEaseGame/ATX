@@ -2,6 +2,7 @@
 
 import airtest
 
-print airtest.__version__
+print 'Version:', airtest.__version__
 
-app = airtest.connect()
+app = airtest.connect(None)
+print app.screenshot('screen.png')
