@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# License under MIT
+
+from uiautomator import device as d
+from uiautomator import Device as UiaDevice
 
 import collections
 import os
@@ -7,6 +12,7 @@ import platform
 import time
 import threading
 import json
+import warnings
 
 import cv2
 import aircv as ac
@@ -19,12 +25,14 @@ from .image import template as imttemplate
 
 log = base.getLogger('devsuit')
 
-class DeviceSuit(object):
-    def __init__(self, devtype, dev, logfile='log/airtest.log'):
+class AndroidDevice(UiaDevice):
+    def __init__(self, serialno=None):
+        super(AndroidDevice, self).__init__(serialno)
+
         # print 'DEVSUIT_SERIALNO:', phoneno
-        self.dev = dev
+        # self.dev = dev
         # self.appname = appname
-        self._devtype = devtype
+        # self._devtype = devtype
         self._inside_depth = 0
 
         # default image search extentension and 
@@ -39,20 +47,20 @@ class DeviceSuit(object):
 
         self._snapshot_file = None
         self._keep_capture = False # for func:keepScreen,releaseScreen
-        self._logfile = logfile
+        # self._logfile = logfile
         self._loglock = threading.Lock()
         self._operation_mark = False
 
         self._image_match_method = 'auto'
         self._threshold = 0.3 # for findImage
 
-        if self._logfile:
-            logdir = os.path.dirname(logfile) or '.'
-            if not os.path.exists(logdir):
-                os.makedirs(logdir)
-            if os.path.exists(logfile):
-                backfile = logfile+'.'+time.strftime('%Y%m%d%H%M%S')
-                os.rename(logfile, backfile)
+        # if self._logfile:
+        #     logdir = os.path.dirname(logfile) or '.'
+        #     if not os.path.exists(logdir):
+        #         os.makedirs(logdir)
+        #     if os.path.exists(logfile):
+        #         backfile = logfile+'.'+time.strftime('%Y%m%d%H%M%S')
+        #         os.rename(logfile, backfile)
 
         # Only for android phone method=<adb|screencap>
         def _snapshot_method(method):
@@ -62,25 +70,37 @@ class DeviceSuit(object):
         self._snapshot_method = _snapshot_method
         #-- end of func setting
 
-    def __getattribute__(self, name):
-        # print name
-        v = object.__getattribute__(self, name)
-        if isinstance(v, collections.Callable):
-            objdict = object.__getattribute__(self, '__dict__')
-            # print objdict
+    def takeSnapshot(self, filename):
+        '''
+        Take screen snapshot
 
-            def _wrapper(*args, **kwargs):
-                objdict['_inside_depth'] += 1
-                # log function call
-                ret = v(*args, **kwargs)
-                if objdict['_inside_depth'] == 1 and \
-                    not v.__name__.startswith('_') and \
-                        not v.__name__ == 'log':
-                    self.log(proto.TAG_FUNCTION, dict(name=v.__name__, args=args, kwargs=kwargs))
-                objdict['_inside_depth'] -= 1
-                return ret
-            return _wrapper
-        return v
+        @param filename: string (base filename want to save as basename)
+        @return string: (filename that really save to)
+        '''
+        warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
+        self.snapshot(filename)
+        # savefile = self._save_screen(filename, random_name=False, tempdir=False)
+        # return savefile
+
+    # def __getattribute__(self, name):
+    #     # print name
+    #     v = object.__getattribute__(self, name)
+    #     if isinstance(v, collections.Callable):
+    #         objdict = object.__getattribute__(self, '__dict__')
+    #         # print objdict
+
+    #         def _wrapper(*args, **kwargs):
+    #             objdict['_inside_depth'] += 1
+    #             # log function call
+    #             ret = v(*args, **kwargs)
+    #             if objdict['_inside_depth'] == 1 and \
+    #                 not v.__name__.startswith('_') and \
+    #                     not v.__name__ == 'log':
+    #                 self.log(proto.TAG_FUNCTION, dict(name=v.__name__, args=args, kwargs=kwargs))
+    #             objdict['_inside_depth'] -= 1
+    #             return ret
+    #         return _wrapper
+    #     return v
 
     def _imfind(self, bgimg, search):
         method = self._image_match_method
@@ -119,6 +139,7 @@ class DeviceSuit(object):
         if sort:
             def cmpy((x0, y0), (x1, y1)):
                 return y1<y0
+
             def cmpx((x0, y0), (x1, y1)):
                 return x1<x1
             m = {'x': cmpx, 'y': cmpy}
@@ -141,7 +162,7 @@ class DeviceSuit(object):
             return proto.ROTATION_0
         return proto.ROTATION_0
 
-    def _fixPoint(self, (x, y)):
+    def _fix_point(self, (x, y)):
         w, h = self.shape() # in shape() the width always < height
         if self.rotation() % 2 == 1:
             w, h = h, w
@@ -152,7 +173,7 @@ class DeviceSuit(object):
             y = int(h*y)
         return (x, y)
 
-    def _searchImage(self, filename):
+    def _search_image(self, filename):
         ''' Search image in default path '''
         if isinstance(filename, unicode) and platform.system() == 'Windows':
             filename = filename.encode('gbk')
@@ -166,19 +187,19 @@ class DeviceSuit(object):
                     return fullpath
         raise RuntimeError('Image file(%s) not found in %s' %(filename, self._image_dirs))
 
-    def _PS2Point(self, PS):
+    def _val_to_point(self, v):
         '''
-        Convert PS to point
+        Convert v to point
         @return (x, y) or None if not found
         '''
-        if isinstance(PS, basestring):
-            PS = self.find(PS)
-            if not PS:
+        if isinstance(v, basestring):
+            v = self.find(v)
+            if not v:
                 return None
-        (x, y) = self._fixPoint(PS)#(PS[0], PS[1]))#(1L, 2L))
+        (x, y) = self._fix_point(v)#(PS[0], PS[1]))#(1L, 2L))
         return (x, y)
 
-    def _saveScreen(self, filename, random_name=True, tempdir=True):
+    def _save_screen(self, filename, random_name=True, tempdir=True):
         # use last snapshot file
         if self._snapshot_file and self._keep_capture:
             return self._snapshot_file
@@ -229,16 +250,6 @@ class DeviceSuit(object):
         '''
         self._keep_capture = False
 
-    def takeSnapshot(self, filename):
-        '''
-        Take screen snapshot
-
-        @param filename: string (base filename want to save as basename)
-        @return string: (filename that really save to)
-        '''
-        savefile = self._saveScreen(filename, random_name=False, tempdir=False)
-        return savefile
-
     def globalSet(self, *args, **kwargs):
         '''
         app setting, be careful you should known what you are doing.
@@ -249,7 +260,7 @@ class DeviceSuit(object):
             assert isinstance(m, dict)
         else:
             m = kwargs
-        for k,v in m.items():
+        for k, v in m.items():
             key = '_'+k
             if hasattr(self, key):
                 item = getattr(self, key)
@@ -286,11 +297,11 @@ class DeviceSuit(object):
 
         @return (point founded or None if not found)
         '''
-        filepath = self._searchImage(imgfile)
+        filepath = self._search_image(imgfile)
         
         log.debug('Locate image path: %s', filepath)
         
-        screen = self._saveScreen('screen-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
+        screen = self._save_screen('screen-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
         if self._screen_resolution:
             # resize image
             ow, oh = self._screen_resolution # original
@@ -326,8 +337,8 @@ class DeviceSuit(object):
         @return list point that found
         @warn not finished yet.
         '''
-        filepath = self._searchImage(imgfile)
-        screen = self._saveScreen('find-XXXXXXXX.png')
+        filepath = self._search_image(imgfile)
+        screen = self._save_screen('find-XXXXXXXX.png')
         pts = self._imfindall(screen, filepath, maxcnt, sort)
         return pts
 
@@ -338,10 +349,21 @@ class DeviceSuit(object):
         return None when timeout
         return point if found
         '''
+        warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
+        self.safe_wait(imgfile, seconds)
+
+    def safe_wait(self, img, seconds=20.0):
+        '''
+        Like wait, but don't raise RuntimeError
+
+        return None when timeout
+        return point if found
+        '''
+        warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
         try:
-            return self.wait(imgfile, seconds)
+            return self.wait(img, seconds)
         except:
-            return None
+            return None        
 
     def wait(self, imgfile, timeout=20):
         '''
@@ -363,22 +385,22 @@ class DeviceSuit(object):
     def exists(self, imgfile):
         return True if self.find(imgfile) else False
 
-    def click(self, SF, timeout=None, duration=None):
+    def click(self, img_or_point, timeout=None, duration=None):
         '''
         Click function
         @param seconds: float (if time not exceed, it will retry and retry)
         '''
-        if timeout == None:
+        if timeout is None:
             timeout = self._click_timeout
-        log.info('CLICK %s, timeout=%.2fs, duration=%s', SF, timeout, str(duration))
-        point = self._PS2Point(SF)
+        log.info('CLICK %s, timeout=%.2fs, duration=%s', img_or_point, timeout, str(duration))
+        point = self._val_to_point(img_or_point)
         if point:
             (x, y) = point
         else:
-            (x, y) = self.wait(SF, timeout=timeout)
-        log.info('Click %s point: (%d, %d)', SF, x, y)
+            (x, y) = self.wait(img_or_point, timeout=timeout)
+        log.info('Click %s point: (%d, %d)', img_or_point, x, y)
         self.dev.touch(x, y, duration)
-        log.debug('delay after click: %.2fs' ,self._delay_after_click)
+        log.debug('delay after click: %.2fs', self._delay_after_click)
 
         # FIXME(ssx): not tested
         if self._operation_mark:
@@ -387,7 +409,7 @@ class DeviceSuit(object):
                 ac.mark_point(img, (x, y))
                 cv2.imwrite(self._snapshot_file, img)
             if self._devtype == 'android':
-                self.dev.adbshell('am', 'broadcast', '-a', 'MP_POSITION', '--es', 'msg', '%d,%d'%(x, y))
+                self.dev.adbshell('am', 'broadcast', '-a', 'MP_POSITION', '--es', 'msg', '%d,%d' %(x, y))
 
         time.sleep(self._delay_after_click)
 
@@ -421,8 +443,8 @@ class DeviceSuit(object):
         @param fpt,tpt: filename or position
         @param duration: float (duration of the event in seconds)
         '''
-        fpt = self._PS2Point(fpt)
-        tpt = self._PS2Point(tpt)
+        fpt = self._val_to_point(fpt)
+        tpt = self._val_to_point(tpt)
         return self.dev.drag(fpt, tpt, duration)
 
     def sleep(self, secs=1.0):
@@ -462,5 +484,3 @@ class DeviceSuit(object):
         if hasattr(self.dev, 'keyevent'):
             return self.dev.keyevent(event)
         raise RuntimeError('keyevent not support')
-
-
