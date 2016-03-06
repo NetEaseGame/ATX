@@ -29,6 +29,8 @@
 	**amd64**
 
 	# win64
+
+	```
 	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win_amd64.whl
 	```
 
