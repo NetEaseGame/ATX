@@ -84,10 +84,6 @@ def main():
         cv2.imshow("image", images[1])
         key = cv2.waitKey(1) & 0xFF
 
-        # if the 'r' key is pressed, reset the cropping region
-        # if key == ord("r"):
-        #     images[1] = clone.copy()
-
         # if the 'c' key is pressed, break from the loop
         if key == ord("c"):
             if ref_pt[1] is None:
