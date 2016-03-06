@@ -73,8 +73,8 @@
 
 3. 截图
 
-	使用windows的画图板打开 `screen.png` 这个文件, 利用其中的截图功能截取需要点击的按钮或者图标
-	_PS: 这里其实有个IDE截图的最好了，因为时间精力问题还没有做_
+	命令行运行 `python -mairtest -o button.png`, 选择一个按钮或者图标, 按下`c`截图保存推出.
+	_PS: 这里其实有个好的IDE截图的最好了，因为时间精力问题还没有做_
 
 	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.touch_image('button.png')`
 
