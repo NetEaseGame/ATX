@@ -1,10 +1,17 @@
 language: python
-
 install:
-  - "pip install --pre -r test/requirements.txt"
-  - "python setup.py install"
-
+- pip install --pre -r test/requirements.txt
+- python setup.py install
 python:
-  - "2.7"
+- '2.7'
 script:
-  - bash test/runtest.sh
+- bash test/runtest.sh
+deploy:
+  provider: pypi
+  server: https://testpypi.python.org/pypi
+  user: codeskyblue
+  password:
+    secure: tfJTs+uV5he1mTshNDea0RLOIMDYy+c3L8ASDczD2Mkx7C+nFegCssch/xbPgWmHwHXw2Tx4Kl10AAPYgZRA605aHqj1CmqEdQHVJ8JvHICXRvb9EqMLWFNTglFEDcAk2pARdmXh4fnSEjdsM3PBT21ZmuNm0Q4wDYAM/U/uEauNYvqGuhTcmS8+fSFal5Qmursq1ZJnem7G6pQvfoq0xj5OCF0LIEAk3P1m9QZ9djwh0/Naf5QXeRp9emS5b07sxJzqLwLrG98ElKFPMmAzEXV4YEeAvwPJK5PrwYYpv1a9pupljaHDd8v209GYX+ZH/Bx33MgptKQdZE8kG2PA/bgTz9AyNf1PLI4vOQ6UZoVsToEtP1jLpxnID7qUb+eZ0Lj+ioaNXHjP8sLgYrzB9xU13z+yP5lg7oYWg4wPdGlNtv3NRe+NFbzL1E/cDBe44Gxxz2ScFH6Cc5JRKDSRgwPsoFQllkjF6/LRflWDA8j75Cxxj1VdkCuMOJu6gBi6a2gfH10VEP2x95JlMuJtQx66Y6TUtzVMEr3p0dSljlqSsCEA3dsEYzcnpA3l5DIron88VePWWK6Hr7H2JivRP3rK4dWUWH9VAgt4Boz5Mh/oD5rf4B9BrWjdUmf/UaFvgEkzIipjxc31yXAbattTH0NBJfhFeYPrf/aZiISR6t8=
+  on:
+    distributions: sdist bdist_wheel
+    repo: codeskyblue/airtest
