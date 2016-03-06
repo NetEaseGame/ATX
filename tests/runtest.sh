@@ -3,6 +3,7 @@
 set -eu
 cd $(dirname $0)
 
+echo "Skip tests"
 exit 0
 # Skip test for now
 
