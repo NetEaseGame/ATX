@@ -1,9 +1,9 @@
 language: python
-install:
-- pip install --pre -r test/requirements.txt
-- python setup.py install
 python:
-- '2.7'
+- "2.7"
+install:
+- "pip install -r requirements.txt"
+- "pip install -r test/requirements.txt"
 script:
 - bash test/runtest.sh
 deploy:
