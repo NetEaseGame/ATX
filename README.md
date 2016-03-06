@@ -22,7 +22,7 @@
 3. Android4.1+
 
 ## 安装
-1. 首先安装opencv(>=2.4 && <3.0)到你的电脑上
+1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
 
 	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本
 
@@ -36,6 +36,13 @@
 
 	```
 	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	```
+
+	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
+
+	```
+	brew install python
+	brew install opencv
 	```
 
 2. 安装airtest

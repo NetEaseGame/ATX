@@ -7,14 +7,16 @@
 import os
 import sys
 import argparse
-from StringIO import StringIO
-
-import cv2
+import threading
 import Tkinter
 import tkSimpleDialog
+from Queue import Queue
+from StringIO import StringIO
+
+#import cv2
 from PIL import ImageTk, Image
 
-import airtest
+#import airtest
 
 
 def cv2_to_pil(image):
@@ -67,7 +69,7 @@ def interactive_save(image, save_to=None):
     imgtk = ImageTk.PhotoImage(image=imgpil)
     panel = Tkinter.Label(root, image=imgtk) #.pack()
     panel.pack(side="bottom", fill="both", expand="yes")
-    Tkinter.Button(root, text="Hello!").pack()
+    
     # if not save_to:
     # save_to = tkSimpleDialog.askstring("Save cropped image", "Enter filename")
     if save_to:
@@ -77,8 +79,39 @@ def interactive_save(image, save_to=None):
         cv2.imwrite(save_to, image)
     root.destroy()
 
+def long_task(secs=2):
+    import time
+    time.sleep(secs)
+    print 'hello'
+
+def worker(que):
+    while True:
+        (func, args, kwargs) = que.get()
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            print e
+        finally:
+            que.task_done()
+
+def simple_ide():
+    que = Queue()
+    que.put((long_task, (), {}))
+
+    th = threading.Thread(name='worker', target=worker, args=(que,))
+    th.daemon = True
+    th.start()
+
+    root = Tkinter.Tk()
+    root.geometry('{}x{}'.format(400, 400))
+    btn_hello = Tkinter.Button(root, text="Hello!")
+    #btn_hello.set_text("World")
+    btn_hello.pack()
+    root.mainloop()
+
 def main():
     # construct the argument parser and parse the arguments
+    #simple_ide()
     ap = argparse.ArgumentParser()
     ap.add_argument("-s", "--serial", required=False, help="Android serialno")
     ap.add_argument("-o", "--output", required=True, help="Output image file, ext must be png")
