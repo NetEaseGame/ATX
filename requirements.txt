@@ -1,2 +1,3 @@
-# aircv==1.3
+aircv==1.4.0
 uiautomator==0.2.6
+Pillow==2.4.0
