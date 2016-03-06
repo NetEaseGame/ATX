@@ -15,6 +15,11 @@
 ## 主要更新内容
 * 截图方式从adb screencap转成使用uiautomator
 
+## 依赖
+1. python2.7
+2. opencv2.4+
+3. Android4.1+
+
 ## 安装
 1. 首先安装opencv(>=2.4 && <3.0)到你的电脑上
 
@@ -47,7 +52,7 @@
 
 	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
 
-	```shell
+	```bash
 	$ adb devices
 	List of devices attached
 	EP7333W7XB      device
@@ -56,6 +61,7 @@
 2. 创建一个python文件 `test.py`, 内容如下
 
 	```python
+	# coding: utf-8
 	import airtest
 
 	d = airtest.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号

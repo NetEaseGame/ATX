@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.0.0
+-----
+
+* update readme again
+* fix typo
+* support touch_image
 * add touch_image prepare code
 * restructure code
 * initial commit
