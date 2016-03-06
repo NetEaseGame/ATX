@@ -1,4 +1,5 @@
 # Airtest (中文版)
+[![Build Status](https://travis-ci.org/codeskyblue/airtest.svg?branch=master)](https://travis-ci.org/codeskyblue/airtest)
 
 # 代码重构中（不要着急）
 另外软件的更新也需要
