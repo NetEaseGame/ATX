@@ -9,8 +9,11 @@ import device
 # from device import Device
 # from airtest import patch, proto, cron
 # from airtest.device import Device
-
-__version__ = '1.0.0'
+import pkg_resources
+try:
+    version = pkg_resources.get_distribution("airtest").version
+except pkg_resources.DistributionNotFound:
+    version = 'unknown'
 
 
 def connect(serialno, platform='android'):

@@ -20,8 +20,8 @@ import aircv as ac
 from . import base
 from . import proto
 from . import patch
-from .image import sift as imtsift
-from .image import template as imttemplate
+# from .image import sift as imtsift
+# from .image import template as imttemplate
 
 log = base.getLogger('devsuit')
 
@@ -155,49 +155,49 @@ class AndroidDevice(UiaDevice):
     #         return _wrapper
     #     return v
 
-    def _imfind(self, bgimg, search):
-        method = self._image_match_method
-        print 'match-method:', method
-        imsrc, imsch = ac.imread(bgimg), ac.imread(search)
-        if method == 'auto':
-            point = ac.find(imsrc, imsch)
-        elif method == 'template':
-            res = ac.find_template(imsrc, imsch, self._threshold)
-            if res:
-                point, score = res
-                print 'match result:', point, score
-                return point
-            return None
+    # def _imfind(self, bgimg, search):
+    #     method = self._image_match_method
+    #     print 'match-method:', method
+    #     imsrc, imsch = ac.imread(bgimg), ac.imread(search)
+    #     if method == 'auto':
+    #         point = ac.find(imsrc, imsch)
+    #     elif method == 'template':
+    #         res = ac.find_template(imsrc, imsch, self._threshold)
+    #         if res:
+    #             point, score = res
+    #             print 'match result:', point, score
+    #             return point
+    #         return None
 
-        elif method == 'sift':
-            point = imtsift.find(search, bgimg)
-        else:
-            raise RuntimeError("Unknown image match method: %s" %(method))
-        return point
+    #     elif method == 'sift':
+    #         point = imtsift.find(search, bgimg)
+    #     else:
+    #         raise RuntimeError("Unknown image match method: %s" %(method))
+    #     return point
 
-    def _imfindall(self, bgimg, search, maxcnt, sort):
-        if not maxcnt:
-            maxcnt = 0
-        method = self._image_match_method
-        imsrc, imsch = ac.imread(bgimg), ac.imread(search)
-        if method == 'auto':
-            points = ac.find_all(imsrc, imsch, maxcnt=5)
-            # points = imtauto.locate_more_image_Template(search, bgimg, num=maxcnt)
-        elif method == 'template':
-            points = imttemplate.findall(search, bgimg, self._threshold, maxcnt=maxcnt)
-        elif method == 'sift':
-            points = imtsift.findall(search, bgimg, maxcnt=maxcnt)
-        else:
-            raise RuntimeError("Unknown image match method: %s" %(method))
-        if sort:
-            def cmpy((x0, y0), (x1, y1)):
-                return y1<y0
+    # def _imfindall(self, bgimg, search, maxcnt, sort):
+    #     if not maxcnt:
+    #         maxcnt = 0
+    #     method = self._image_match_method
+    #     imsrc, imsch = ac.imread(bgimg), ac.imread(search)
+    #     if method == 'auto':
+    #         points = ac.find_all(imsrc, imsch, maxcnt=5)
+    #         # points = imtauto.locate_more_image_Template(search, bgimg, num=maxcnt)
+    #     elif method == 'template':
+    #         points = imttemplate.findall(search, bgimg, self._threshold, maxcnt=maxcnt)
+    #     elif method == 'sift':
+    #         points = imtsift.findall(search, bgimg, maxcnt=maxcnt)
+    #     else:
+    #         raise RuntimeError("Unknown image match method: %s" %(method))
+    #     if sort:
+    #         def cmpy((x0, y0), (x1, y1)):
+    #             return y1<y0
 
-            def cmpx((x0, y0), (x1, y1)):
-                return x1<x1
-            m = {'x': cmpx, 'y': cmpy}
-            points.sort(cmp=m[sort])
-        return points
+    #         def cmpx((x0, y0), (x1, y1)):
+    #             return x1<x1
+    #         m = {'x': cmpx, 'y': cmpy}
+    #         points.sort(cmp=m[sort])
+    #     return points
 
     # def rotation(self):
     #     '''
