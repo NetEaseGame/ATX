@@ -18,7 +18,7 @@
 ## 安装
 1. 首先安装opencv(>=2.4 && <3.0)到你的电脑上
 
-	windows推荐直接通过pip安装, 根据
+	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本
 
 	**win32**
 	
@@ -28,8 +28,6 @@
 
 	**amd64**
 
-	# win64
-
 	```
 	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win_amd64.whl
 	```
@@ -37,19 +35,19 @@
 2. 安装airtest
 
 	```
-	pip install https://github.com/codeskyblue/airtest/archive/master.zip
+	pip install -U https://github.com/codeskyblue/airtest/archive/master.zip
 	```
 
 3. 安装android依赖
 
-	下载adb安装到电脑上，可选下载地址 <http://adbshell.com/>
+	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 
 ## 快速入门
 1. 连接一台安卓手机 (4.1+)
 
 	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
 
-	```
+	```shell
 	$ adb devices
 	List of devices attached
 	EP7333W7XB      device
@@ -57,7 +55,7 @@
 
 2. 创建一个python文件 `test.py`, 内容如下
 
-	```
+	```python
 	import airtest
 
 	d = airtest.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号
@@ -125,7 +123,13 @@ touch_image(TouchImage(file='start.png', offset=(0, 0)))
 
 其他待补充
 
-## 历史文档 (below)
+## 相关的项目
+1. 基于opencv的图像识别库 <https://github.com/netease/aircv>
+
+## License
+This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
+
+## 历史文档 (below, 下面就不要看了)
 Python lib for **android** app test. (Not for ios)
 
 ## 更新说明
@@ -151,8 +155,3 @@ Python lib for **android** app test. (Not for ios)
 
 可以在发现了问题后，提个issue给作者。 另外一些新的思路也可以提到issue中。
 
-## 相关的项目
-1. 基于opencv的图像识别库 <https://github.com/netease/aircv>
-
-## License
-This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
