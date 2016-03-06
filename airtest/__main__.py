@@ -17,6 +17,11 @@ from PIL import ImageTk, Image
 import airtest
 
 
+def cv2_to_pil(image):
+    img_str = cv2.imencode('.png', image)[1].tostring()
+    return Image.open(StringIO(img_str))
+
+
 def make_mouse_callback(imgs, ref_pt):
     # initialize the list of reference points and boolean indicating
     # whether cropping is being performed or not
@@ -53,8 +58,9 @@ def make_mouse_callback(imgs, ref_pt):
     return _click_and_crop
 
 def interactive_save(image, save_to=None):
-    img_str = cv2.imencode('.png', image)[1].tostring()
-    imgpil = Image.open(StringIO(img_str))
+    imgpil = cv2_to_pil(image)
+    #img_str = cv2.imencode('.png', image)[1].tostring()
+    #imgpil = Image.open(StringIO(img_str))
 
     root = Tkinter.Tk()
     root.geometry('{}x{}'.format(400, 400))

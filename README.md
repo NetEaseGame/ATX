@@ -41,7 +41,7 @@
 2. 安装airtest
 
 	```
-	pip install -U https://github.com/codeskyblue/airtest/archive/master.zip
+	pip install -i https://testpypi.python.org/pypi -U --pre airtest
 	```
 
 3. 安装android依赖
