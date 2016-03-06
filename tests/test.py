@@ -4,5 +4,6 @@ import airtest
 
 print 'Version:', airtest.__version__
 
-app = airtest.connect(None)
-print app.screenshot('screen.png')
+d = airtest.connect(None)
+print d.screenshot('screen.png')
+print d.touch_image('a.png')

@@ -1,4 +1,4 @@
-# Airtest
+# Airtest (中文版)
 
 # 代码重构中（不要着急）
 另外软件的更新也需要
@@ -14,6 +14,69 @@
 
 ## 主要更新内容
 * 截图方式从adb screencap转成使用uiautomator
+
+## 安装
+1. 首先安装opencv(>=2.4 && <3.0)到你的电脑上
+
+	windows推荐直接通过pip安装, 根据
+
+	**win32**
+	
+	```
+	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win32.whl
+	```
+
+	**amd64**
+
+	# win64
+	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	```
+
+2. 安装airtest
+
+	```
+	pip install https://github.com/codeskyblue/airtest/archive/master.zip
+	```
+
+3. 安装android依赖
+
+	下载adb安装到电脑上，可选下载地址 <http://adbshell.com/>
+
+## 快速入门
+1. 连接一台安卓手机 (4.1+)
+
+	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
+
+	```
+	$ adb devices
+	List of devices attached
+	EP7333W7XB      device
+	```
+
+2. 创建一个python文件 `test.py`, 内容如下
+
+	```
+	import airtest
+
+	d = airtest.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号
+	d.screenshot('screen.png') # 截图
+	```
+
+	运行 `python test.py`
+
+3. 截图
+
+	使用windows的画图板打开 `screen.png` 这个文件, 利用其中的截图功能截取需要点击的按钮或者图标
+	_PS: 这里其实有个IDE截图的最好了，因为时间精力问题还没有做_
+
+	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.touch_image('button.png')`
+
+	重新运行 `python test.py`, 此时差不多可以看到代码可以点击那个按钮了
+
+4. 更多
+
+	可以使用的接口还有很多，请接着往下看
+
 
 ## 接口
 ### 截图

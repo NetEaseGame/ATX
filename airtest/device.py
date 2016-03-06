@@ -28,9 +28,21 @@ log = base.getLogger('devsuit')
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
 
+class BaseError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class ImageNotFoundError(BaseError):
+    pass
+
+
 class AndroidDevice(UiaDevice):
     def __init__(self, serialno=None):
         super(AndroidDevice, self).__init__(serialno)
+        self._uiauto = super(AndroidDevice, self)
 
         # print 'DEVSUIT_SERIALNO:', phoneno
         # self.dev = dev
@@ -73,6 +85,12 @@ class AndroidDevice(UiaDevice):
         self._snapshot_method = _snapshot_method
         #-- end of func setting
 
+    def screenshot(self, filename):
+        save_dir = os.path.dirname(filename) or '.'
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        self._uiauto.screenshot(filename)
+
     def takeSnapshot(self, filename):
         '''
         Take screen snapshot
@@ -81,16 +99,41 @@ class AndroidDevice(UiaDevice):
         @return string: (filename that really save to)
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
-        return self.snapshot(filename)
+        return self.screenshot(filename)
+
+    def _read_img(self, img):
+        if isinstance(img, basestring):
+            return ac.imread(img)
+        # FIXME(ssx): need support other types
+        return img
+
+    def _get_screen_img(self):
+        tmp_file = os.path.join(__tmp__, 'img-%s.png' %(time.time()))
+        self.screenshot(tmp_file)
+        log.debug("touch image save screen to %s", tmp_file)
+        img = ac.imread(tmp_file)
+        os.remove(tmp_file)
+        return img
 
     def touch_image(self, img):
-        tmp_file = os.path.join(__dir__, 'img-%s.png' %(time.time()))
-        self.snapshot(tmp_file)
-        os.remove(tmp_file)
-        
+        """Simulate touch according image position
 
-        # savefile = self._save_screen(filename, random_name=False, tempdir=False)
-        # return savefile
+        Args:
+            img: filename or an opencv image object
+
+        Returns:
+            None
+
+        Raises:
+            ImageNotFoundError: An error occured when img not found in current screen.
+        """
+        search_img = self._read_img(img)
+        screen_img = self._get_screen_img()
+        ret = ac.find_template(screen_img, search_img)
+        if ret is None:
+            raise ImageNotFoundError('Not found image %s' %(img,))
+        (position, match_value) = ret
+        self._uiauto.click(*position)
 
     # def __getattribute__(self, name):
     #     # print name
@@ -156,32 +199,32 @@ class AndroidDevice(UiaDevice):
             points.sort(cmp=m[sort])
         return points
 
-    def rotation(self):
-        '''
-        device orientation
-        @return int
-        '''
-        # 通过globalSet设置的rotation
-        if self._rotation:
-            return self._rotation
-        # 看dev是否有rotation方法
-        if hasattr(self.dev, 'rotation'):
-            return self.dev.rotation()
-        # windows上的特殊处理
-        if self._devtype == 'windows':
-            return proto.ROTATION_0
-        return proto.ROTATION_0
+    # def rotation(self):
+    #     '''
+    #     device orientation
+    #     @return int
+    #     '''
+    #     # 通过globalSet设置的rotation
+    #     if self._rotation:
+    #         return self._rotation
+    #     # 看dev是否有rotation方法
+    #     if hasattr(self.dev, 'rotation'):
+    #         return self.dev.rotation()
+    #     # windows上的特殊处理
+    #     if self._devtype == 'windows':
+    #         return proto.ROTATION_0
+    #     return proto.ROTATION_0
 
-    def _fix_point(self, (x, y)):
-        w, h = self.shape() # in shape() the width always < height
-        if self.rotation() % 2 == 1:
-            w, h = h, w
+    # def _fix_point(self, (x, y)):
+    #     w, h = self.shape() # in shape() the width always < height
+    #     if self.rotation() % 2 == 1:
+    #         w, h = h, w
 
-        if isinstance(x, float) and x <= 1.0:
-            x = int(w*x)
-        if isinstance(y, float) and y <= 1.0:
-            y = int(h*y)
-        return (x, y)
+    #     if isinstance(x, float) and x <= 1.0:
+    #         x = int(w*x)
+    #     if isinstance(y, float) and y <= 1.0:
+    #         y = int(h*y)
+    #     return (x, y)
 
     def _search_image(self, filename):
         ''' Search image in default path '''
@@ -197,17 +240,17 @@ class AndroidDevice(UiaDevice):
                     return fullpath
         raise RuntimeError('Image file(%s) not found in %s' %(filename, self._image_dirs))
 
-    def _val_to_point(self, v):
-        '''
-        Convert v to point
-        @return (x, y) or None if not found
-        '''
-        if isinstance(v, basestring):
-            v = self.find(v)
-            if not v:
-                return None
-        (x, y) = self._fix_point(v)#(PS[0], PS[1]))#(1L, 2L))
-        return (x, y)
+    # def _val_to_point(self, v):
+    #     '''
+    #     Convert v to point
+    #     @return (x, y) or None if not found
+    #     '''
+    #     if isinstance(v, basestring):
+    #         v = self.find(v)
+    #         if not v:
+    #             return None
+    #     (x, y) = self._fix_point(v)#(PS[0], PS[1]))#(1L, 2L))
+    #     return (x, y)
 
     def _save_screen(self, filename, random_name=True, tempdir=True):
         # use last snapshot file
@@ -231,22 +274,22 @@ class AndroidDevice(UiaDevice):
         self._snapshot_file = filename
         return filename
 
-    def log(self, tag, message):
-        if not self._logfile:
-            return
+    # def log(self, tag, message):
+    #     if not self._logfile:
+    #         return
 
-        self._loglock.acquire()
-        timestamp = time.time()
-        try:
-            dirname = os.path.dirname(self._logfile) or '.'
-            if not os.path.exists(dirname):
-                os.path.makedirs(dirname)
-        except:
-            pass
-        with open(self._logfile, 'a') as file:
-            data = dict(timestamp=int(timestamp), tag=tag, data=message)
-            file.write(json.dumps(data) + '\n')
-        self._loglock.release()
+    #     self._loglock.acquire()
+    #     timestamp = time.time()
+    #     try:
+    #         dirname = os.path.dirname(self._logfile) or '.'
+    #         if not os.path.exists(dirname):
+    #             os.path.makedirs(dirname)
+    #     except:
+    #         pass
+    #     with open(self._logfile, 'a') as file:
+    #         data = dict(timestamp=int(timestamp), tag=tag, data=message)
+    #         file.write(json.dumps(data) + '\n')
+    #     self._loglock.release()
 
     def keepCapture(self):
         '''

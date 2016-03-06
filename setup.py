@@ -4,6 +4,10 @@
 # Licensed under MIT
 #
 
+import setuptools
+setuptools.setup(setup_requires=['pbr'], pbr=True)
+
+'''
 # import sys
 # sys.path.insert(1, '/usr/lib/pyshared/python2.7')
 from setuptools import setup, find_packages
@@ -39,7 +43,7 @@ setup(name='airtest',
       # 'paramiko',
       #'androidviewclient >= 7.1.1', 
       # 'requests >= 2.4.3', 
-  ], entry_points='''
-  [console_scripts]
-  air.test = airtest.console:main
-  ''')
+  '''#], entry_points='''
+  #[console_scripts]
+  #air.test = airtest.console:main
+  #''')

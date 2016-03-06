@@ -40,3 +40,4 @@ log/
 test/match.png
 _site
 apps
+__cache__
