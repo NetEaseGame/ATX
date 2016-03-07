@@ -9,9 +9,6 @@ Airtest
 
 .. title: Airtest mobile test framework
 
-|Airtest|
-=========
-
 
 Quick links
 -----------
