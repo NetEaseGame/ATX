@@ -13,10 +13,10 @@ import tkSimpleDialog
 from Queue import Queue
 from StringIO import StringIO
 
-#import cv2
+import cv2
 from PIL import ImageTk, Image
 
-#import airtest
+import airtest
 
 
 def cv2_to_pil(image):

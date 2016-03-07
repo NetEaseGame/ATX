@@ -20,6 +20,8 @@ import aircv as ac
 from . import base
 from . import proto
 from . import patch
+
+from airtest import consts
 # from .image import sift as imtsift
 # from .image import template as imttemplate
 
@@ -44,6 +46,9 @@ class AndroidDevice(UiaDevice):
         super(AndroidDevice, self).__init__(serialno)
         self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
+        self._minicap_params = None
+
+        self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
 
         # print 'DEVSUIT_SERIALNO:', phoneno
         # self.dev = dev
@@ -86,11 +91,88 @@ class AndroidDevice(UiaDevice):
         # self._snapshot_method = _snapshot_method
         #-- end of func setting
 
-    def screenshot(self, filename):
-        save_dir = os.path.dirname(filename) or '.'
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        self._uiauto.screenshot(filename)
+    def _tmp_filename(self, prefix='tmp-', ext='.png'):
+        return '%s%s%s' %(prefix, time.time(), ext)
+
+    # def _make_tmp_file(self, dir=__tmp__, ext='png', prefix='tmp-', mkdir=False):
+    #     tmp_file = '%s%s.%s' %(prefix, time.time(), ext)
+    #     if dir:
+    #         tmp_file = os.path.join(dir, tmp_file)
+    #     return tmp_file
+        # tmp_dir = os.path.dirname(tmp_file)
+        # if not os.path.exists(tmp_dir):
+        #     os.makedirs(tmp_dir)
+
+    def _get_minicap_params(self):
+        height = d.info['displayHeight']
+        if not self._minicap_params:
+            self._minicap_params = '{x}x{y}@{x}x{y}/{r}'.format(
+                x=d.info['displayWidth'], y=height, r=d.info['displayRotation'])
+        return self._minicap_params
+        
+    def _minicap(self):
+        phone_tmp_file = '/data/local/tmp/'+self._tmp_filename(ext='.jpg')
+        local_tmp_file = os.path.join(__tmp__, self._tmp_filename(ext='.jpg'))
+        command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
+            self._get_minicap_params(), phone_tmp_file)
+        self.shell(command)
+        print phone_tmp_file
+        self.adbrun(['pull', phone_tmp_file, local_tmp_file])
+        self.shell(['rm', phone_tmp_file])
+        img = cv2.imread(local_tmp_file)
+        os.remove(local_tmp_file)
+        return img
+
+    def screenshot(self, filename=None):
+        """
+        Take screen snapshot
+
+        Args:
+            filename: filename where save to
+
+        Returns:
+            None
+
+        Raises:
+            TypeError
+        """
+        image = None
+        if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
+            tmp_file = os.path.join(__tmp__, self._tmp_filename())
+            self._uiauto.screenshot(tmp_file)
+            image = cv2.imread(tmp_file)
+            os.remove(tmp_file)
+        elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
+            image = self._minicap()
+        else:
+            raise TypeError('Invalid screenshot_method')
+
+        if filename:
+            save_dir = os.path.dirname(filename) or '.'
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            cv2.imwrite(filename, image)
+        return image
+
+    def adbrun(self, command):
+        '''
+        Run adb command, for example: adbrun(['pull', '/data/local/tmp/a.png'])
+
+        Args:
+            command: string or list of string
+
+        Returns:
+            None
+        '''
+        cmds = ['adb']
+        if self._serial:
+            cmds.extend(['-s', self._serial])
+
+        if isinstance(command, list) or isinstance(command, tuple):
+            cmds.extend(list(command))
+        else:
+            cmds.append(command)
+        os.system(subprocess.list2cmdline(cmds))
 
     def shell(self, command):
         '''
@@ -102,16 +184,10 @@ class AndroidDevice(UiaDevice):
         Returns:
             None
         '''
-        cmds = ['adb']
-        if self._serial:
-            cmds.extend(['-s', self._serial])
-        cmds.append('shell')
-
         if isinstance(command, list) or isinstance(command, tuple):
-            cmds.extend(list(command))
+            self.adbrun(['shell'] + list(command))
         else:
-            cmds.append(command)
-        os.system(subprocess.list2cmdline(cmds))
+            self.adbrun(['shell'] + [command])
 
     def start_app(self, package_name):
         '''
@@ -140,13 +216,7 @@ class AndroidDevice(UiaDevice):
 
     def takeSnapshot(self, filename):
         '''
-        Take screen snapshot
-
-        Args:
-            filename: filename where save to
-
-        Returns:
-            None
+        Deprecated, use screenshot instead.
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
@@ -158,18 +228,19 @@ class AndroidDevice(UiaDevice):
         return img
 
     def _get_screen_img(self):
-        tmp_file = os.path.join(__tmp__, 'img-%s.png' %(time.time()))
+        tmp_file = os.path.join(__tmp__, self._tmp_filename())
         self.screenshot(tmp_file)
         log.debug("touch image save screen to %s", tmp_file)
         img = ac.imread(tmp_file)
         os.remove(tmp_file)
         return img
 
-    def touch_image(self, img):
+    def touch_image(self, img, timeout=10.0):
         """Simulate touch according image position
 
         Args:
             img: filename or an opencv image object
+            timeout: float, if image not found during this time, ImageNotFoundError will raise.
 
         Returns:
             None
@@ -178,12 +249,20 @@ class AndroidDevice(UiaDevice):
             ImageNotFoundError: An error occured when img not found in current screen.
         """
         search_img = self._read_img(img)
-        screen_img = self._get_screen_img()
-        ret = ac.find_template(screen_img, search_img)
-        if ret is None:
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            screen_img = self._get_screen_img()
+            ret = ac.find_template(screen_img, search_img)
+            if ret is None:
+                continue
+            position = ret['result']
+            confidence = ret['confidence']
+            log.info('match confidence: %s', confidence)
+            self._uiauto.click(*position)
+            break
+        else:
             raise ImageNotFoundError('Not found image %s' %(img,))
-        (position, match_value) = ret
-        self._uiauto.click(*position)
 
     # def __getattribute__(self, name):
     #     # print name
