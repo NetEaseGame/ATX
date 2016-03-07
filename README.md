@@ -119,14 +119,14 @@ Parameters
 
 Name      | Type      | Description
 ----------|-----------|------------
-img       |string or TouchImage  | 需要点击的图片
+img       |string     | 需要点击的图片
 
 Example
 
 ```
 touch_image('start.png')
 
-# or
+# or (todo)
 touch_image(TouchImage(file='start.png', offset=(0, 0)))
 ```
 
@@ -139,6 +139,10 @@ touch_image(TouchImage(file='start.png', offset=(0, 0)))
 
 ## 相关的项目
 1. 基于opencv的图像识别库 <https://github.com/netease/aircv>
+2. 感谢作者 <https://github.com/xiaocong> 提供的uiautomator的python封装，相关项目已经fork到了
+
+	- <https://github.com/codeskyblue/android-uiautomator-server>
+	- <https://github.com/codeskyblue/airtest-uiautomator>
 
 ## License
 This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.

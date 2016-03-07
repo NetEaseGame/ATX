@@ -49,41 +49,41 @@ class AndroidDevice(UiaDevice):
         # self.dev = dev
         # self.appname = appname
         # self._devtype = devtype
-        self._inside_depth = 0
+        # self._inside_depth = 0
 
-        # default image search extentension and 
-        self._image_exts = ['.jpg', '.png']
-        self._image_dirs = ['.', 'image']
+        # # default image search extentension and 
+        # self._image_exts = ['.jpg', '.png']
+        # self._image_dirs = ['.', 'image']
 
-        self._rotation = None # 0,1,2,3
-        self._tmpdir = 'tmp'
-        self._click_timeout = 20.0 # if icon not found in this time, then panic
-        self._delay_after_click = 0.5 # when finished click, wait time
-        self._screen_resolution = None
+        # self._rotation = None # 0,1,2,3
+        # self._tmpdir = 'tmp'
+        # self._click_timeout = 20.0 # if icon not found in this time, then panic
+        # self._delay_after_click = 0.5 # when finished click, wait time
+        # self._screen_resolution = None
 
-        self._snapshot_file = None
-        self._keep_capture = False # for func:keepScreen,releaseScreen
-        # self._logfile = logfile
-        self._loglock = threading.Lock()
-        self._operation_mark = False
+        # self._snapshot_file = None
+        # self._keep_capture = False # for func:keepScreen,releaseScreen
+        # # self._logfile = logfile
+        # self._loglock = threading.Lock()
+        # self._operation_mark = False
 
-        self._image_match_method = 'auto'
-        self._threshold = 0.3 # for findImage
+        # self._image_match_method = 'auto'
+        # self._threshold = 0.3 # for findImage
 
-        # if self._logfile:
-        #     logdir = os.path.dirname(logfile) or '.'
-        #     if not os.path.exists(logdir):
-        #         os.makedirs(logdir)
-        #     if os.path.exists(logfile):
-        #         backfile = logfile+'.'+time.strftime('%Y%m%d%H%M%S')
-        #         os.rename(logfile, backfile)
+        # # if self._logfile:
+        # #     logdir = os.path.dirname(logfile) or '.'
+        # #     if not os.path.exists(logdir):
+        # #         os.makedirs(logdir)
+        # #     if os.path.exists(logfile):
+        # #         backfile = logfile+'.'+time.strftime('%Y%m%d%H%M%S')
+        # #         os.rename(logfile, backfile)
 
-        # Only for android phone method=<adb|screencap>
-        def _snapshot_method(method):
-            if method and self._devtype == 'android':
-                self.dev._snapshot_method = method
+        # # Only for android phone method=<adb|screencap>
+        # def _snapshot_method(method):
+        #     if method and self._devtype == 'android':
+        #         self.dev._snapshot_method = method
 
-        self._snapshot_method = _snapshot_method
+        # self._snapshot_method = _snapshot_method
         #-- end of func setting
 
     def screenshot(self, filename):
@@ -93,18 +93,60 @@ class AndroidDevice(UiaDevice):
         self._uiauto.screenshot(filename)
 
     def shell(self, command):
+        '''
+        Run adb shell command
+
+        Args:
+            command: string or list of string
+
+        Returns:
+            None
+        '''
         cmds = ['adb']
         if self._serial:
             cmds.extend(['-s', self._serial])
-        cmds.extend(['shell', command])
+        cmds.append('shell')
+
+        if isinstance(command, list) or isinstance(command, tuple):
+            cmds.extend(list(command))
+        else:
+            cmds.append(command)
         os.system(subprocess.list2cmdline(cmds))
-        
+
+    def start_app(self, package_name):
+        '''
+        Start application
+
+        Args:
+            package_name: string like com.example.app1
+
+        Returns:
+            None
+        '''
+        self.shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
+    
+    def stop_app(self, package_name):
+        '''
+        Stop application
+
+        Args:
+            package_name: string like com.example.app1
+
+        Returns:
+            None
+        '''
+        # FIXME(ssx): not sure if this method will clean data
+        self.shell(['am', 'force-stop', package_name])
+
     def takeSnapshot(self, filename):
         '''
         Take screen snapshot
 
-        @param filename: string (base filename want to save as basename)
-        @return string: (filename that really save to)
+        Args:
+            filename: filename where save to
+
+        Returns:
+            None
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
