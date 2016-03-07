@@ -157,6 +157,14 @@ try:
 except airtest.ImageNotFoundError:
 	print('Image not found')
 
+# watcher, trigger when screenshot is called
+w = airtest.Watcher()
+w.on('setting.png', airtest.Watcher.ACTION_TOUCH)
+w.on('common.png', airtest.Watcher.ACTION_TOUCH)
+
+wid = d.add_watcher(w)
+# d.del_watcher(wid) # remove watcher
+
 d.stop_app(package_name)
 ```
 

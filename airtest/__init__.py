@@ -20,6 +20,8 @@ except pkg_resources.DistributionNotFound:
 
 from airtest.consts import *
 from airtest.errors import *
+from airtest.device import Watcher
+
 
 def connect(serialno, platform='android'):
     """Connect to a device, and return its object

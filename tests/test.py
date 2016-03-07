@@ -24,7 +24,7 @@ def screenshot():
     # Image now save in screen2.png
     # d._minicap()
     start = time.time()
-    d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
+    # d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
     d.screenshot('ttt.png')
     print time.time() - start
 
@@ -39,6 +39,14 @@ def touch():
     d.touch_image('button.png')
 
 if __name__ == '__main__':
-    stop_app()
+    # stop_app()
+    w = airtest.Watcher()
+    w.on('setting.png', airtest.Watcher.ACTION_TOUCH)
+    w.on('common.png', airtest.Watcher.ACTION_TOUCH)
+
+    wid = d.add_watcher(w)
+    d.del_watcher(wid)
+    while 1:
+        screenshot()
     # screenshot()
     # touch()
