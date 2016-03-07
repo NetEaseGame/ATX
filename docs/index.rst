@@ -1,17 +1,22 @@
-Airtest
-=======
+.. airtest documentation master file, created by
+   sphinx-quickstart on Mon Mar  7 13:34:33 2016.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-`airtest <http://github.com/netease/airtest>`_ is a Python mobile test framework and GUI based testing library. Currently only for android. By using opencv, airtest can also perform touch button in a mobile game.
+Welcome to airtest's documentation!
+===================================
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
 
 
-1. 第一项
-2. 第二项
 
-.. title: Airtest mobile test framework
+Indices and tables
+==================
 
-
-Quick links
------------
-
-* `Source (github) <https://github.com/netease/airtest>`_
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
