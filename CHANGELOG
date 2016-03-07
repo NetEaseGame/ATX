@@ -1,6 +1,23 @@
 CHANGES
 =======
 
+* add a very simple ide
+* remove useless code
+* add simple ide
+* add version
+* auto convert md to rst
+* support multi publish
+* fix travis add distributions
+* fix travis again
+* remove aircv for now
+* update test requirements
+* fix again
+* fix travis yml
+* add travis
+* update travis
+* add pbr requirements
+* update dep again
+
 1.0.0
 -----
 
