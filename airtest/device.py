@@ -7,6 +7,7 @@ import subprocess
 import collections
 import os
 import platform
+import re
 import time
 import threading
 import json
@@ -22,24 +23,16 @@ from . import proto
 from . import patch
 
 from airtest import consts
-# from .image import sift as imtsift
-# from .image import template as imttemplate
+from airtest import errors
+
 
 log = base.getLogger('devsuit')
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
 
-class BaseError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-class ImageNotFoundError(BaseError):
-    pass
-
+DISPLAY_RE = re.compile(
+    '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
 class AndroidDevice(UiaDevice):
     def __init__(self, serialno=None):
@@ -94,20 +87,25 @@ class AndroidDevice(UiaDevice):
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
 
-    # def _make_tmp_file(self, dir=__tmp__, ext='png', prefix='tmp-', mkdir=False):
-    #     tmp_file = '%s%s.%s' %(prefix, time.time(), ext)
-    #     if dir:
-    #         tmp_file = os.path.join(dir, tmp_file)
-    #     return tmp_file
-        # tmp_dir = os.path.dirname(tmp_file)
-        # if not os.path.exists(tmp_dir):
-        #     os.makedirs(tmp_dir)
-
     def _get_minicap_params(self):
-        height = d.info['displayHeight']
-        if not self._minicap_params:
+        """
+        Used about 0.1s
+        uiautomator d.info is now well working with device which has virtual menu.
+        """
+        w, h = (0, 0)
+        for line in self.shell('dumpsys display').splitlines():
+            m = DISPLAY_RE.search(line, 0)
+            if not m:
+                continue
+            w = int(m.group('width'))
+            h = int(m.group('height'))
+            # o = int(m.group('orientation'))
+            w, h = min(w, h), max(w, h)
             self._minicap_params = '{x}x{y}@{x}x{y}/{r}'.format(
-                x=d.info['displayWidth'], y=height, r=d.info['displayRotation'])
+                x=w, y=h, r=d.info['displayRotation']*90)
+            break
+        else:
+            raise errors.BaseError('Fail to get display width and height')
         return self._minicap_params
         
     def _minicap(self):
@@ -116,7 +114,6 @@ class AndroidDevice(UiaDevice):
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
             self._get_minicap_params(), phone_tmp_file)
         self.shell(command)
-        print phone_tmp_file
         self.adbrun(['pull', phone_tmp_file, local_tmp_file])
         self.shell(['rm', phone_tmp_file])
         img = cv2.imread(local_tmp_file)
@@ -162,7 +159,7 @@ class AndroidDevice(UiaDevice):
             command: string or list of string
 
         Returns:
-            None
+            command output
         '''
         cmds = ['adb']
         if self._serial:
@@ -172,7 +169,9 @@ class AndroidDevice(UiaDevice):
             cmds.extend(list(command))
         else:
             cmds.append(command)
-        os.system(subprocess.list2cmdline(cmds))
+        output = subprocess.check_output(cmds, stderr=subprocess.STDOUT)
+        return output.replace('\r\n', '\n')
+        # os.system(subprocess.list2cmdline(cmds))
 
     def shell(self, command):
         '''
@@ -182,12 +181,12 @@ class AndroidDevice(UiaDevice):
             command: string or list of string
 
         Returns:
-            None
+            command output
         '''
         if isinstance(command, list) or isinstance(command, tuple):
-            self.adbrun(['shell'] + list(command))
+            return self.adbrun(['shell'] + list(command))
         else:
-            self.adbrun(['shell'] + [command])
+            return self.adbrun(['shell'] + [command])
 
     def start_app(self, package_name):
         '''
@@ -262,7 +261,7 @@ class AndroidDevice(UiaDevice):
             self._uiauto.click(*position)
             break
         else:
-            raise ImageNotFoundError('Not found image %s' %(img,))
+            raise errors.ImageNotFoundError('Not found image %s' %(img,))
 
     # def __getattribute__(self, name):
     #     # print name

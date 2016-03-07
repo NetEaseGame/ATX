@@ -1,1 +1,0 @@
-Documents in <https://github.com/codeskyblue/airtest>

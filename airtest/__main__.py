@@ -10,14 +10,16 @@ import argparse
 import threading
 import Tkinter
 import tkSimpleDialog
+import collections
 from Queue import Queue
 from StringIO import StringIO
-
 import cv2
 from PIL import ImageTk, Image
 
 import airtest
 
+
+Point = collections.namedtuple('Point', ['x', 'y'])
 
 def cv2_to_pil(image):
     img_str = cv2.imencode('.png', image)[1].tostring()
@@ -28,7 +30,6 @@ def make_mouse_callback(imgs, ref_pt):
     # initialize the list of reference points and boolean indicating
     # whether cropping is being performed or not
     cropping = [False]
-    clone = imgs[0]
 
     def _click_and_crop(event, x, y, flags, param):
         # grab references to the global variables
@@ -38,28 +39,28 @@ def make_mouse_callback(imgs, ref_pt):
         # (x, y) coordinates and indicate that cropping is being
         # performed
         if event == cv2.EVENT_LBUTTONDOWN:
-            ref_pt[0] = (x, y)
+            ref_pt[0] = Point(x, y)
             cropping[0] = True
 
         # check to see if the left mouse button was released
         elif event == cv2.EVENT_LBUTTONUP:
             # record the ending (x, y) coordinates and indicate that
             # the cropping operation is finished
-            ref_pt[1] = (x, y)
+            ref_pt[1] = Point(x, y)
             cropping[0] = False
 
             # draw a rectangle around the region of interest
-            imgs[1] = image = clone.copy()
+            imgs[1] = image = imgs[0].copy()
             cv2.rectangle(image, ref_pt[0], ref_pt[1], (0, 255, 0), 2)
             cv2.imshow("image", image)
         elif event == cv2.EVENT_MOUSEMOVE and cropping[0]:
-            img2 = clone.copy()
+            img2 = imgs[0].copy()
             cv2.rectangle(img2, ref_pt[0], (x, y), (0, 255, 0), 2)
             imgs[1] = image = img2
             cv2.imshow("image", image)
     return _click_and_crop
 
-def interactive_save(image, save_to=None):
+def interactive_save(image): #, save_to=None):
     imgpil = cv2_to_pil(image)
     #img_str = cv2.imencode('.png', image)[1].tostring()
     #imgpil = Image.open(StringIO(img_str))
@@ -71,7 +72,7 @@ def interactive_save(image, save_to=None):
     panel.pack(side="bottom", fill="both", expand="yes")
     
     # if not save_to:
-    # save_to = tkSimpleDialog.askstring("Save cropped image", "Enter filename")
+    save_to = tkSimpleDialog.askstring("Save cropped image", "Enter filename")
     if save_to:
         if save_to.find('.') == -1:
             save_to += '.png'
@@ -114,44 +115,42 @@ def main():
     #simple_ide()
     ap = argparse.ArgumentParser()
     ap.add_argument("-s", "--serial", required=False, help="Android serialno")
-    ap.add_argument("-o", "--output", required=True, help="Output image file, ext must be png")
+    # ap.add_argument("-o", "--output", required=True, help="Output image file, ext must be png")
     args = vars(ap.parse_args())
 
-    output = args["output"]
-    (_, ext) = os.path.splitext(output)
-    if ext != '.png':
-        sys.exit("File must has ext .png")
-
     d = airtest.connect(args["serial"])
-    d.screenshot(output)
+    origin = d.screenshot()
 
     # load the image, clone it, and setup the mouse callback function
-    image = cv2.imread(output)
-    clone = image.copy()
-    images = [clone, image]
+    # origin = cv2.imread(output)
+    image = cv2.resize(origin, (0, 0), fx=0.5, fy=0.5) 
+    images = [image.copy(), image]
     ref_pt = [None, None]
     
     cv2.namedWindow("image")
     cv2.setMouseCallback("image", make_mouse_callback(images, ref_pt))
 
-    # keep looping until the 'q' key is pressed
     while True:
         # display the image and wait for a keypress
         cv2.imshow("image", images[1])
         key = cv2.waitKey(1) & 0xFF
 
         # if the 'c' key is pressed, break from the loop
+        if key == ord("r"):
+            origin = d.screenshot()
+            image = cv2.resize(origin, (0, 0), fx=0.5, fy=0.5) 
+            images[0] = image.copy()
+            images[1] = image
         if key == ord("c"):
             if ref_pt[1] is None:
                 continue
-            roi = clone[ref_pt[0][1]:ref_pt[1][1], ref_pt[0][0]:ref_pt[1][0]]
-            interactive_save(roi, output)
-            break
+            (a, b) = ref_pt
+            a = Point(a.x*2, a.y*2)
+            b = Point(b.x*2, b.y*2)
+            roi = origin[a.y:b.y, a.x:b.x]
+            interactive_save(roi)
         elif key == ord("q"):
             break
-
-    # if there are two reference points, then crop the region of interest
-    # from teh image and display it
 
     # close all open windows
     cv2.destroyAllWindows()

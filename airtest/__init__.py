@@ -18,6 +18,8 @@ try:
 except pkg_resources.DistributionNotFound:
     version = 'unknown'
 
+from airtest.consts import *
+from airtest.errors import *
 
 def connect(serialno, platform='android'):
     """Connect to a device, and return its object
@@ -34,8 +36,6 @@ def connect(serialno, platform='android'):
     if cls is None:
         raise Exception('Platform not exists')
     return cls(serialno)
-    # if platform == 'android':
-    # return device.AndroidDevice(serialno)
 
 
 # import os

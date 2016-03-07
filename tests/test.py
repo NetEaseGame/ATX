@@ -40,5 +40,5 @@ def touch():
 
 if __name__ == '__main__':
     # start_app()
-    # screenshot()
-    touch()
+    screenshot()
+    # touch()

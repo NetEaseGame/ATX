@@ -1,4 +1,4 @@
-# Airtest (中文版)
+# AirtestX (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/airtest.svg?branch=master)](https://travis-ci.org/codeskyblue/airtest)
 [![Documentation Status](https://readthedocs.org/projects/airtest/badge/?version=latest)](http://airtest.readthedocs.org/en/latest/?badge=latest)
 
@@ -82,7 +82,7 @@
 
 3. 截图
 
-	命令行运行 `python -mairtest -o button.png`, 选择一个按钮或者图标, 按下`c`截图保存推出.
+	命令行运行 `python -mairtest`, 鼠标左键拖拽选择一个按钮或者图标, 按下`c`截图保存推出. (按下r重新刷新屏幕, q推出)
 	_PS: 这里其实有个好的IDE截图的最好了，因为时间精力问题还没有做_
 
 	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.touch_image('button.png')`
@@ -130,6 +130,33 @@ touch_image('start.png')
 
 # or (todo)
 touch_image(TouchImage(file='start.png', offset=(0, 0)))
+```
+
+### 其他接口
+本来想着用sphinx自动生成文档来着，没想到竟然学了几个小时没学会. 我先写一些常用的方法吧
+
+```python
+import airtest
+from airtest import consts
+
+d = airtest.connect(None)
+package_name = 'com.example.game'
+d.start_app(package_name)
+
+d.shell('uptime') # not done yet.
+
+# this is default
+d.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
+# alternative
+# d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
+
+# if image not show in 10s, ImageNotFoundError will raised
+try:
+	d.touch_image('button.png', timeout=10.0)
+except airtest.ImageNotFoundError:
+	print('Image not found')
+
+d.stop_app(package_name)
 ```
 
 ## 代码导读

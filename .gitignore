@@ -41,3 +41,4 @@ test/match.png
 _site
 apps
 __cache__
+*.png
