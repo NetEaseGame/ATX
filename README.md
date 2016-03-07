@@ -143,6 +143,7 @@ d = airtest.connect(None)
 package_name = 'com.example.game'
 d.start_app(package_name)
 
+d.sleep(5) # sleep 5s
 d.shell('uptime') # not done yet.
 
 # this is default

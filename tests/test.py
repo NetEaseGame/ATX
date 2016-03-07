@@ -29,16 +29,16 @@ def screenshot():
     print time.time() - start
 
 def start_app():
-    d.start_app('com.netease.my')
+    d.start_app('com.netease.txx')
 
 def stop_app():
-    d.stop_app('com.netease.my')
+    d.stop_app('com.netease.txx', clear=True)
 
 def touch():
     d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
     d.touch_image('button.png')
 
 if __name__ == '__main__':
-    # start_app()
-    screenshot()
+    stop_app()
+    # screenshot()
     # touch()

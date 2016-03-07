@@ -8,6 +8,7 @@ import collections
 import os
 import platform
 import re
+import sys
 import time
 import threading
 import json
@@ -83,6 +84,15 @@ class AndroidDevice(UiaDevice):
 
         # self._snapshot_method = _snapshot_method
         #-- end of func setting
+
+    def sleep(self, secs):
+        secs = int(secs)
+        for i in reversed(range(secs)):
+            sys.stdout.write('\r')
+            sys.stdout.write("sleep %ds, left %2ds" % (secs, i+1))
+            sys.stdout.flush()
+            time.sleep(1)
+        sys.stdout.write("\n")
 
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
@@ -200,18 +210,22 @@ class AndroidDevice(UiaDevice):
         '''
         self.shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
     
-    def stop_app(self, package_name):
+    def stop_app(self, package_name, clear=False):
         '''
         Stop application
 
         Args:
             package_name: string like com.example.app1
+            clear: bool, remove user data
 
         Returns:
             None
         '''
         # FIXME(ssx): not sure if this method will clean data
-        self.shell(['am', 'force-stop', package_name])
+        if clear:
+            self.shell(['pm', 'clear', package_name])
+        else:
+            self.shell(['am', 'force-stop', package_name])
 
     def takeSnapshot(self, filename):
         '''
@@ -229,18 +243,18 @@ class AndroidDevice(UiaDevice):
     def _get_screen_img(self):
         tmp_file = os.path.join(__tmp__, self._tmp_filename())
         self.screenshot(tmp_file)
-        log.debug("touch image save screen to %s", tmp_file)
+        # log.debug("touch image save screen to %s", tmp_file)
         img = ac.imread(tmp_file)
         os.remove(tmp_file)
         return img
 
-    def touch_image(self, img, timeout=10.0):
+    def touch_image(self, img, timeout=20.0, wait_change=False):
         """Simulate touch according image position
 
         Args:
             img: filename or an opencv image object
             timeout: float, if image not found during this time, ImageNotFoundError will raise.
-
+            wait_change: wait until background image changed.
         Returns:
             None
 
@@ -248,8 +262,9 @@ class AndroidDevice(UiaDevice):
             ImageNotFoundError: An error occured when img not found in current screen.
         """
         search_img = self._read_img(img)
-
+        log.info('touch image: %s', img)
         start_time = time.time()
+        found = False
         while time.time() - start_time < timeout:
             screen_img = self._get_screen_img()
             ret = ac.find_template(screen_img, search_img)
@@ -259,8 +274,19 @@ class AndroidDevice(UiaDevice):
             confidence = ret['confidence']
             log.info('match confidence: %s', confidence)
             self._uiauto.click(*position)
+            found = True
             break
-        else:
+
+        # wait until click area not same
+        if found and wait_change:
+            start_time = time.time()
+            while time.time()-start_time < timeout:
+                screen_img = self._get_screen_img()
+                ret = ac.find_template(screen_img, search_img)
+                if ret is None:
+                    break
+
+        if not found:
             raise errors.ImageNotFoundError('Not found image %s' %(img,))
 
     # def __getattribute__(self, name):
@@ -628,15 +654,15 @@ class AndroidDevice(UiaDevice):
         tpt = self._val_to_point(tpt)
         return self.dev.drag(fpt, tpt, duration)
 
-    def sleep(self, secs=1.0):
-        '''
-        Sleeps for the specified number of seconds
+    # def sleep(self, secs=1.0):
+    #     '''
+    #     Sleeps for the specified number of seconds
 
-        @param secs: float (number of seconds)
-        @return None
-        '''
-        log.debug('SLEEP %.2fs', secs)
-        time.sleep(secs)
+    #     @param secs: float (number of seconds)
+    #     @return None
+    #     '''
+    #     log.debug('SLEEP %.2fs', secs)
+    #     time.sleep(secs)
 
     def type(self, text):
         '''
