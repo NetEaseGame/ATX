@@ -20,3 +20,5 @@ deploy:
     distributions: sdist bdist_wheel
     on:
       tags: true
+after_deploy:
+  - "curl -X POST https://readthedocs.org/build/airtest"
