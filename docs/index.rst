@@ -6,12 +6,14 @@
 Welcome to airtest's documentation!
 ===================================
 
-Contents:
+Documentation
+-------------
 
 .. toctree::
-   :maxdepth: 2
+    :titleonly:
 
-
+.. automodule:: airtest
+    :undoc-members:
 
 Indices and tables
 ==================

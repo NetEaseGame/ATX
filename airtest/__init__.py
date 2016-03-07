@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""This module helps make mobile test easily
+"""
+
 import sys
 import signal
 
@@ -17,9 +20,13 @@ except pkg_resources.DistributionNotFound:
 
 
 def connect(serialno, platform='android'):
-    '''
-    @platform string: one of <android|ios|windows>
-    '''
+    """Connect to a device, and return its object
+    Args:
+        platform: string one of <android|ios|windows>
+
+    Returns:
+        None
+    """
     devclss = {
         'android': device.AndroidDevice,
     }
