@@ -3,9 +3,7 @@
 #
 # License under MIT
 
-from uiautomator import device as d
-from uiautomator import Device as UiaDevice
-
+import subprocess
 import collections
 import os
 import platform
@@ -14,6 +12,8 @@ import threading
 import json
 import warnings
 
+from uiautomator import device as d
+from uiautomator import Device as UiaDevice
 import cv2
 import aircv as ac
 
@@ -42,6 +42,7 @@ class ImageNotFoundError(BaseError):
 class AndroidDevice(UiaDevice):
     def __init__(self, serialno=None):
         super(AndroidDevice, self).__init__(serialno)
+        self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
 
         # print 'DEVSUIT_SERIALNO:', phoneno
@@ -91,6 +92,13 @@ class AndroidDevice(UiaDevice):
             os.makedirs(save_dir)
         self._uiauto.screenshot(filename)
 
+    def shell(self, command):
+        cmds = ['adb']
+        if self._serial:
+            cmds.extend(['-s', self._serial])
+        cmds.extend(['shell', command])
+        os.system(subprocess.list2cmdline(cmds))
+        
     def takeSnapshot(self, filename):
         '''
         Take screen snapshot
