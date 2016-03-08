@@ -16,7 +16,7 @@ from StringIO import StringIO
 import cv2
 from PIL import ImageTk, Image
 
-import airtest
+import atx
 
 
 Point = collections.namedtuple('Point', ['x', 'y'])
@@ -118,7 +118,7 @@ def main():
     # ap.add_argument("-o", "--output", required=True, help="Output image file, ext must be png")
     args = vars(ap.parse_args())
 
-    d = airtest.connect(args["serial"])
+    d = atx.connect(args["serial"])
     origin = d.screenshot()
 
     # load the image, clone it, and setup the mouse callback function

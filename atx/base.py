@@ -10,8 +10,9 @@ import time
 import logging
 import threading
 
+
 random.seed(time.time())
-logging.basicConfig(format = '%(asctime)s - %(levelname)s: %(message)s', level = logging.DEBUG) 
+logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) 
 
 def getLogger(name='root'):
     return logging.getLogger(name)

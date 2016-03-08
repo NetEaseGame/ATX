@@ -9,18 +9,15 @@ import signal
 
 import patch
 import device
-# from device import Device
-# from airtest import patch, proto, cron
-# from airtest.device import Device
 import pkg_resources
 try:
-    version = pkg_resources.get_distribution("airtest").version
+    version = pkg_resources.get_distribution("atx").version
 except pkg_resources.DistributionNotFound:
     version = 'unknown'
 
-from airtest.consts import *
-from airtest.errors import *
-from airtest.device import Watcher
+from atx.consts import *
+from atx.errors import *
+from atx.device import Watcher
 
 
 def connect(serialno, platform='android'):
@@ -115,7 +112,7 @@ def connect(serialno, platform='android'):
 #                 return getattr(cl, key)
 #         raise AttributeError('Object has no attribute "%s"' % key)
 
-# def connect(addr='', appname=None, device=None, interval=3.0, logfile='log/airtest.log'):
+# def connect(addr='', appname=None, device=None, interval=3.0, logfile='log/atx.log'):
 #     clss = []
 #     # compatible with old connect style
 #     if addr.find('://') == -1:

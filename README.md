@@ -3,8 +3,10 @@
 [![Documentation Status](https://readthedocs.org/projects/airtest/badge/?version=latest)](http://airtest.readthedocs.org/en/latest/?badge=latest)
 
 
+改版本重构与一个老项目 <https://github.com/netease/airtest>
+
 # 代码重构中（不要着急）
-另外软件的更新也需要
+airtest已经有人用，这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
 
 ## 为什么要重构
 很多的代码不符合pytohn编码规范, 还有一些很冗余的功能夹杂在里面，很不好维护。
@@ -12,8 +14,11 @@
 
 ## Contribute
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。
+由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。
 
-有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
+BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
+
+网易内部用户暂时请直接联系 hzsunshx
 
 ## 主要更新内容
 * 截图方式从adb screencap转成使用uiautomator
@@ -49,9 +54,12 @@
 
 2. 安装airtest
 
+	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
+
 	```
-	pip install -i https://testpypi.python.org/pypi -U --pre airtest
+	pip install -i https://testpypi.python.org/pypi -U --pre atx
 	```
+
 
 3. 安装android依赖
 
@@ -72,9 +80,9 @@
 
 	```python
 	# coding: utf-8
-	import airtest
+	import atx
 
-	d = airtest.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号
+	d = atx.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号
 	d.screenshot('screen.png') # 截图
 	```
 
@@ -104,11 +112,11 @@ Parameters
 
     Name | Type   | Description
 ---------|--------|------------
-filename | string | **Required** 保存的文件名
+filename | string | **Optional** 保存的文件名
 
 返回值
 
-无
+opencv image
 
 ### 点击图片(制作中)
 `touch_image(img)`
@@ -136,10 +144,10 @@ touch_image(TouchImage(file='start.png', offset=(0, 0)))
 本来想着用sphinx自动生成文档来着，没想到竟然学了几个小时没学会. 我先写一些常用的方法吧
 
 ```python
-import airtest
-from airtest import consts
+import atx
 
-d = airtest.connect(None)
+
+d = atx.connect(None)
 package_name = 'com.example.game'
 d.start_app(package_name)
 
@@ -147,14 +155,14 @@ d.sleep(5) # sleep 5s
 d.shell('uptime') # not done yet.
 
 # this is default
-d.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
+d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
 # alternative
-# d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
+# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP
 
 # if image not show in 10s, ImageNotFoundError will raised
 try:
 	d.touch_image('button.png', timeout=10.0)
-except airtest.ImageNotFoundError:
+except atx.ImageNotFoundError:
 	print('Image not found')
 
 # watcher, trigger when screenshot is called

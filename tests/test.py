@@ -2,11 +2,11 @@
 
 import os
 import time
-import airtest
-from airtest import consts
-print 'Version:', airtest.version
+import atx
+from atx import consts
+print 'Version:', atx.version
 
-d = airtest.connect(None)
+d = atx.connect(None)
 
 # print d.screenshot('screen.png')
 
@@ -40,9 +40,9 @@ def touch():
 
 if __name__ == '__main__':
     # stop_app()
-    w = airtest.Watcher()
-    w.on('setting.png', airtest.Watcher.ACTION_TOUCH)
-    w.on('common.png', airtest.Watcher.ACTION_TOUCH)
+    w = atx.Watcher()
+    w.on('setting.png', atx.Watcher.ACTION_TOUCH)
+    w.on('common.png', atx.Watcher.ACTION_TOUCH)
 
     wid = d.add_watcher(w)
     d.del_watcher(wid)

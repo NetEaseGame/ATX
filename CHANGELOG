@@ -1,6 +1,18 @@
 CHANGES
 =======
 
+* add watcher
+* add sleep
+* a simple ide was born
+* add minicap screenshot method support
+* trigger readthedocs to build
+* make some docs
+* update doc use sphinx
+* update link
+* add start and stop app support
+* add shell command
+* prepare to add a simple ide
+* ide ^_^
 * add a very simple ide
 * remove useless code
 * add simple ide

@@ -23,8 +23,8 @@ from . import base
 from . import proto
 from . import patch
 
-from airtest import consts
-from airtest import errors
+from atx import consts
+from atx import errors
 
 
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence'])
