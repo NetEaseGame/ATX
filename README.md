@@ -109,6 +109,15 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 	可以使用的接口还有很多，请接着往下看
 
+## 配置项
+```
+#
+d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR # 默认
+# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP # 可选
+
+d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
+# d.image_match_method = atx.IMAGE_MATCH_METHOD_SIFT # 特征点匹配, 可选
+```
 
 ## 接口
 ### 连接设备

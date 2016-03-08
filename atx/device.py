@@ -27,7 +27,7 @@ from atx import consts
 from atx import errors
 
 
-FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence'])
+FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method'])
 log = base.getLogger('devsuit')
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -52,9 +52,16 @@ class Watcher(object):
             ret = d.exists(img, screen=screen)
             if ret is None:
                 continue
-            if ret.confidence < 0.9:
-                print("Skip confidence:", ret.confidence)
-                continue
+
+            # FIXME(ssx): Image match confidence should can set
+            if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
+                if ret.confidence < 0.9:
+                    print("Skip confidence:", ret.confidence)
+                    continue
+            elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
+                matches, total = ret.confidence
+                if 1.0*matches/total < 0.5:
+                    continue
             if flags & Watcher.ACTION_TOUCH:
                 print('trigger watch click', ret.pos)
                 d.click(*ret.pos)
@@ -62,7 +69,10 @@ class Watcher(object):
                 d.stop_watcher()
 
 
-class CommonWrap(object):    
+class CommonWrap(object):
+    def __init__(self):
+        self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
+
     def _read_img(self, img):
         if isinstance(img, basestring):
             return ac.imread(img)
@@ -87,17 +97,28 @@ class CommonWrap(object):
 
         Returns:
             None or FindPoint
+
+        Raises:
+            TypeError: when image_match_method is invalid
         """
         search_img = self._read_img(img)
         if screen is None:
             screen = self.screenshot()
-        ret = ac.find_template(screen, search_img)
+        
+        # image match
+        if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+            ret = ac.find_template(screen, search_img)
+        elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
+            ret = ac.find_sift(screen, search_img, min_match_count=10)
+        else:
+            raise TypeError("Invalid image match method: %s" %(self.image_match_method,))
+
         if ret is None:
             return None
         position = ret['result']
         confidence = ret['confidence']
         log.info('match confidence: %s', confidence)
-        return FindPoint(position, confidence)
+        return FindPoint(position, confidence, self.image_match_method)
 
     def touch_image(self, img, timeout=20.0, wait_change=False):
         """Simulate touch according image position
@@ -182,7 +203,9 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._host = kwargs.get('host', '127.0.0.1')
         self._port = kwargs.get('port', 5037)
 
-        super(AndroidDevice, self).__init__(serialno, **kwargs)
+        UiaDevice.__init__(self, serialno, **kwargs)
+        # super(AndroidDevice, self).__init__(serialno, **kwargs)
+
         self._serial = serialno
 
         self._uiauto = super(AndroidDevice, self)
