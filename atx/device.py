@@ -144,20 +144,47 @@ class CommonWrap(object):
         return name
 
     def remove_watcher(self, name):
+        """Remove watcher from event loop
+        Args:
+            name: string watcher name
+
+        Returns:
+            None
+        """
         self._watchers.pop(name, None)
 
-    def watch_all(self):
+    def remove_all_watcher(self):
+        self._watchers = {}
+
+    def watch_all(self, timeout=None):
+        """Start watch and wait until timeout
+
+        Args:
+            timeout: float, optional
+
+        Returns:
+            None
+        """
         self._run_watch = True
+        start_time = time.time()
         while self._run_watch:
+            if timeout is not None:
+                if time.time() - start_time > timeout:
+                    raise errors.WatchTimeoutError("Watch timeout %s" % (timeout,))
+                log.debug("Watch time left: %.1fs", timeout-time.time()+start_time)
             self.screenshot()
 
     def stop_watcher(self):
         self._run_watch = False
 
 class AndroidDevice(CommonWrap, UiaDevice):
-    def __init__(self, serialno=None):
-        super(AndroidDevice, self).__init__(serialno)
+    def __init__(self, serialno=None, **kwargs):
+        self._host = kwargs.get('host', '127.0.0.1')
+        self._port = kwargs.get('port', 5037)
+
+        super(AndroidDevice, self).__init__(serialno, **kwargs)
         self._serial = serialno
+
         self._uiauto = super(AndroidDevice, self)
         self._minicap_params = None
         self._watchers = {}
@@ -288,6 +315,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         cmds = ['adb']
         if self._serial:
             cmds.extend(['-s', self._serial])
+        cmds.extend(['-H', self._host, '-P', str(self._port)])
 
         if isinstance(command, list) or isinstance(command, tuple):
             cmds.extend(list(command))

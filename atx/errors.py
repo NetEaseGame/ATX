@@ -11,3 +11,6 @@ class BaseError(Exception):
 
 class ImageNotFoundError(BaseError):
     pass
+
+class WatchTimeoutError(BaseError):
+    pass

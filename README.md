@@ -1,6 +1,6 @@
 # AirtestX (中文版)
-[![Build Status](https://travis-ci.org/codeskyblue/airtest.svg?branch=master)](https://travis-ci.org/codeskyblue/airtest)
-[![Documentation Status](https://readthedocs.org/projects/airtest/badge/?version=latest)](http://airtest.readthedocs.org/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/codeskyblue/airtestx.svg?branch=master)](https://travis-ci.org/codeskyblue/airtestx)
+[![Documentation Status](https://readthedocs.org/projects/airtestx/badge/?version=latest)](http://airtest.readthedocs.org/en/latest/?badge=latest)
 
 
 改版自一个老项目 <https://github.com/netease/airtest>
@@ -62,7 +62,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	pip install --upgrade atx
 	```
 
-	For the develop version, (maybe not stable)
+	For the develop version, (maybe not stable), Sync with github master code
 
 	```
 	 pip -i https://testpypi.python.org/pypi -U --pre atx
@@ -111,6 +111,19 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 
 ## 接口
+### 连接设备
+`connect(udid, **kwargs)`
+
+对于安卓设备常见连接方法
+
+```
+connect(None)
+connect(None, host='127.0.0.1', port=5037)
+connect('EFSXA124') # specify serialno
+```
+
+目前没有别的设备
+
 ### 截图
 `snapshot(filename)`
 
