@@ -204,6 +204,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._port = kwargs.get('port', 5037)
 
         UiaDevice.__init__(self, serialno, **kwargs)
+        CommonWrap.__init__(self)
         # super(AndroidDevice, self).__init__(serialno, **kwargs)
 
         self._serial = serialno
@@ -213,9 +214,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._watchers = {}
 
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
-        # self.dev = dev
-        # self.appname = appname
-        # self._devtype = devtype
         # self._inside_depth = 0
 
         # # default image search extentension and 
@@ -233,9 +231,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         # # self._logfile = logfile
         # self._loglock = threading.Lock()
         # self._operation_mark = False
-
-        # self._image_match_method = 'auto'
-        # self._threshold = 0.3 # for findImage
 
         # # if self._logfile:
         # #     logdir = os.path.dirname(logfile) or '.'
