@@ -174,11 +174,12 @@ except atx.ImageNotFoundError:
 	print('Image not found')
 
 # watcher, trigger when screenshot is called
-w = airtest.Watcher()
-w.on('setting.png', airtest.Watcher.ACTION_TOUCH)
-w.on('common.png', airtest.Watcher.ACTION_TOUCH)
+w = atx.Watcher()
+w.on('enter-game.png', atx.Watcher.ACTION_TOUCH)
+w.on('inside.png', atx.Watcher.ACTION_QUIT)
+d.add_watcher(w)
+d.watch_all()
 
-wid = d.add_watcher(w)
 # d.del_watcher(wid) # remove watcher
 
 d.stop_app(package_name)

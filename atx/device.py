@@ -37,28 +37,124 @@ DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
 class Watcher(object):
-    ACTION_TOUCH = 1
+    ACTION_TOUCH = 1 <<0
+    ACTION_QUIT = 1 <<1
 
     def __init__(self):
         self._events = {}
+        self.name = None
 
-    def on(self, image, action):
-        self._events[image] = action
+    def on(self, image, flags):
+        self._events[image] = flags
 
     def hook(self, screen, d):
-        for (img, action) in self._events.items():
-            if action == Watcher.ACTION_TOUCH:
-                ret = d.exists(img, screen=screen)
-                if ret is None:
-                    continue
-                if ret.confidence < 0.9:
-                    print("Skip confidence:", ret.confidence)
-                    continue
-                print('trigger watch click')
+        for (img, flags) in self._events.items():
+            ret = d.exists(img, screen=screen)
+            if ret is None:
+                continue
+            if ret.confidence < 0.9:
+                print("Skip confidence:", ret.confidence)
+                continue
+            if flags & Watcher.ACTION_TOUCH:
+                print('trigger watch click', ret.pos)
                 d.click(*ret.pos)
+            if flags & Watcher.ACTION_QUIT:
+                d.stop_watcher()
 
 
-class AndroidDevice(UiaDevice):
+class CommonWrap(object):    
+    def _read_img(self, img):
+        if isinstance(img, basestring):
+            return ac.imread(img)
+        # FIXME(ssx): need support other types
+        return img
+
+    def sleep(self, secs):
+        secs = int(secs)
+        for i in reversed(range(secs)):
+            sys.stdout.write('\r')
+            sys.stdout.write("sleep %ds, left %2ds" % (secs, i+1))
+            sys.stdout.flush()
+            time.sleep(1)
+        sys.stdout.write("\n")
+
+    def exists(self, img, screen=None):
+        """Change if image exists
+
+        Args:
+            img: string or opencv image
+            screen: opencv image, optional, if not None, screenshot will be called
+
+        Returns:
+            None or FindPoint
+        """
+        search_img = self._read_img(img)
+        if screen is None:
+            screen = self.screenshot()
+        ret = ac.find_template(screen, search_img)
+        if ret is None:
+            return None
+        position = ret['result']
+        confidence = ret['confidence']
+        log.info('match confidence: %s', confidence)
+        return FindPoint(position, confidence)
+
+    def touch_image(self, img, timeout=20.0, wait_change=False):
+        """Simulate touch according image position
+
+        Args:
+            img: filename or an opencv image object
+            timeout: float, if image not found during this time, ImageNotFoundError will raise.
+            wait_change: wait until background image changed.
+        Returns:
+            None
+
+        Raises:
+            ImageNotFoundError: An error occured when img not found in current screen.
+        """
+        search_img = self._read_img(img)
+        log.info('touch image: %s', img)
+        start_time = time.time()
+        found = False
+        while time.time() - start_time < timeout:
+            point = self.exists(search_img)
+            if point is None:
+                continue
+            self._uiauto.click(*point.pos)
+            found = True
+            break
+
+        # wait until click area not same
+        if found and wait_change:
+            start_time = time.time()
+            while time.time()-start_time < timeout:
+                screen_img = self.screenshot()
+                ret = ac.find_template(screen_img, search_img)
+                if ret is None:
+                    break
+
+        if not found:
+            raise errors.ImageNotFoundError('Not found image %s' %(img,))
+
+    def add_watcher(self, w, name=None):
+        if name is None:
+            name = time.time()
+        self._watchers[name] = w
+        w.name = name
+        return name
+
+    def remove_watcher(self, name):
+        self._watchers.pop(name, None)
+
+    def watch_all(self):
+        self._run_watch = True
+        while self._run_watch:
+            self.screenshot()
+
+    def stop_watcher(self):
+        self._run_watch = False
+
+class AndroidDevice(CommonWrap, UiaDevice):
     def __init__(self, serialno=None):
         super(AndroidDevice, self).__init__(serialno)
         self._serial = serialno
@@ -67,7 +163,6 @@ class AndroidDevice(UiaDevice):
         self._watchers = {}
 
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
-        # print 'DEVSUIT_SERIALNO:', phoneno
         # self.dev = dev
         # self.appname = appname
         # self._devtype = devtype
@@ -108,23 +203,6 @@ class AndroidDevice(UiaDevice):
         # self._snapshot_method = _snapshot_method
         #-- end of func setting
 
-    def sleep(self, secs):
-        secs = int(secs)
-        for i in reversed(range(secs)):
-            sys.stdout.write('\r')
-            sys.stdout.write("sleep %ds, left %2ds" % (secs, i+1))
-            sys.stdout.flush()
-            time.sleep(1)
-        sys.stdout.write("\n")
-
-    def add_watcher(self, w):
-        id = time.time()
-        self._watchers[id] = w
-        return id
-
-    def del_watcher(self, id):
-        self._watchers.pop(id, None)
-
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
 
@@ -134,7 +212,7 @@ class AndroidDevice(UiaDevice):
         uiautomator d.info is now well working with device which has virtual menu.
         """
         w, h = (0, 0)
-        for line in self.shell('dumpsys display').splitlines():
+        for line in self.adb_shell('dumpsys display').splitlines():
             m = DISPLAY_RE.search(line, 0)
             if not m:
                 continue
@@ -154,9 +232,9 @@ class AndroidDevice(UiaDevice):
         local_tmp_file = os.path.join(__tmp__, self._tmp_filename(ext='.jpg'))
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
             self._get_minicap_params(), phone_tmp_file)
-        self.shell(command)
+        self.adb_shell(command)
         self.adbrun(['pull', phone_tmp_file, local_tmp_file])
-        self.shell(['rm', phone_tmp_file])
+        self.adb_shell(['rm', phone_tmp_file])
         img = cv2.imread(local_tmp_file)
         os.remove(local_tmp_file)
         return img
@@ -219,7 +297,7 @@ class AndroidDevice(UiaDevice):
         return output.replace('\r\n', '\n')
         # os.system(subprocess.list2cmdline(cmds))
 
-    def shell(self, command):
+    def adb_shell(self, command):
         '''
         Run adb shell command
 
@@ -244,8 +322,9 @@ class AndroidDevice(UiaDevice):
         Returns:
             None
         '''
-        self.shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
-    
+        self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
+        return self
+
     def stop_app(self, package_name, clear=False):
         '''
         Stop application
@@ -258,9 +337,10 @@ class AndroidDevice(UiaDevice):
             None
         '''
         if clear:
-            self.shell(['pm', 'clear', package_name])
+            self.adb_shell(['pm', 'clear', package_name])
         else:
-            self.shell(['am', 'force-stop', package_name])
+            self.adb_shell(['am', 'force-stop', package_name])
+        return self
 
     def takeSnapshot(self, filename):
         '''
@@ -268,70 +348,6 @@ class AndroidDevice(UiaDevice):
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
-
-    def _read_img(self, img):
-        if isinstance(img, basestring):
-            return ac.imread(img)
-        # FIXME(ssx): need support other types
-        return img
-
-    def exists(self, img, screen=None):
-        """Change if image exists
-
-        Args:
-            img: string or opencv image
-            screen: opencv image, optional, if not None, screenshot will be called
-
-        Returns:
-            None or FindPoint
-        """
-        search_img = self._read_img(img)
-        if screen is None:
-            screen = self.screenshot()
-        ret = ac.find_template(screen, search_img)
-        if ret is None:
-            return None
-        position = ret['result']
-        confidence = ret['confidence']
-        log.info('match confidence: %s', confidence)
-        return FindPoint(position, confidence)
-
-    def touch_image(self, img, timeout=20.0, wait_change=False):
-        """Simulate touch according image position
-
-        Args:
-            img: filename or an opencv image object
-            timeout: float, if image not found during this time, ImageNotFoundError will raise.
-            wait_change: wait until background image changed.
-        Returns:
-            None
-
-        Raises:
-            ImageNotFoundError: An error occured when img not found in current screen.
-        """
-        search_img = self._read_img(img)
-        log.info('touch image: %s', img)
-        start_time = time.time()
-        found = False
-        while time.time() - start_time < timeout:
-            point = self.exists(search_img)
-            if point is None:
-                continue
-            self._uiauto.click(*point.pos)
-            found = True
-            break
-
-        # wait until click area not same
-        if found and wait_change:
-            start_time = time.time()
-            while time.time()-start_time < timeout:
-                screen_img = self.screenshot()
-                ret = ac.find_template(screen_img, search_img)
-                if ret is None:
-                    break
-
-        if not found:
-            raise errors.ImageNotFoundError('Not found image %s' %(img,))
 
     # def __getattribute__(self, name):
     #     # print name

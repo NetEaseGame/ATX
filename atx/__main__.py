@@ -8,15 +8,15 @@ import os
 import sys
 import argparse
 import threading
-import Tkinter
 import tkSimpleDialog
 import collections
+import Tkinter as Tk
 from Queue import Queue
 from StringIO import StringIO
-import cv2
-from PIL import ImageTk, Image
 
 import atx
+import cv2
+from PIL import ImageTk, Image
 
 
 Point = collections.namedtuple('Point', ['x', 'y'])
@@ -65,10 +65,10 @@ def interactive_save(image): #, save_to=None):
     #img_str = cv2.imencode('.png', image)[1].tostring()
     #imgpil = Image.open(StringIO(img_str))
 
-    root = Tkinter.Tk()
+    root = Tk.Tk()
     root.geometry('{}x{}'.format(400, 400))
     imgtk = ImageTk.PhotoImage(image=imgpil)
-    panel = Tkinter.Label(root, image=imgtk) #.pack()
+    panel = Tk.Label(root, image=imgtk) #.pack()
     panel.pack(side="bottom", fill="both", expand="yes")
     
     # if not save_to:
@@ -95,6 +95,32 @@ def worker(que):
         finally:
             que.task_done()
 
+class SimpleIDE():
+    def __init__(self):
+        self.tk = Tk.Tk()
+        self.tk.geometry('{}x{}'.format(400, 400))
+
+        frame = Tk.Frame(self.tk, height=40, bg='#ddd')
+        frame.pack_propagate(0)
+        frame.pack(fill=Tk.X)
+
+        self.btn_quit = Tk.Button(
+            frame, text='Quit', command=frame.quit)
+        self.btn_quit.pack(side=Tk.RIGHT)
+        self.btn_hello = Tk.Button(
+            frame, text='Hello', fg='red', command=self.say_hi)
+        self.btn_hello.pack(side=Tk.LEFT)
+
+    def say_hi(self):
+        print 'Hi there, everyone!'
+
+    def mainloop(self):
+        self.tk.mainloop()
+        try:
+            self.tk.destroy()
+        except:
+            pass
+
 def simple_ide():
     que = Queue()
     que.put((long_task, (), {}))
@@ -103,12 +129,15 @@ def simple_ide():
     th.daemon = True
     th.start()
 
-    root = Tkinter.Tk()
-    root.geometry('{}x{}'.format(400, 400))
-    btn_hello = Tkinter.Button(root, text="Hello!")
-    #btn_hello.set_text("World")
-    btn_hello.pack()
+    root = SimpleIDE()
     root.mainloop()
+    # root.mainloop()
+    # root.destroy()
+
+    # btn_hello = Tk.Button(root, text="Hello!")
+    #btn_hello.set_text("World")
+    # btn_hello.pack()
+    # root.mainloop()
 
 def main():
     # construct the argument parser and parse the arguments
@@ -117,6 +146,9 @@ def main():
     ap.add_argument("-s", "--serial", required=False, help="Android serialno")
     # ap.add_argument("-o", "--output", required=True, help="Output image file, ext must be png")
     args = vars(ap.parse_args())
+
+    # simple_ide()
+    # return
 
     d = atx.connect(args["serial"])
     origin = d.screenshot()
