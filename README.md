@@ -3,7 +3,9 @@
 [![Documentation Status](https://readthedocs.org/projects/airtest/badge/?version=latest)](http://airtest.readthedocs.org/en/latest/?badge=latest)
 
 
-改版本重构与一个老项目 <https://github.com/netease/airtest>
+改版自一个老项目 <https://github.com/netease/airtest>
+
+该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，虽然有点类似于Sikuli, 但其实很多都不一样
 
 # 代码重构中（不要着急）
 airtest已经有人用，这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX

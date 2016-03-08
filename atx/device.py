@@ -275,14 +275,6 @@ class AndroidDevice(UiaDevice):
         # FIXME(ssx): need support other types
         return img
 
-    # def _get_screen_img(self):
-    #     tmp_file = os.path.join(__tmp__, self._tmp_filename())
-    #     self.screenshot(tmp_file)
-    #     # log.debug("touch image save screen to %s", tmp_file)
-    #     img = ac.imread(tmp_file)
-    #     os.remove(tmp_file)
-    #     return img
-
     def exists(self, img, screen=None):
         """Change if image exists
 
@@ -323,13 +315,6 @@ class AndroidDevice(UiaDevice):
         found = False
         while time.time() - start_time < timeout:
             point = self.exists(search_img)
-            # screen_img = self.screenshot()
-            # ret = ac.find_template(screen_img, search_img)
-            # if ret is None:
-                # continue
-            # position = ret['result']
-            # confidence = ret['confidence']
-            # log.info('match confidence: %s', confidence)
             if point is None:
                 continue
             self._uiauto.click(*point.pos)
@@ -340,7 +325,7 @@ class AndroidDevice(UiaDevice):
         if found and wait_change:
             start_time = time.time()
             while time.time()-start_time < timeout:
-                screen_img = self._get_screen_img()
+                screen_img = self.screenshot()
                 ret = ac.find_template(screen_img, search_img)
                 if ret is None:
                     break
