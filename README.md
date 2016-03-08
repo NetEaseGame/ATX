@@ -59,8 +59,14 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
 
 	```
-	pip install -i https://testpypi.python.org/pypi -U --pre atx
+	pip install --upgrade atx
 	```
+
+	For the develop version, (maybe not stable)
+
+	```
+	 pip -i https://testpypi.python.org/pypi -U --pre atx
+	 ```
 
 
 3. 安装android依赖
@@ -92,7 +98,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 3. 截图
 
-	命令行运行 `python -mairtest`, 鼠标左键拖拽选择一个按钮或者图标, 按下`c`截图保存推出. (按下r重新刷新屏幕, q推出)
+	命令行运行 `python -matx`, 鼠标左键拖拽选择一个按钮或者图标, 按下`c`截图保存推出. (按下r重新刷新屏幕, q推出)
 	_PS: 这里其实有个好的IDE截图的最好了，因为时间精力问题还没有做_
 
 	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.touch_image('button.png')`
