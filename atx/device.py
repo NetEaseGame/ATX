@@ -216,7 +216,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._watchers = {}
 
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
-        # self._inside_depth = 0
 
         # # default image search extentension and 
         # self._image_exts = ['.jpg', '.png']
@@ -488,41 +487,41 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #         y = int(h*y)
     #     return (x, y)
 
-    def _search_image(self, filename):
-        ''' Search image in default path '''
-        if isinstance(filename, unicode) and platform.system() == 'Windows':
-            filename = filename.encode('gbk')
-            #filename = filename.encode('utf-8')
-        basename, ext = os.path.splitext(filename)
-        exts = [ext] if ext else self._image_exts
-        for folder in self._image_dirs:
-            for ext in exts:
-                fullpath = os.path.join(folder, basename+ext)
-                if os.path.exists(fullpath):
-                    return fullpath
-        raise RuntimeError('Image file(%s) not found in %s' %(filename, self._image_dirs))
+    # def _search_image(self, filename):
+    #     ''' Search image in default path '''
+    #     if isinstance(filename, unicode) and platform.system() == 'Windows':
+    #         filename = filename.encode('gbk')
+    #         #filename = filename.encode('utf-8')
+    #     basename, ext = os.path.splitext(filename)
+    #     exts = [ext] if ext else self._image_exts
+    #     for folder in self._image_dirs:
+    #         for ext in exts:
+    #             fullpath = os.path.join(folder, basename+ext)
+    #             if os.path.exists(fullpath):
+    #                 return fullpath
+    #     raise RuntimeError('Image file(%s) not found in %s' %(filename, self._image_dirs))
 
-    def _save_screen(self, filename, random_name=True, tempdir=True):
-        # use last snapshot file
-        if self._snapshot_file and self._keep_capture:
-            return self._snapshot_file
+    # def _save_screen(self, filename, random_name=True, tempdir=True):
+    #     # use last snapshot file
+    #     if self._snapshot_file and self._keep_capture:
+    #         return self._snapshot_file
 
-        if random_name:
-            filename = base.random_name(filename)
-        if tempdir:
-            filename = os.path.join(self._tmpdir, filename)
+    #     if random_name:
+    #         filename = base.random_name(filename)
+    #     if tempdir:
+    #         filename = os.path.join(self._tmpdir, filename)
 
-        parent_dir = os.path.dirname(filename) or '.'
-        if not os.path.exists(parent_dir):
-            base.makedirs(parent_dir)
+    #     parent_dir = os.path.dirname(filename) or '.'
+    #     if not os.path.exists(parent_dir):
+    #         base.makedirs(parent_dir)
 
-        # FIXME(ssx): don't save as file, better store in memory
-        self.dev.snapshot(filename)
+    #     # FIXME(ssx): don't save as file, better store in memory
+    #     self.dev.snapshot(filename)
 
-        if tempdir:
-            self.log(proto.TAG_SNAPSHOT, dict(filename=filename))
-        self._snapshot_file = filename
-        return filename
+    #     if tempdir:
+    #         self.log(proto.TAG_SNAPSHOT, dict(filename=filename))
+    #     self._snapshot_file = filename
+    #     return filename
 
     # def log(self, tag, message):
     #     if not self._logfile:
@@ -541,149 +540,149 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #         file.write(json.dumps(data) + '\n')
     #     self._loglock.release()
 
-    def keepCapture(self):
-        '''
-        Use screen in memory
-        '''
-        self._keep_capture = True
+    # def keepCapture(self):
+    #     '''
+    #     Use screen in memory
+    #     '''
+    #     self._keep_capture = True
 
-    def releaseCapture(self):
-        '''
-        Donot use screen in memory (this is default behavior)
-        '''
-        self._keep_capture = False
+    # def releaseCapture(self):
+    #     '''
+    #     Donot use screen in memory (this is default behavior)
+    #     '''
+    #     self._keep_capture = False
 
-    def globalSet(self, *args, **kwargs):
-        '''
-        app setting, be careful you should known what you are doing.
-        @parma m(dict): eg:{"threshold": 0.3}
-        '''
-        if len(args) > 0:
-            m = args[0]
-            assert isinstance(m, dict)
-        else:
-            m = kwargs
-        for k, v in m.items():
-            key = '_'+k
-            if hasattr(self, key):
-                item = getattr(self, key)
-                if callable(item):
-                    item(v)
-                else:
-                    setattr(self, key, v)
-            else:
-                print 'not have such setting: %s' %(k)
+    # def globalSet(self, *args, **kwargs):
+    #     '''
+    #     app setting, be careful you should known what you are doing.
+    #     @parma m(dict): eg:{"threshold": 0.3}
+    #     '''
+    #     if len(args) > 0:
+    #         m = args[0]
+    #         assert isinstance(m, dict)
+    #     else:
+    #         m = kwargs
+    #     for k, v in m.items():
+    #         key = '_'+k
+    #         if hasattr(self, key):
+    #             item = getattr(self, key)
+    #             if callable(item):
+    #                 item(v)
+    #             else:
+    #                 setattr(self, key, v)
+    #         else:
+    #             print 'not have such setting: %s' %(k)
 
-    def globalGet(self, key):
-        '''
-        get app setting
-        '''
-        if hasattr(self, '_'+key):
-            return getattr(self, '_'+key)
-        return None
+    # def globalGet(self, key):
+    #     '''
+    #     get app setting
+    #     '''
+    #     if hasattr(self, '_'+key):
+    #         return getattr(self, '_'+key)
+    #     return None
 
-    def startApp(self, appname, activity):
-        '''
-        Start app
-        '''
-        self.dev.start_app(appname, activity)
+    # def startApp(self, appname, activity):
+    #     '''
+    #     Start app
+    #     '''
+    #     self.dev.start_app(appname, activity)
 
-    def stopApp(self, appname):
-        '''
-        Stop app
-        '''
-        self.dev.stop_app(appname)
+    # def stopApp(self, appname):
+    #     '''
+    #     Stop app
+    #     '''
+    #     self.dev.stop_app(appname)
 
-    def find(self, imgfile):
-        '''
-        Find image position on screen
+    # def find(self, imgfile):
+    #     '''
+    #     Find image position on screen
 
-        @return (point founded or None if not found)
-        '''
-        filepath = self._search_image(imgfile)
+    #     @return (point founded or None if not found)
+    #     '''
+    #     filepath = self._search_image(imgfile)
         
-        log.debug('Locate image path: %s', filepath)
+    #     log.debug('Locate image path: %s', filepath)
         
-        screen = self._save_screen('screen-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
-        if self._screen_resolution:
-            # resize image
-            ow, oh = self._screen_resolution # original
-            cw, ch = self.shape() # current
-            (ratew, rateh) = cw/float(ow), ch/float(oh)
+    #     screen = self._save_screen('screen-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
+    #     if self._screen_resolution:
+    #         # resize image
+    #         ow, oh = self._screen_resolution # original
+    #         cw, ch = self.shape() # current
+    #         (ratew, rateh) = cw/float(ow), ch/float(oh)
 
-            im = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+    #         im = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
 
-            nim = cv2.resize(im, (0, 0), fx=ratew, fy=rateh)
-            new_name = base.random_name('resize-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
-            filepath = new_name = os.path.join(self._tmpdir, new_name)
-            cv2.imwrite(new_name, nim)
-            # im.resize((int(ratew*rw), int(rateh*rh))).save(new_name)
-            # filepath = new_name
-        pt = self._imfind(screen, filepath)
-        return pt
+    #         nim = cv2.resize(im, (0, 0), fx=ratew, fy=rateh)
+    #         new_name = base.random_name('resize-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
+    #         filepath = new_name = os.path.join(self._tmpdir, new_name)
+    #         cv2.imwrite(new_name, nim)
+    #         # im.resize((int(ratew*rw), int(rateh*rh))).save(new_name)
+    #         # filepath = new_name
+    #     pt = self._imfind(screen, filepath)
+    #     return pt
 
-    def mustFind(self, imgfile):
-        ''' 
-        Raise Error if image not found
-        '''
-        pt = self.find(imgfile)
-        if not pt:
-            raise RuntimeError("Image[%s] not found" %(imgfile))
-        return pt
+    # def mustFind(self, imgfile):
+    #     ''' 
+    #     Raise Error if image not found
+    #     '''
+    #     pt = self.find(imgfile)
+    #     if not pt:
+    #         raise RuntimeError("Image[%s] not found" %(imgfile))
+    #     return pt
 
-    def findall(self, imgfile, maxcnt=None, sort=None):
-        '''
-        Find multi positions that imgfile on screen
+    # def findall(self, imgfile, maxcnt=None, sort=None):
+    #     '''
+    #     Find multi positions that imgfile on screen
 
-        @maxcnt (int): max number of object restricted.
-        @sort (string): (None|x|y) x to sort with x, small in front, None to be origin order
-        @return list point that found
-        @warn not finished yet.
-        '''
-        filepath = self._search_image(imgfile)
-        screen = self._save_screen('find-XXXXXXXX.png')
-        pts = self._imfindall(screen, filepath, maxcnt, sort)
-        return pts
+    #     @maxcnt (int): max number of object restricted.
+    #     @sort (string): (None|x|y) x to sort with x, small in front, None to be origin order
+    #     @return list point that found
+    #     @warn not finished yet.
+    #     '''
+    #     filepath = self._search_image(imgfile)
+    #     screen = self._save_screen('find-XXXXXXXX.png')
+    #     pts = self._imfindall(screen, filepath, maxcnt, sort)
+    #     return pts
 
-    def safeWait(self, imgfile, seconds=20.0):
-        '''
-        Like wait, but don't raise RuntimeError
+    # def safeWait(self, imgfile, seconds=20.0):
+    #     '''
+    #     Like wait, but don't raise RuntimeError
 
-        return None when timeout
-        return point if found
-        '''
-        warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
-        self.safe_wait(imgfile, seconds)
+    #     return None when timeout
+    #     return point if found
+    #     '''
+    #     warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
+    #     self.safe_wait(imgfile, seconds)
 
-    def safe_wait(self, img, seconds=20.0):
-        '''
-        Like wait, but don't raise RuntimeError
+    # def safe_wait(self, img, seconds=20.0):
+    #     '''
+    #     Like wait, but don't raise RuntimeError
 
-        return None when timeout
-        return point if found
-        '''
-        warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
-        try:
-            return self.wait(img, seconds)
-        except:
-            return None        
+    #     return None when timeout
+    #     return point if found
+    #     '''
+    #     warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
+    #     try:
+    #         return self.wait(img, seconds)
+    #     except:
+    #         return None        
 
-    def wait(self, imgfile, timeout=20):
-        '''
-        Wait until some picture exists
-        @return position when imgfile shows
-        @raise RuntimeError if not found
-        '''
-        log.info('WAIT: %s', imgfile)
-        start = time.time()
-        while True:
-            pt = self.find(imgfile)
-            if pt:
-                return pt
-            if time.time()-start > timeout: 
-                break
-            time.sleep(1)
-        raise RuntimeError('Wait timeout(%.2f)', float(timeout))
+    # def wait(self, imgfile, timeout=20):
+    #     '''
+    #     Wait until some picture exists
+    #     @return position when imgfile shows
+    #     @raise RuntimeError if not found
+    #     '''
+    #     log.info('WAIT: %s', imgfile)
+    #     start = time.time()
+    #     while True:
+    #         pt = self.find(imgfile)
+    #         if pt:
+    #             return pt
+    #         if time.time()-start > timeout: 
+    #             break
+    #         time.sleep(1)
+    #     raise RuntimeError('Wait timeout(%.2f)', float(timeout))
 
     # def exists(self, imgfile):
         # return True if self.find(imgfile) else False
@@ -716,39 +715,39 @@ class AndroidDevice(CommonWrap, UiaDevice):
 
     #     time.sleep(self._delay_after_click)
 
-    def center(self):
-        '''
-        Center position
-        '''
-        w, h = self.shape()
-        return w/2, h/2
+    # def center(self):
+    #     '''
+    #     Center position
+    #     '''
+    #     w, h = self.shape()
+    #     return w/2, h/2
     
-    def clickIfExists(self, imgfile):
-        '''
-        Click when image file exists
+    # def clickIfExists(self, imgfile):
+    #     '''
+    #     Click when image file exists
 
-        @return (True|False) if clicked
-        '''
-        log.info('CLICK IF EXISTS: %s' %(imgfile))
-        pt = self.find(imgfile)
-        if pt:
-            log.debug('click for exists %s', imgfile)
-            self.click(pt)
-            return True
-        else:
-            log.debug('ignore for no exists %s', imgfile)
-            return False
+    #     @return (True|False) if clicked
+    #     '''
+    #     log.info('CLICK IF EXISTS: %s' %(imgfile))
+    #     pt = self.find(imgfile)
+    #     if pt:
+    #         log.debug('click for exists %s', imgfile)
+    #         self.click(pt)
+    #         return True
+    #     else:
+    #         log.debug('ignore for no exists %s', imgfile)
+    #         return False
 
-    def drag(self, fpt, tpt, duration=0.5):
-        ''' 
-        Drag from one place to another place
+    # def drag(self, fpt, tpt, duration=0.5):
+    #     ''' 
+    #     Drag from one place to another place
 
-        @param fpt,tpt: filename or position
-        @param duration: float (duration of the event in seconds)
-        '''
-        fpt = self._val_to_point(fpt)
-        tpt = self._val_to_point(tpt)
-        return self.dev.drag(fpt, tpt, duration)
+    #     @param fpt,tpt: filename or position
+    #     @param duration: float (duration of the event in seconds)
+    #     '''
+    #     fpt = self._val_to_point(fpt)
+    #     tpt = self._val_to_point(tpt)
+    #     return self.dev.drag(fpt, tpt, duration)
 
     # def sleep(self, secs=1.0):
     #     '''
@@ -760,30 +759,30 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #     log.debug('SLEEP %.2fs', secs)
     #     time.sleep(secs)
 
-    def type(self, text):
-        '''
-        Input some text
+    # def type(self, text):
+    #     '''
+    #     Input some text
 
-        @param text: string (text want to type)
-        '''
-        self.dev.type(text)
+    #     @param text: string (text want to type)
+    #     '''
+    #     self.dev.type(text)
 
-    @patch.run_once
-    def shape(self):
-        '''
-        Get device shape
+    # @patch.run_once
+    # def shape(self):
+    #     '''
+    #     Get device shape
 
-        @return (width, height), width < height
-        '''
-        return sorted(self.dev.shape())
+    #     @return (width, height), width < height
+    #     '''
+    #     return sorted(self.dev.shape())
 
-    def keyevent(self, event):
-        '''
-        Send keyevent (only support android and ios)
+    # def keyevent(self, event):
+    #     '''
+    #     Send keyevent (only support android and ios)
 
-        @param event: string (one of MENU,BACK,HOME)
-        @return nothing
-        '''
-        if hasattr(self.dev, 'keyevent'):
-            return self.dev.keyevent(event)
-        raise RuntimeError('keyevent not support')
+    #     @param event: string (one of MENU,BACK,HOME)
+    #     @return nothing
+    #     '''
+    #     if hasattr(self.dev, 'keyevent'):
+    #         return self.dev.keyevent(event)
+    #     raise RuntimeError('keyevent not support')
