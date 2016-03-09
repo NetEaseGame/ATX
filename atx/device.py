@@ -61,8 +61,8 @@ class Watcher(object):
             if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
                 if ret.confidence > 0.8:
                     exists = True
-                else:
-                    print("Skip confidence:", ret.confidence)
+                # else:
+                    # print("Skip confidence:", ret.confidence)
             elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
                 matches, total = ret.confidence
                 if 1.0*matches/total > 0.5:
