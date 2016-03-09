@@ -7,8 +7,7 @@
 
 该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，虽然有点类似于Sikuli, Appium
 
-# 代码重构中（不要着急）
-airtest已经有人用，这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
+airtest已经有人用，但是这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
 
 ## 为什么要重构
 很多的代码不符合python编码规范, 还有一些很冗余的功能夹杂在里面，很不好维护。
@@ -27,25 +26,16 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 ## 依赖
 1. python2.7
-2. opencv2.4+
+2. opencv2.4, numpy
 3. Android4.1+
 
 ## 安装
 1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
 
-	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本
+	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本，前往下载地址<https://github.com/NetEase/aircv/releases>，
+	把相应的numpy和opencv下载下来。安装方法很简单
 
-	**win32**
-	
-	```
-	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win32.whl
-	```
-
-	**amd64**
-
-	```
-	pip install https://github.com/NetEase/aircv/releases/download/cv2binary/opencv_python-2.4.12-cp27-none-win_amd64.whl
-	```
+	例如 `pip install numpy-1.10.4.mkl-cp27-none-win32.whl`, pip最好版本高一点，避免出错
 
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
 
