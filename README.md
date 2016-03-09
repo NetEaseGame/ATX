@@ -5,18 +5,18 @@
 
 改版自一个老项目 <https://github.com/netease/airtest>
 
-该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，虽然有点类似于Sikuli, 但其实很多都不一样
+该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，虽然有点类似于Sikuli, Appium
 
 # 代码重构中（不要着急）
 airtest已经有人用，这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
 
 ## 为什么要重构
-很多的代码不符合pytohn编码规范, 还有一些很冗余的功能夹杂在里面，很不好维护。
+很多的代码不符合python编码规范, 还有一些很冗余的功能夹杂在里面，很不好维护。
 为了能够重现该软件昔日的光芒，是时候擦亮代码，重出江湖了。
 
 ## Contribute
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。
-由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。
+由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。但是如果不提交Issue，说不定我真的会忘掉。
 
 BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
 
@@ -210,13 +210,30 @@ w.on('inside.png', atx.Watcher.ACTION_QUIT)
 d.add_watcher(w)
 d.watch_all()
 
+# click by ui component
+d(text='Enter').click()
+
 # d.remove_watcher(wid) # remove watcher
 
 d.stop_app(package_name)
 ```
 
+如何点击UI元素请直接看 <https://github.com/codeskyblue/airtest-uiautomator>
+里面的API是直接通过继承的方式支持的。
+
+TODO: Watch还需要改的好用一点，目前的想法
+
+```
+with d.watch('enter game') as w:
+	w.on('enter-game').click()
+	w.on(text='Quick Game').click(text='Login')
+	w.on('btn-a.png').not('btn-b.png').quit()
+	w.on('accept.png').click()
+	w.on(text='Login').quit()
+```
+
 ## FAQ
-1. 如果连接远程机器上的安卓设备
+1. 如果连接远程机器上的安卓设备(测试过，并不好使，可能跟pyuiautomator依赖`adb forword`有关)
 
 	远程机器上使用如下命令启动命令
 
@@ -226,6 +243,18 @@ d.stop_app(package_name)
 	```
 
 	连接时指定远程机器的IP和端口号就好了
+
+2. 如何一个脚本可以适应不同的机器（针对于找不到控件的游戏）
+
+	市面上大部分的手机都是 16:9 还有一部分是 4:3 其他比例的似乎了了。而游戏中元素的大小，在屏幕变化的时候，也会等比例的去缩放。16:9到4:3的缩放比例似乎也有规律可循，暂时不研究啦。
+
+	所以通常只需要找个分辨率高点的设备，然后截个图。同样宽高比的手机就可以一次拿下。
+
+	```
+	d.resolution = (1280, 1920)
+	```
+
+	设置完后，当遇到其他分辨率的手机，就会自动去缩放。
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
