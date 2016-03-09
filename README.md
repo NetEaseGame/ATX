@@ -65,7 +65,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	For the develop version, (maybe not stable), Sync with github master code
 
 	```
-	 pip -i https://testpypi.python.org/pypi -U --pre atx
+	 pip install -i https://testpypi.python.org/pypi -U --pre atx
 	 ```
 
 
@@ -221,6 +221,7 @@ d.stop_app(package_name)
 	远程机器上使用如下命令启动命令
 
 	```
+	adb kill-server
 	adb -P 5037 -a fork-server server
 	```
 
@@ -242,30 +243,4 @@ d.stop_app(package_name)
 
 ## License
 This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
-
-## 历史文档 (below, 下面就不要看了)
-Python lib for **android** app test. (Not for ios)
-
-## 更新说明
-### 0.10.0
-经过慎重的考虑，airtest如果处理的事情太多的的话，整个库就不能很好的维护，也不符合开源的哲学（做一件事，并把它做好），所以去除了监控功能, 去除的iOS支持，windows支持，只保留下安卓的自动化支持。
-
-## 文档
-
-在线文档 <http://netease.github.io/airtest>
-
-作为在线文档的一个补充，有个pydoc生成的API列表可以作为参考
- <http://netease.github.io/airtest/airtest.devsuit.html>
-
-离线文档使用方法：
-
-	git clone https://github.com/netease/airtest && cd airtest
-	gem install jekyll
-	git checkout gh-pages
-	jekyll serve --baseurl=''
-
-## 如何给给该项目贡献
-因为刚项目常常更新，所以可能会有一些没有测试到的bug。
-
-可以在发现了问题后，提个issue给作者。 另外一些新的思路也可以提到issue中。
 
