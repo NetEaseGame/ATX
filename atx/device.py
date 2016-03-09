@@ -17,7 +17,9 @@ import warnings
 from uiautomator import device as d
 from uiautomator import Device as UiaDevice
 import cv2
+import numpy as np
 import aircv as ac
+from PIL import Image
 
 from . import base
 from . import proto
@@ -43,6 +45,7 @@ class Watcher(object):
     def __init__(self):
         self._events = {}
         self.name = None
+        self.touched = {}
 
     def on(self, image, flags):
         self._events[image] = flags
@@ -54,24 +57,31 @@ class Watcher(object):
                 continue
 
             # FIXME(ssx): Image match confidence should can set
+            exists = False
             if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
-                if ret.confidence < 0.9:
+                if ret.confidence > 0.8:
+                    exists = True
+                else:
                     print("Skip confidence:", ret.confidence)
-                    continue
             elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
                 matches, total = ret.confidence
-                if 1.0*matches/total < 0.5:
-                    continue
-            if flags & Watcher.ACTION_TOUCH:
-                print('trigger watch click', ret.pos)
-                d.click(*ret.pos)
-            if flags & Watcher.ACTION_QUIT:
-                d.stop_watcher()
+                if 1.0*matches/total > 0.5:
+                    exists = True
+
+            if exists:
+                if flags & Watcher.ACTION_TOUCH:
+                    print('trigger watch click', ret.pos)
+                    d.click(*ret.pos)
+                    self.touched[img] = True
+
+                if flags & Watcher.ACTION_QUIT:
+                    d.stop_watcher()
 
 
 class CommonWrap(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
+        self.resolution = None
 
     def _read_img(self, img):
         if isinstance(img, basestring):
@@ -107,6 +117,13 @@ class CommonWrap(object):
         
         # image match
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+            if self.resolution is not None:
+                ow, oh = self.resolution
+                fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
+                search_img = cv2.resize(search_img, (0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+                # TODO(useless)
+                # cv2.imwrite('resize-tmp.png', search_img)
+                # cv2.imwrite('current-screen.png', screen)
             ret = ac.find_template(screen, search_img)
         elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             ret = ac.find_sift(screen, search_img, min_match_count=10)
@@ -140,10 +157,13 @@ class CommonWrap(object):
         while time.time() - start_time < timeout:
             point = self.exists(search_img)
             if point is None:
+                sys.stdout.write('.')
+                sys.stdout.flush()
                 continue
             self._uiauto.click(*point.pos)
             found = True
             break
+        sys.stdout.write('\n')
 
         # wait until click area not same
         if found and wait_change:
@@ -192,7 +212,7 @@ class CommonWrap(object):
             if timeout is not None:
                 if time.time() - start_time > timeout:
                     raise errors.WatchTimeoutError("Watch timeout %s" % (timeout,))
-                log.debug("Watch time left: %.1fs", timeout-time.time()+start_time)
+                log.debug("Watch time total: %.1fs left: %.1fs", timeout, timeout-time.time()+start_time)
             self.screenshot()
 
     def stop_watcher(self):
@@ -207,21 +227,14 @@ class AndroidDevice(CommonWrap, UiaDevice):
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
         UiaDevice.__init__(self, serialno, **kwargs)
         CommonWrap.__init__(self)
-        # super(AndroidDevice, self).__init__(serialno, **kwargs)
 
         self._serial = serialno
-
         self._uiauto = super(AndroidDevice, self)
         self._minicap_params = None
+        self.minicap_rotation = None
         self._watchers = {}
 
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
-
-        # # default image search extentension and 
-        # self._image_exts = ['.jpg', '.png']
-        # self._image_dirs = ['.', 'image']
-
-        # self._rotation = None # 0,1,2,3
         # self._tmpdir = 'tmp'
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
         # self._delay_after_click = 0.5 # when finished click, wait time
@@ -252,10 +265,14 @@ class AndroidDevice(CommonWrap, UiaDevice):
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
 
-    def _get_minicap_params(self):
-        """
-        Used about 0.1s
-        uiautomator d.info is now well working with device which has virtual menu.
+    @property
+    def wlan_ip(self):
+        return self.adb_shell(['getprop', 'dhcp.wlan0.ipaddress']).strip()
+
+    @property
+    @patch.run_once
+    def display(self):
+        """Virtual keyborad may get small d.info['displayHeight']
         """
         w, h = (0, 0)
         for line in self.adb_shell('dumpsys display').splitlines():
@@ -266,12 +283,26 @@ class AndroidDevice(CommonWrap, UiaDevice):
             h = int(m.group('height'))
             # o = int(m.group('orientation'))
             w, h = min(w, h), max(w, h)
-            self._minicap_params = '{x}x{y}@{x}x{y}/{r}'.format(
-                x=w, y=h, r=d.info['displayRotation']*90)
-            break
-        else:
-            raise errors.BaseError('Fail to get display width and height')
-        return self._minicap_params
+            return collections.namedtuple('Display', ['width', 'height'])(w, h)
+
+        w, h = d.info['displayWidth'], d.info['displayHeight']
+        w, h = min(w, h), max(w, h)
+        return collections.namedtuple('Display', ['width', 'height'])(w, h)
+            
+    def _get_minicap_params(self):
+        """
+        Used about 0.1s
+        uiautomator d.info is now well working with device which has virtual menu.
+        """
+        rotation = self.minicap_rotation 
+        if self.minicap_rotation is None:
+            rotation = d.info['displayRotation']
+
+        # rotation not working on SumSUNG 9502
+        return '{x}x{y}@{x}x{y}/{r}'.format(
+            x=self.display.width,
+            y=self.display.height,
+            r=rotation*90)
         
     def _minicap(self):
         phone_tmp_file = '/data/local/tmp/'+self._tmp_filename(ext='.jpg')
@@ -281,9 +312,21 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self.adb_shell(command)
         self.adbrun(['pull', phone_tmp_file, local_tmp_file])
         self.adb_shell(['rm', phone_tmp_file])
-        img = cv2.imread(local_tmp_file)
+
+        pil_image = Image.open(local_tmp_file)
+        (img_w, img_h) = pil_image.size
+
+        # Fix rotation not rotate right.
+        if self.minicap_rotation in [1, 3] and img_w < img_h:
+            pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
+
+        # convert PIL to OpenCV
+        pil_image = pil_image.convert('RGB')
+        open_cv_image = np.array(pil_image)
+        # Convert RGB to BGR 
+        open_cv_image = open_cv_image[:, :, ::-1].copy()
         os.remove(local_tmp_file)
-        return img
+        return open_cv_image
 
     def screenshot(self, filename=None):
         """
@@ -301,7 +344,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
             tmp_file = os.path.join(__tmp__, self._tmp_filename())
-            self._uiauto.screenshot(tmp_file)
+            print self._uiauto.screenshot(tmp_file)
             screen = cv2.imread(tmp_file)
             os.remove(tmp_file)
         elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
@@ -395,26 +438,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
-
-    # def __getattribute__(self, name):
-    #     # print name
-    #     v = object.__getattribute__(self, name)
-    #     if isinstance(v, collections.Callable):
-    #         objdict = object.__getattribute__(self, '__dict__')
-    #         # print objdict
-
-    #         def _wrapper(*args, **kwargs):
-    #             objdict['_inside_depth'] += 1
-    #             # log function call
-    #             ret = v(*args, **kwargs)
-    #             if objdict['_inside_depth'] == 1 and \
-    #                 not v.__name__.startswith('_') and \
-    #                     not v.__name__ == 'log':
-    #                 self.log(proto.TAG_FUNCTION, dict(name=v.__name__, args=args, kwargs=kwargs))
-    #             objdict['_inside_depth'] -= 1
-    #             return ret
-    #         return _wrapper
-    #     return v
 
     # def _imfind(self, bgimg, search):
     #     method = self._image_match_method

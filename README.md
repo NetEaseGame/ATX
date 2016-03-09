@@ -187,6 +187,8 @@ d = atx.connect(None)
 package_name = 'com.example.game'
 d.start_app(package_name)
 
+print d.wlan_ip
+# expect 10.1.x.x
 d.sleep(5) # sleep 5s
 d.adb_shell('uptime') # not done yet.
 
