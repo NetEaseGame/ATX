@@ -20,7 +20,7 @@ from atx.errors import *
 from atx.device import Watcher
 
 
-def connect(serialno, platform='android'):
+def connect(serialno, **kwargs):
     """Connect to a device, and return its object
     Args:
         platform: string one of <android|ios|windows>
@@ -28,13 +28,14 @@ def connect(serialno, platform='android'):
     Returns:
         None
     """
+    platform = kwargs.pop('platform', 'android')
     devclss = {
         'android': device.AndroidDevice,
     }
     cls = devclss.get(platform)
     if cls is None:
         raise Exception('Platform not exists')
-    return cls(serialno)
+    return cls(serialno, **kwargs)
 
 
 # import os

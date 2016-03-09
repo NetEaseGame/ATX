@@ -203,6 +203,8 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._host = kwargs.get('host', '127.0.0.1')
         self._port = kwargs.get('port', 5037)
 
+        kwargs['adb_server_host'] = kwargs.pop('host', self._host)
+        kwargs['adb_server_port'] = kwargs.pop('port', self._port)
         UiaDevice.__init__(self, serialno, **kwargs)
         CommonWrap.__init__(self)
         # super(AndroidDevice, self).__init__(serialno, **kwargs)

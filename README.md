@@ -131,10 +131,16 @@ connect(None, host='127.0.0.1', port=5037)
 connect('EFSXA124') # specify serialno
 ```
 
-目前没有别的设备
+connect返回一个Device对象, 该对象下有很多方法可以用，使用举例
 
+```
+d = atx.connect(None)
+d.screenshot('screen.png')
+```
+
+## Device下的方法
 ### 截图
-`snapshot(filename)`
+`screenshot(filename)`
 
 可以自动识别屏幕的旋转
 
@@ -182,7 +188,7 @@ package_name = 'com.example.game'
 d.start_app(package_name)
 
 d.sleep(5) # sleep 5s
-d.shell('uptime') # not done yet.
+d.adb_shell('uptime') # not done yet.
 
 # this is default
 d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
@@ -202,10 +208,21 @@ w.on('inside.png', atx.Watcher.ACTION_QUIT)
 d.add_watcher(w)
 d.watch_all()
 
-# d.del_watcher(wid) # remove watcher
+# d.remove_watcher(wid) # remove watcher
 
 d.stop_app(package_name)
 ```
+
+## FAQ
+1. 如果连接远程机器上的安卓设备
+
+	远程机器上使用如下命令启动命令
+
+	```
+	adb -P 5037 -a fork-server server
+	```
+
+	连接时指定远程机器的IP和端口号就好了
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
