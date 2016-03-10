@@ -1,6 +1,7 @@
 # AirtestX (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/AirtestX.svg?branch=master)](https://travis-ci.org/codeskyblue/AirtestX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/atx.png)](https://badge.fury.io/py/atx)
 
 
 改版自一个老项目 <https://github.com/netease/airtest>
