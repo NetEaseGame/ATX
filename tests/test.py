@@ -39,14 +39,15 @@ def touch():
     d.touch_image('button.png')
 
 if __name__ == '__main__':
-    # stop_app()
-    w = atx.Watcher()
-    w.on('setting.png', atx.Watcher.ACTION_TOUCH)
-    w.on('common.png', atx.Watcher.ACTION_TOUCH)
 
-    wid = d.add_watcher(w)
-    d.del_watcher(wid)
-    while 1:
-        screenshot()
+    # # stop_app()
+    print 'inside'
+    # w.on('setting.png', atx.Watcher.ACTION_TOUCH)
+    # w.on('common.png', atx.Watcher.ACTION_TOUCH)
+
+    # wid = d.add_watcher(w)
+    # d.del_watcher(wid)
+    # while 1:
+    #     screenshot()
     # screenshot()
     # touch()

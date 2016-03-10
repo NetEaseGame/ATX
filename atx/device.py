@@ -40,17 +40,34 @@ class Watcher(object):
     ACTION_TOUCH = 1 <<0
     ACTION_QUIT = 1 <<1
 
-    def __init__(self):
+    def __init__(self, device, name=None, timeout=None):
         self._events = {}
-        self.name = None
+        self._dev = device
+        self._run = False
+        self.name = name
         self.touched = {}
+        self.timeout = timeout
 
     def on(self, image, flags):
+        """Trigger when some object exists
+        Args:
+            image: string location of an image
+            flags: ACTION_TOUCH | ACTION_QUIT
+
+        Returns:
+            None
+        """
         self._events[image] = flags
 
-    def hook(self, screen, d):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._run_watch()
+
+    def _hook(self, screen):
         for (img, flags) in self._events.items():
-            ret = d.exists(img, screen=screen)
+            ret = self._dev.exists(img, screen=screen)
             if ret is None:
                 continue
 
@@ -68,12 +85,25 @@ class Watcher(object):
 
             if exists:
                 if flags & Watcher.ACTION_TOUCH:
-                    print('trigger watch click', ret.pos)
-                    d.click(*ret.pos)
+                    log.debug('trigger watch click: %s', ret.pos)
+                    self._dev.click(*ret.pos)
                     self.touched[img] = True
 
                 if flags & Watcher.ACTION_QUIT:
-                    d.stop_watcher()
+                    self._run = False
+
+    def _run_watch(self):
+        self._run = True
+        start_time = time.time()
+        
+        while self._run:
+            screen = self._dev.screenshot()
+            self._hook(screen)
+            if self.timeout is not None:
+                if time.time() - start_time > self.timeout:
+                    raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+                sys.stdout.write("\rWatching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                sys.stdout.flush()
 
 
 class CommonWrap(object):
@@ -175,46 +205,59 @@ class CommonWrap(object):
         if not found:
             raise errors.ImageNotFoundError('Not found image %s' %(img,))
 
-    def add_watcher(self, w, name=None):
-        if name is None:
-            name = time.time()
-        self._watchers[name] = w
-        w.name = name
-        return name
-
-    def remove_watcher(self, name):
-        """Remove watcher from event loop
+    def watch(self, name, timeout=None):
+        """Return a new watcher
         Args:
             name: string watcher name
+            timeout: watch timeout
 
         Returns:
-            None
+            watcher object
         """
-        self._watchers.pop(name, None)
+        w = Watcher(self, name, timeout)
+        w._dev = self
+        return w
 
-    def remove_all_watcher(self):
-        self._watchers = {}
+    # def add_watcher(self, w, name=None):
+    #     if name is None:
+    #         name = time.time()
+    #     self._watchers[name] = w
+    #     w.name = name
+    #     return name
 
-    def watch_all(self, timeout=None):
-        """Start watch and wait until timeout
+    # def remove_watcher(self, name):
+    #     """Remove watcher from event loop
+    #     Args:
+    #         name: string watcher name
 
-        Args:
-            timeout: float, optional
+    #     Returns:
+    #         None
+    #     """
+    #     self._watchers.pop(name, None)
 
-        Returns:
-            None
-        """
-        self._run_watch = True
-        start_time = time.time()
-        while self._run_watch:
-            if timeout is not None:
-                if time.time() - start_time > timeout:
-                    raise errors.WatchTimeoutError("Watch timeout %s" % (timeout,))
-                log.debug("Watch time total: %.1fs left: %.1fs", timeout, timeout-time.time()+start_time)
-            self.screenshot()
+    # def remove_all_watcher(self):
+    #     self._watchers = {}
 
-    def stop_watcher(self):
-        self._run_watch = False
+    # def watch_all(self, timeout=None):
+    #     """Start watch and wait until timeout
+
+    #     Args:
+    #         timeout: float, optional
+
+    #     Returns:
+    #         None
+    #     """
+    #     self._run_watch = True
+    #     start_time = time.time()
+    #     while self._run_watch:
+    #         if timeout is not None:
+    #             if time.time() - start_time > timeout:
+    #                 raise errors.WatchTimeoutError("Watch timeout %s" % (timeout,))
+    #             log.debug("Watch time total: %.1fs left: %.1fs", timeout, timeout-time.time()+start_time)
+    #         self.screenshot()
+
+    # def stop_watcher(self):
+    #     self._run_watch = False
 
 class AndroidDevice(CommonWrap, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -356,9 +399,9 @@ class AndroidDevice(CommonWrap, UiaDevice):
                 os.makedirs(save_dir)
             cv2.imwrite(filename, screen)
 
-        # handle watchers
-        for w in self._watchers.values():
-            w.hook(screen, self)
+        # # handle watchers
+        # for w in self._watchers.values():
+        #     w.hook(screen, self)
 
         return screen
 

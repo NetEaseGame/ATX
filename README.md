@@ -203,16 +203,13 @@ except atx.ImageNotFoundError:
 	print('Image not found')
 
 # watcher, trigger when screenshot is called
-w = atx.Watcher()
-w.on('enter-game.png', atx.Watcher.ACTION_TOUCH)
-w.on('inside.png', atx.Watcher.ACTION_QUIT)
-d.add_watcher(w)
-d.watch_all()
+timeout = 50 # 50s
+with d.watch('enter game', timeout) as w:
+	w.on('enter-game', atx.Watcher.ACTION_TOUCH)
+	w.on('inside.png', atx.Watcher.ACTION_QUIT)
 
 # click by ui component
 d(text='Enter').click()
-
-# d.remove_watcher(wid) # remove watcher
 
 d.stop_app(package_name)
 ```
@@ -220,7 +217,7 @@ d.stop_app(package_name)
 如何点击UI元素请直接看 <https://github.com/codeskyblue/airtest-uiautomator>
 里面的API是直接通过继承的方式支持的。
 
-TODO: Watch还需要改的好用一点，目前的想法
+TODO: Watch还需要改的再好用一点，目前的想法
 
 ```
 with d.watch('enter game') as w:
