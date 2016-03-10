@@ -13,6 +13,7 @@ import subprocess
 import time
 import threading
 import warnings
+import logging
 
 import cv2
 import numpy as np
@@ -21,14 +22,15 @@ from uiautomator import device as d
 from uiautomator import Device as UiaDevice
 from PIL import Image
 
-from atx import base
 from atx import consts
 from atx import errors
 from atx import patch
+from atx import logutils
 
 
+log = logutils.getLogger(__name__) # base.getLogger('devsuit')
+log.setLevel(logging.DEBUG)
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method'])
-log = base.getLogger('devsuit')
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')

@@ -5,10 +5,10 @@ import time
 import threading
 from functools import partial
 
-from atx import base
+from atx import logutils
 
 
-log = base.getLogger('patch')
+log = logutils.getLogger(__name__) #base.getLogger('patch')
 
 def thread_safe(f):
     '''

@@ -10,21 +10,6 @@ import time
 import logging
 import threading
 
-
-random.seed(time.time())
-logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s', level=logging.DEBUG) 
-
-def getLogger(name='root'):
-    return logging.getLogger(name)
-
-log = getLogger('base')
-
-def makedirs(dirname):
-    try:
-        os.makedirs(dirname)
-    except:
-        pass
-
 def dirname(name):
     if os.path.isabs(name):
         return os.path.dirname(name)
@@ -67,10 +52,6 @@ def exec_cmd(*cmds, **kwargs):
         return r.wait()
     return 0
 
-def check_output(cmd):
-    #log.debug('CHECK_OUTPUT, cmd: %s' %(cmd))
-    return subprocess.check_output(cmd, shell=True)
-    
 def random_name(name):
     out = []
     for c in name:
@@ -79,18 +60,3 @@ def random_name(name):
         out.append(c)
     return ''.join(out)
 
-
-def wait_until(fn, interval=0.5, max_retry=10, args=(), kwargs={}):
-    '''
-    @return True(when found), False(when not found)
-    '''
-    log.debug('start wait func: %s', fn.__name__)
-    retry = 0
-    while retry < max_retry:
-        retry += 1
-        ret = fn(*args, **kwargs)
-        if ret:
-            return ret
-        log.debug('wait until: %s, sleep: %s', fn.__name__, interval)
-        time.sleep(interval)
-    return None
