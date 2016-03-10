@@ -3,30 +3,28 @@
 #
 # License under MIT
 
-import subprocess
 import collections
+import json
 import os
 import platform
 import re
 import sys
+import subprocess
 import time
 import threading
-import json
 import warnings
 
-from uiautomator import device as d
-from uiautomator import Device as UiaDevice
 import cv2
 import numpy as np
 import aircv as ac
+from uiautomator import device as d
+from uiautomator import Device as UiaDevice
 from PIL import Image
 
-from . import base
-from . import proto
-from . import patch
-
+from atx import base
 from atx import consts
 from atx import errors
+from atx import patch
 
 
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method'])
@@ -438,130 +436,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
-
-    # def _imfind(self, bgimg, search):
-    #     method = self._image_match_method
-    #     print 'match-method:', method
-    #     imsrc, imsch = ac.imread(bgimg), ac.imread(search)
-    #     if method == 'auto':
-    #         point = ac.find(imsrc, imsch)
-    #     elif method == 'template':
-    #         res = ac.find_template(imsrc, imsch, self._threshold)
-    #         if res:
-    #             point, score = res
-    #             print 'match result:', point, score
-    #             return point
-    #         return None
-
-    #     elif method == 'sift':
-    #         point = imtsift.find(search, bgimg)
-    #     else:
-    #         raise RuntimeError("Unknown image match method: %s" %(method))
-    #     return point
-
-    # def _imfindall(self, bgimg, search, maxcnt, sort):
-    #     if not maxcnt:
-    #         maxcnt = 0
-    #     method = self._image_match_method
-    #     imsrc, imsch = ac.imread(bgimg), ac.imread(search)
-    #     if method == 'auto':
-    #         points = ac.find_all(imsrc, imsch, maxcnt=5)
-    #         # points = imtauto.locate_more_image_Template(search, bgimg, num=maxcnt)
-    #     elif method == 'template':
-    #         points = imttemplate.findall(search, bgimg, self._threshold, maxcnt=maxcnt)
-    #     elif method == 'sift':
-    #         points = imtsift.findall(search, bgimg, maxcnt=maxcnt)
-    #     else:
-    #         raise RuntimeError("Unknown image match method: %s" %(method))
-    #     if sort:
-    #         def cmpy((x0, y0), (x1, y1)):
-    #             return y1<y0
-
-    #         def cmpx((x0, y0), (x1, y1)):
-    #             return x1<x1
-    #         m = {'x': cmpx, 'y': cmpy}
-    #         points.sort(cmp=m[sort])
-    #     return points
-
-    # def rotation(self):
-    #     '''
-    #     device orientation
-    #     @return int
-    #     '''
-    #     # 通过globalSet设置的rotation
-    #     if self._rotation:
-    #         return self._rotation
-    #     # 看dev是否有rotation方法
-    #     if hasattr(self.dev, 'rotation'):
-    #         return self.dev.rotation()
-    #     # windows上的特殊处理
-    #     if self._devtype == 'windows':
-    #         return proto.ROTATION_0
-    #     return proto.ROTATION_0
-
-    # def _fix_point(self, (x, y)):
-    #     w, h = self.shape() # in shape() the width always < height
-    #     if self.rotation() % 2 == 1:
-    #         w, h = h, w
-
-    #     if isinstance(x, float) and x <= 1.0:
-    #         x = int(w*x)
-    #     if isinstance(y, float) and y <= 1.0:
-    #         y = int(h*y)
-    #     return (x, y)
-
-    # def _search_image(self, filename):
-    #     ''' Search image in default path '''
-    #     if isinstance(filename, unicode) and platform.system() == 'Windows':
-    #         filename = filename.encode('gbk')
-    #         #filename = filename.encode('utf-8')
-    #     basename, ext = os.path.splitext(filename)
-    #     exts = [ext] if ext else self._image_exts
-    #     for folder in self._image_dirs:
-    #         for ext in exts:
-    #             fullpath = os.path.join(folder, basename+ext)
-    #             if os.path.exists(fullpath):
-    #                 return fullpath
-    #     raise RuntimeError('Image file(%s) not found in %s' %(filename, self._image_dirs))
-
-    # def _save_screen(self, filename, random_name=True, tempdir=True):
-    #     # use last snapshot file
-    #     if self._snapshot_file and self._keep_capture:
-    #         return self._snapshot_file
-
-    #     if random_name:
-    #         filename = base.random_name(filename)
-    #     if tempdir:
-    #         filename = os.path.join(self._tmpdir, filename)
-
-    #     parent_dir = os.path.dirname(filename) or '.'
-    #     if not os.path.exists(parent_dir):
-    #         base.makedirs(parent_dir)
-
-    #     # FIXME(ssx): don't save as file, better store in memory
-    #     self.dev.snapshot(filename)
-
-    #     if tempdir:
-    #         self.log(proto.TAG_SNAPSHOT, dict(filename=filename))
-    #     self._snapshot_file = filename
-    #     return filename
-
-    # def log(self, tag, message):
-    #     if not self._logfile:
-    #         return
-
-    #     self._loglock.acquire()
-    #     timestamp = time.time()
-    #     try:
-    #         dirname = os.path.dirname(self._logfile) or '.'
-    #         if not os.path.exists(dirname):
-    #             os.path.makedirs(dirname)
-    #     except:
-    #         pass
-    #     with open(self._logfile, 'a') as file:
-    #         data = dict(timestamp=int(timestamp), tag=tag, data=message)
-    #         file.write(json.dumps(data) + '\n')
-    #     self._loglock.release()
 
     # def keepCapture(self):
     #     '''

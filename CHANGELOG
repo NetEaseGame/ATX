@@ -1,6 +1,30 @@
 CHANGES
 =======
 
+* remove useless file
+* finish rebuild
+* update doc
+
+1.0.2
+-----
+
+* prepare to release
+* remove skip
+* add wlan_ip and some other methods
+* comment useless functions
+* fix connect remote device
+* remove useless code
+* match method
+* update badge
+* add watch timeout
+* add simple ide
+* fix readme
+
+1.0.1
+-----
+
+* fix ..
+* use atx name for airtestx
 * add watcher
 * add sleep
 * a simple ide was born

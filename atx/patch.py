@@ -3,10 +3,10 @@
 
 import time
 import threading
-
 from functools import partial
 
-from . import base
+from atx import base
+
 
 log = base.getLogger('patch')
 
@@ -19,6 +19,7 @@ def thread_safe(f):
         print 'Hi', name
     '''
     lock = threading.Lock()
+    
     def wrapper(*args, **kwargs):
         lock.acquire()
         ret = f(*args, **kwargs)
