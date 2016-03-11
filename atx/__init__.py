@@ -20,7 +20,7 @@ from atx.errors import *
 from atx.device import Watcher
 
 
-def connect(serialno, **kwargs):
+def connect(*args, **kwargs):
     """Connect to a device, and return its object
     Args:
         platform: string one of <android|ios|windows>
@@ -31,6 +31,12 @@ def connect(serialno, **kwargs):
     Raises:
         SyntaxError
     """
+    serialno = None
+    if len(args) == 1:
+        serialno = args[0]
+    elif len(args) > 1:
+        raise SyntaxError("Too many serial numbers")
+        
     platform = kwargs.pop('platform', 'android')
     devclss = {
         'android': device.AndroidDevice,

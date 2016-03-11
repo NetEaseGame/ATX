@@ -52,6 +52,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 	```
 	brew install python
+	brew install pillow
 	brew install opencv
 	```
 
@@ -91,7 +92,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	# coding: utf-8
 	import atx
 
-	d = atx.connect(None) # 如果多个手机连接电脑，则需要将None改成对应的设备号
+	d = atx.connect() # 如果多个手机连接电脑，则需要填入对应的设备号
 	d.screenshot('screen.png') # 截图
 	```
 
@@ -127,6 +128,7 @@ d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
 对于安卓设备常见连接方法
 
 ```
+connect() # only one device
 connect(None)
 connect(None, host='127.0.0.1', port=5037)
 connect('EFSXA124') # specify serialno
@@ -193,7 +195,7 @@ d.start_app(package_name)
 print d.wlan_ip
 # expect 10.1.x.x
 d.sleep(5) # sleep 5s
-d.adb_shell('uptime') # not done yet.
+d.adb_shell('uptime')
 
 # this is default
 d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR

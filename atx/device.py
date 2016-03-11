@@ -136,25 +136,11 @@ class Watcher(object):
                 continue
 
             if evt.actions & Watcher.ACTION_TOUCH:
-                log.debug('trigger watch click: %s', pos)
-                self._dev.click(*pos)
+                log.debug('trigger watch touch: %s', pos)
+                self._dev.touch(*pos)
 
             if evt.actions & Watcher.ACTION_QUIT:
                 self._run = False
-            # ret = self._dev.exists(evt.selector, screen=screen)
-            # if ret is None:
-            #     continue
-
-            # exists = False
-            # if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
-            #     if ret.confidence > 0.8:
-            #         exists = True
-            #     # else:
-            #         # print("Skip confidence:", ret.confidence)
-            # elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
-            #     matches, total = ret.confidence
-            #     if 1.0*matches/total > 0.5:
-            #         exists = True
 
     def _run_watch(self):
         self._run = True
@@ -171,17 +157,26 @@ class Watcher(object):
                 # sys.stdout.flush()
         # sys.stdout.write('\n')
 
+def read_image(self, img):
+    if isinstance(img, basestring):
+        return ac.imread(img)
+    # FIXME(ssx): need support other types
+    return img
+
+
+def pil_to_opencv(pil_image):
+    # convert PIL to OpenCV
+    pil_image = pil_image.convert('RGB')
+    cv2_image = np.array(pil_image)
+    # Convert RGB to BGR 
+    cv2_image = cv2_image[:, :, ::-1].copy()
+    return cv2_image
+
 
 class CommonWrap(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.resolution = None
-
-    def _read_img(self, img):
-        if isinstance(img, basestring):
-            return ac.imread(img)
-        # FIXME(ssx): need support other types
-        return img
 
     def sleep(self, secs):
         secs = int(secs)
@@ -205,7 +200,7 @@ class CommonWrap(object):
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        search_img = self._read_img(img)
+        search_img = read_image(img)
         if screen is None:
             screen = self.screenshot()
 
@@ -254,7 +249,7 @@ class CommonWrap(object):
                 sys.stdout.write('.')
                 sys.stdout.flush()
                 continue
-            self._uiauto.click(*point.pos)
+            self.touch(*point.pos)
             found = True
             break
         sys.stdout.write('\n')
@@ -284,16 +279,6 @@ class CommonWrap(object):
         w._dev = self
         return w
 
-
-def pil_to_opencv(pil_image):
-    # convert PIL to OpenCV
-    pil_image = pil_image.convert('RGB')
-    cv2_image = np.array(pil_image)
-    # Convert RGB to BGR 
-    cv2_image = cv2_image[:, :, ::-1].copy()
-    return cv2_image
-
-
 class AndroidDevice(CommonWrap, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
         self._host = kwargs.get('host', '127.0.0.1')
@@ -309,6 +294,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
 
         self.minicap_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
+        self.last_screenshot = None
         # self._tmpdir = 'tmp'
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
         # self._delay_after_click = 0.5 # when finished click, wait time
@@ -333,15 +319,17 @@ class AndroidDevice(CommonWrap, UiaDevice):
         #     if method and self._devtype == 'android':
         #         self.dev._snapshot_method = method
 
-        # self._snapshot_method = _snapshot_method
-        #-- end of func setting
-
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
 
     @property
     def wlan_ip(self):
+        """ Wlan IP """
         return self.adb_shell(['getprop', 'dhcp.wlan0.ipaddress']).strip()
+
+    def is_app_alive(self, package_name):
+        """ Check if app in running in foreground """
+        return d.info['currentPackageName'] == package_name
 
     @property
     @patch.run_once
@@ -363,7 +351,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         w, h = min(w, h), max(w, h)
         return collections.namedtuple('Display', ['width', 'height'])(w, h)
             
-    def _get_minicap_params(self):
+    def _minicap_params(self):
         """
         Used about 0.1s
         uiautomator d.info is now well working with device which has virtual menu.
@@ -378,13 +366,13 @@ class AndroidDevice(CommonWrap, UiaDevice):
             y=self.display.height,
             r=rotation*90)
         
-    def _minicap(self):
+    def _screenshot_minicap(self):
         phone_tmp_file = '/data/local/tmp/'+self._tmp_filename(ext='.jpg')
         local_tmp_file = os.path.join(__tmp__, self._tmp_filename(ext='.jpg'))
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
-            self._get_minicap_params(), phone_tmp_file)
+            self._minicap_params(), phone_tmp_file)
         self.adb_shell(command)
-        self.adbrun(['pull', phone_tmp_file, local_tmp_file])
+        self.adb(['pull', phone_tmp_file, local_tmp_file])
         self.adb_shell(['rm', phone_tmp_file])
 
         pil_image = Image.open(local_tmp_file)
@@ -395,6 +383,25 @@ class AndroidDevice(CommonWrap, UiaDevice):
         if self.minicap_rotation in [1, 3] and img_w < img_h:
             pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
         return pil_image
+
+    def _screenshot_uiauto(self):
+        tmp_file = os.path.join(__tmp__, self._tmp_filename())
+        self._uiauto.screenshot(tmp_file)
+        screen = Image.open(tmp_file)
+        os.remove(tmp_file)
+        return screen
+
+    def touch(self, x, y):
+        """
+        Touch specify position
+
+        Args:
+            x, y: int
+
+        Returns:
+            None
+        """
+        return self._uiauto.click(x, y)
 
     def screenshot(self, filename=None):
         """
@@ -411,12 +418,9 @@ class AndroidDevice(CommonWrap, UiaDevice):
         """
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
-            tmp_file = os.path.join(__tmp__, self._tmp_filename())
-            self._uiauto.screenshot(tmp_file)
-            screen = Image.open(tmp_file)
-            os.remove(tmp_file)
+            screen = self._screenshot_uiauto()
         elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
-            screen = self._minicap()
+            screen = self._screenshot_minicap()
         else:
             raise TypeError('Invalid screenshot_method')
 
@@ -426,11 +430,12 @@ class AndroidDevice(CommonWrap, UiaDevice):
                 os.makedirs(save_dir)
             screen.save(filename)
 
+        self.last_screenshot = screen
         return screen
 
-    def adbrun(self, command):
+    def adb(self, command):
         '''
-        Run adb command, for example: adbrun(['pull', '/data/local/tmp/a.png'])
+        Run adb command, for example: adb(['pull', '/data/local/tmp/a.png'])
 
         Args:
             command: string or list of string
@@ -461,9 +466,9 @@ class AndroidDevice(CommonWrap, UiaDevice):
             command output
         '''
         if isinstance(command, list) or isinstance(command, tuple):
-            return self.adbrun(['shell'] + list(command))
+            return self.adb(['shell'] + list(command))
         else:
-            return self.adbrun(['shell'] + [command])
+            return self.adb(['shell'] + [command])
 
     def start_app(self, package_name):
         '''
