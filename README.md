@@ -153,7 +153,9 @@ filename | string | **Optional** 保存的文件名
 
 返回值
 
-opencv image
+PIL.Image (1.0.4+)
+
+1.0.3的版本返回的是 Opencv Image Object
 
 ### 点击图片(制作中)
 `touch_image(img)`

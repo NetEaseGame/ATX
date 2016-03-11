@@ -28,7 +28,7 @@ from atx import patch
 from atx import logutils
 
 
-log = logutils.getLogger(__name__) # base.getLogger('devsuit')
+log = logutils.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method'])
 
@@ -106,6 +106,7 @@ class Watcher(object):
                     raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
                 sys.stdout.write("\rWatching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
                 sys.stdout.flush()
+        sys.stdout.write('\n')
 
 
 class CommonWrap(object):
@@ -129,7 +130,7 @@ class CommonWrap(object):
         sys.stdout.write("\n")
 
     def exists(self, img, screen=None):
-        """Change if image exists
+        """Check if image exists
 
         Args:
             img: string or opencv image
@@ -139,13 +140,14 @@ class CommonWrap(object):
             None or FindPoint
 
         Raises:
-            TypeError: when image_match_method is invalid
+            SyntaxError: when image_match_method is invalid
         """
         search_img = self._read_img(img)
         if screen is None:
             screen = self.screenshot()
-        
+
         # image match
+        screen = pil_to_opencv(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
             if self.resolution is not None:
                 ow, oh = self.resolution
@@ -158,7 +160,7 @@ class CommonWrap(object):
         elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             ret = ac.find_sift(screen, search_img, min_match_count=10)
         else:
-            raise TypeError("Invalid image match method: %s" %(self.image_match_method,))
+            raise SyntaxError("Invalid image match method: %s" %(self.image_match_method,))
 
         if ret is None:
             return None
@@ -220,46 +222,15 @@ class CommonWrap(object):
         w._dev = self
         return w
 
-    # def add_watcher(self, w, name=None):
-    #     if name is None:
-    #         name = time.time()
-    #     self._watchers[name] = w
-    #     w.name = name
-    #     return name
 
-    # def remove_watcher(self, name):
-    #     """Remove watcher from event loop
-    #     Args:
-    #         name: string watcher name
+def pil_to_opencv(pil_image):
+    # convert PIL to OpenCV
+    pil_image = pil_image.convert('RGB')
+    cv2_image = np.array(pil_image)
+    # Convert RGB to BGR 
+    cv2_image = cv2_image[:, :, ::-1].copy()
+    return cv2_image
 
-    #     Returns:
-    #         None
-    #     """
-    #     self._watchers.pop(name, None)
-
-    # def remove_all_watcher(self):
-    #     self._watchers = {}
-
-    # def watch_all(self, timeout=None):
-    #     """Start watch and wait until timeout
-
-    #     Args:
-    #         timeout: float, optional
-
-    #     Returns:
-    #         None
-    #     """
-    #     self._run_watch = True
-    #     start_time = time.time()
-    #     while self._run_watch:
-    #         if timeout is not None:
-    #             if time.time() - start_time > timeout:
-    #                 raise errors.WatchTimeoutError("Watch timeout %s" % (timeout,))
-    #             log.debug("Watch time total: %.1fs left: %.1fs", timeout, timeout-time.time()+start_time)
-    #         self.screenshot()
-
-    # def stop_watcher(self):
-    #     self._run_watch = False
 
 class AndroidDevice(CommonWrap, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -357,19 +328,13 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self.adb_shell(['rm', phone_tmp_file])
 
         pil_image = Image.open(local_tmp_file)
-        (img_w, img_h) = pil_image.size
+        os.remove(local_tmp_file)
 
         # Fix rotation not rotate right.
+        (img_w, img_h) = pil_image.size
         if self.minicap_rotation in [1, 3] and img_w < img_h:
             pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
-
-        # convert PIL to OpenCV
-        pil_image = pil_image.convert('RGB')
-        open_cv_image = np.array(pil_image)
-        # Convert RGB to BGR 
-        open_cv_image = open_cv_image[:, :, ::-1].copy()
-        os.remove(local_tmp_file)
-        return open_cv_image
+        return pil_image
 
     def screenshot(self, filename=None):
         """
@@ -379,7 +344,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
             filename: filename where save to, optional
 
         Returns:
-            cv2 Image object
+            PIL.Image object
 
         Raises:
             TypeError
@@ -387,8 +352,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
             tmp_file = os.path.join(__tmp__, self._tmp_filename())
-            print self._uiauto.screenshot(tmp_file)
-            screen = cv2.imread(tmp_file)
+            screen = Image.open(tmp_file)
             os.remove(tmp_file)
         elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
             screen = self._minicap()
@@ -399,11 +363,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
             save_dir = os.path.dirname(filename) or '.'
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
-            cv2.imwrite(filename, screen)
-
-        # # handle watchers
-        # for w in self._watchers.values():
-        #     w.hook(screen, self)
+            screen.save(filename)
 
         return screen
 
@@ -428,7 +388,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
             cmds.append(command)
         output = subprocess.check_output(cmds, stderr=subprocess.STDOUT)
         return output.replace('\r\n', '\n')
-        # os.system(subprocess.list2cmdline(cmds))
 
     def adb_shell(self, command):
         '''
@@ -482,120 +441,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
 
-    # def keepCapture(self):
-    #     '''
-    #     Use screen in memory
-    #     '''
-    #     self._keep_capture = True
-
-    # def releaseCapture(self):
-    #     '''
-    #     Donot use screen in memory (this is default behavior)
-    #     '''
-    #     self._keep_capture = False
-
-    # def globalSet(self, *args, **kwargs):
-    #     '''
-    #     app setting, be careful you should known what you are doing.
-    #     @parma m(dict): eg:{"threshold": 0.3}
-    #     '''
-    #     if len(args) > 0:
-    #         m = args[0]
-    #         assert isinstance(m, dict)
-    #     else:
-    #         m = kwargs
-    #     for k, v in m.items():
-    #         key = '_'+k
-    #         if hasattr(self, key):
-    #             item = getattr(self, key)
-    #             if callable(item):
-    #                 item(v)
-    #             else:
-    #                 setattr(self, key, v)
-    #         else:
-    #             print 'not have such setting: %s' %(k)
-
-    # def globalGet(self, key):
-    #     '''
-    #     get app setting
-    #     '''
-    #     if hasattr(self, '_'+key):
-    #         return getattr(self, '_'+key)
-    #     return None
-
-    # def startApp(self, appname, activity):
-    #     '''
-    #     Start app
-    #     '''
-    #     self.dev.start_app(appname, activity)
-
-    # def stopApp(self, appname):
-    #     '''
-    #     Stop app
-    #     '''
-    #     self.dev.stop_app(appname)
-
-    # def find(self, imgfile):
-    #     '''
-    #     Find image position on screen
-
-    #     @return (point founded or None if not found)
-    #     '''
-    #     filepath = self._search_image(imgfile)
-        
-    #     log.debug('Locate image path: %s', filepath)
-        
-    #     screen = self._save_screen('screen-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
-    #     if self._screen_resolution:
-    #         # resize image
-    #         ow, oh = self._screen_resolution # original
-    #         cw, ch = self.shape() # current
-    #         (ratew, rateh) = cw/float(ow), ch/float(oh)
-
-    #         im = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
-
-    #         nim = cv2.resize(im, (0, 0), fx=ratew, fy=rateh)
-    #         new_name = base.random_name('resize-{t}-XXXX.png'.format(t=time.strftime("%y%m%d%H%M%S")))
-    #         filepath = new_name = os.path.join(self._tmpdir, new_name)
-    #         cv2.imwrite(new_name, nim)
-    #         # im.resize((int(ratew*rw), int(rateh*rh))).save(new_name)
-    #         # filepath = new_name
-    #     pt = self._imfind(screen, filepath)
-    #     return pt
-
-    # def mustFind(self, imgfile):
-    #     ''' 
-    #     Raise Error if image not found
-    #     '''
-    #     pt = self.find(imgfile)
-    #     if not pt:
-    #         raise RuntimeError("Image[%s] not found" %(imgfile))
-    #     return pt
-
-    # def findall(self, imgfile, maxcnt=None, sort=None):
-    #     '''
-    #     Find multi positions that imgfile on screen
-
-    #     @maxcnt (int): max number of object restricted.
-    #     @sort (string): (None|x|y) x to sort with x, small in front, None to be origin order
-    #     @return list point that found
-    #     @warn not finished yet.
-    #     '''
-    #     filepath = self._search_image(imgfile)
-    #     screen = self._save_screen('find-XXXXXXXX.png')
-    #     pts = self._imfindall(screen, filepath, maxcnt, sort)
-    #     return pts
-
-    # def safeWait(self, imgfile, seconds=20.0):
-    #     '''
-    #     Like wait, but don't raise RuntimeError
-
-    #     return None when timeout
-    #     return point if found
-    #     '''
-    #     warnings.warn("deprecated, use safe_wait instead", DeprecationWarning)
-    #     self.safe_wait(imgfile, seconds)
-
     # def safe_wait(self, img, seconds=20.0):
     #     '''
     #     Like wait, but don't raise RuntimeError
@@ -609,76 +454,12 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #     except:
     #         return None        
 
-    # def wait(self, imgfile, timeout=20):
-    #     '''
-    #     Wait until some picture exists
-    #     @return position when imgfile shows
-    #     @raise RuntimeError if not found
-    #     '''
-    #     log.info('WAIT: %s', imgfile)
-    #     start = time.time()
-    #     while True:
-    #         pt = self.find(imgfile)
-    #         if pt:
-    #             return pt
-    #         if time.time()-start > timeout: 
-    #             break
-    #         time.sleep(1)
-    #     raise RuntimeError('Wait timeout(%.2f)', float(timeout))
-
-    # def exists(self, imgfile):
-        # return True if self.find(imgfile) else False
-
-    # def click(self, img_or_point, timeout=None, duration=None):
-    #     '''
-    #     Click function
-    #     @param seconds: float (if time not exceed, it will retry and retry)
-    #     '''
-    #     if timeout is None:
-    #         timeout = self._click_timeout
-    #     log.info('CLICK %s, timeout=%.2fs, duration=%s', img_or_point, timeout, str(duration))
-    #     point = self._val_to_point(img_or_point)
-    #     if point:
-    #         (x, y) = point
-    #     else:
-    #         (x, y) = self.wait(img_or_point, timeout=timeout)
-    #     log.info('Click %s point: (%d, %d)', img_or_point, x, y)
-    #     self.dev.touch(x, y, duration)
-    #     log.debug('delay after click: %.2fs', self._delay_after_click)
-
-    #     # FIXME(ssx): not tested
-    #     if self._operation_mark:
-    #         if self._snapshot_file and os.path.exists(self._snapshot_file):
-    #             img = ac.imread(self._snapshot_file)
-    #             ac.mark_point(img, (x, y))
-    #             cv2.imwrite(self._snapshot_file, img)
-    #         if self._devtype == 'android':
-    #             self.dev.adbshell('am', 'broadcast', '-a', 'MP_POSITION', '--es', 'msg', '%d,%d' %(x, y))
-
-    #     time.sleep(self._delay_after_click)
-
     # def center(self):
     #     '''
     #     Center position
     #     '''
     #     w, h = self.shape()
     #     return w/2, h/2
-    
-    # def clickIfExists(self, imgfile):
-    #     '''
-    #     Click when image file exists
-
-    #     @return (True|False) if clicked
-    #     '''
-    #     log.info('CLICK IF EXISTS: %s' %(imgfile))
-    #     pt = self.find(imgfile)
-    #     if pt:
-    #         log.debug('click for exists %s', imgfile)
-    #         self.click(pt)
-    #         return True
-    #     else:
-    #         log.debug('ignore for no exists %s', imgfile)
-    #         return False
 
     # def drag(self, fpt, tpt, duration=0.5):
     #     ''' 
@@ -691,16 +472,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #     tpt = self._val_to_point(tpt)
     #     return self.dev.drag(fpt, tpt, duration)
 
-    # def sleep(self, secs=1.0):
-    #     '''
-    #     Sleeps for the specified number of seconds
-
-    #     @param secs: float (number of seconds)
-    #     @return None
-    #     '''
-    #     log.debug('SLEEP %.2fs', secs)
-    #     time.sleep(secs)
-
     # def type(self, text):
     #     '''
     #     Input some text
@@ -708,15 +479,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #     @param text: string (text want to type)
     #     '''
     #     self.dev.type(text)
-
-    # @patch.run_once
-    # def shape(self):
-    #     '''
-    #     Get device shape
-
-    #     @return (width, height), width < height
-    #     '''
-    #     return sorted(self.dev.shape())
 
     # def keyevent(self, event):
     #     '''

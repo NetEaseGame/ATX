@@ -8,6 +8,7 @@ _inited = {}
 
 def getLogger(name):
     logger = logging.getLogger(name)
+    #name = name.split('.', 1)[0]
     if not _inited.get(name):
         ch = logging.StreamHandler()
         _inited[name] = ch

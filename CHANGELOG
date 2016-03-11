@@ -1,6 +1,14 @@
 CHANGES
 =======
 
+* remove log from base.py
+* update pypi badge
+* add pypi badge
+
+1.0.3
+-----
+
+* update watcher api
 * remove useless code
 * remove useless file
 * finish rebuild
