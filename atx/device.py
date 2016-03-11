@@ -20,6 +20,7 @@ import numpy as np
 import aircv as ac
 from uiautomator import device as d
 from uiautomator import Device as UiaDevice
+from uiautomator import AutomatorDeviceObject
 from PIL import Image
 
 from atx import consts
@@ -38,19 +39,35 @@ __tmp__ = os.path.join(__dir__, '__cache__')
 DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
+
+class ImageSelector(object):
+    def __init__(self, image):
+        self._name = None
+        self._image = image
+        if isinstance(image, basestring):
+            self._name = image
+
+    @property
+    def image(self):
+        return self._image
+    
+
 class Watcher(object):
     ACTION_TOUCH = 1 <<0
     ACTION_QUIT = 1 <<1
+    Event = collections.namedtuple('WatchEvent', ['selector', 'actions'])
 
     def __init__(self, device, name=None, timeout=None):
-        self._events = {}
+        self._events = []
         self._dev = device
         self._run = False
+        self._stored_selector = None
+
         self.name = name
         self.touched = {}
         self.timeout = timeout
 
-    def on(self, image, flags):
+    def on(self, image=None, actions=None, text=None):
         """Trigger when some object exists
         Args:
             image: string location of an image
@@ -59,7 +76,23 @@ class Watcher(object):
         Returns:
             None
         """
-        self._events[image] = flags
+        if isinstance(image, basestring):
+            self._stored_selector = ImageSelector(image)
+        elif text:
+            print 'stored selector'
+            self._stored_selector = self._dev(text=text)
+
+        if actions:
+            self._events.append(Watcher.Event(image, actions))
+            self._stored_selector = None
+        return self
+
+    def touch(self):
+        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_TOUCH))
+        return self
+
+    def quit(self):
+        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_QUIT))
 
     def __enter__(self):
         return self
@@ -67,11 +100,12 @@ class Watcher(object):
     def __exit__(self, type, value, traceback):
         self._run_watch()
 
-    def _hook(self, screen):
-        for (img, flags) in self._events.items():
-            ret = self._dev.exists(img, screen=screen)
+    def _match(self, selector, screen):
+        ''' returns position(x, y) or None'''
+        if isinstance(selector, ImageSelector):
+            ret = self._dev.exists(selector.image, screen=screen)
             if ret is None:
-                continue
+                return None
 
             # FIXME(ssx): Image match confidence should can set
             exists = False
@@ -86,13 +120,41 @@ class Watcher(object):
                     exists = True
 
             if exists:
-                if flags & Watcher.ACTION_TOUCH:
-                    log.debug('trigger watch click: %s', ret.pos)
-                    self._dev.click(*ret.pos)
-                    self.touched[img] = True
+                return ret.pos
+        elif isinstance(selector, AutomatorDeviceObject):
+            if not selector.exists:
+                return None
+            info = selector.info['visibleBounds']
+            x = (info['left'] + info['right']) / 2
+            y = (info['bottom'] + info['top']) / 2
+            return (x, y)
 
-                if flags & Watcher.ACTION_QUIT:
-                    self._run = False
+    def _hook(self, screen):
+        for evt in self._events:
+            pos = self._match(evt.selector, screen)
+            if pos is None:
+                continue
+
+            if evt.actions & Watcher.ACTION_TOUCH:
+                log.debug('trigger watch click: %s', pos)
+                self._dev.click(*pos)
+
+            if evt.actions & Watcher.ACTION_QUIT:
+                self._run = False
+            # ret = self._dev.exists(evt.selector, screen=screen)
+            # if ret is None:
+            #     continue
+
+            # exists = False
+            # if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
+            #     if ret.confidence > 0.8:
+            #         exists = True
+            #     # else:
+            #         # print("Skip confidence:", ret.confidence)
+            # elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
+            #     matches, total = ret.confidence
+            #     if 1.0*matches/total > 0.5:
+            #         exists = True
 
     def _run_watch(self):
         self._run = True
@@ -104,9 +166,10 @@ class Watcher(object):
             if self.timeout is not None:
                 if time.time() - start_time > self.timeout:
                     raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
-                sys.stdout.write("\rWatching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-                sys.stdout.flush()
-        sys.stdout.write('\n')
+                # sys.stdout.write("\rWatching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                log.debug("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                # sys.stdout.flush()
+        # sys.stdout.write('\n')
 
 
 class CommonWrap(object):
@@ -166,7 +229,6 @@ class CommonWrap(object):
             return None
         position = ret['result']
         confidence = ret['confidence']
-        log.info('match confidence: %s', confidence)
         return FindPoint(position, confidence, self.image_match_method)
 
     def touch_image(self, img, timeout=20.0, wait_change=False):
@@ -244,10 +306,8 @@ class AndroidDevice(CommonWrap, UiaDevice):
 
         self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
-        self._minicap_params = None
-        self.minicap_rotation = None
-        self._watchers = {}
 
+        self.minicap_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
         # self._tmpdir = 'tmp'
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
@@ -352,6 +412,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
             tmp_file = os.path.join(__tmp__, self._tmp_filename())
+            self._uiauto.screenshot(tmp_file)
             screen = Image.open(tmp_file)
             os.remove(tmp_file)
         elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
