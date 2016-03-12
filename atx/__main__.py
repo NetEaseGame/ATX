@@ -152,6 +152,7 @@ def main():
 
     d = atx.connect(args["serial"])
     origin = d.screenshot()
+    origin = atx.image.pil_to_opencv(origin)
 
     # load the image, clone it, and setup the mouse callback function
     # origin = cv2.imread(output)

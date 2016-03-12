@@ -18,6 +18,7 @@ except pkg_resources.DistributionNotFound:
 from atx.consts import *
 from atx.errors import *
 from atx.device import Watcher
+from atx import image
 
 
 def connect(*args, **kwargs):
@@ -36,7 +37,7 @@ def connect(*args, **kwargs):
         serialno = args[0]
     elif len(args) > 1:
         raise SyntaxError("Too many serial numbers")
-        
+
     platform = kwargs.pop('platform', 'android')
     devclss = {
         'android': device.AndroidDevice,
