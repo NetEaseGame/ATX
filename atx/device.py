@@ -27,6 +27,7 @@ from atx import consts
 from atx import errors
 from atx import patch
 from atx import logutils
+from atx import imutils
 
 
 log = logutils.getLogger(__name__)
@@ -164,15 +165,6 @@ def read_image(img):
     return img
 
 
-def pil_to_opencv(pil_image):
-    # convert PIL to OpenCV
-    pil_image = pil_image.convert('RGB')
-    cv2_image = np.array(pil_image)
-    # Convert RGB to BGR 
-    cv2_image = cv2_image[:, :, ::-1].copy()
-    return cv2_image
-
-
 class CommonWrap(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
@@ -205,7 +197,7 @@ class CommonWrap(object):
             screen = self.screenshot()
 
         # image match
-        screen = pil_to_opencv(screen) # convert to opencv image
+        screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
             if self.resolution is not None:
                 ow, oh = self.resolution
@@ -295,7 +287,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self.minicap_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
         self.last_screenshot = None
-        # self._tmpdir = 'tmp'
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
         # self._delay_after_click = 0.5 # when finished click, wait time
         # self._loglock = threading.Lock()
