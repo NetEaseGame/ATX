@@ -24,7 +24,7 @@ def screenshot():
     # Image now save in screen2.png
     # d._minicap()
     start = time.time()
-    # d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
+    #d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
     d.screenshot('ttt.png')
     print time.time() - start
 
@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     # # stop_app()
     print 'inside'
+    screenshot()
     # w.on('setting.png', atx.Watcher.ACTION_TOUCH)
     # w.on('common.png', atx.Watcher.ACTION_TOUCH)
 

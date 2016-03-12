@@ -293,31 +293,13 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self._uiauto = super(AndroidDevice, self)
 
         self.minicap_rotation = None
-        self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
+        self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
         self.last_screenshot = None
         # self._tmpdir = 'tmp'
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
         # self._delay_after_click = 0.5 # when finished click, wait time
-        # self._screen_resolution = None
-
-        # self._snapshot_file = None
-        # self._keep_capture = False # for func:keepScreen,releaseScreen
-        # # self._logfile = logfile
         # self._loglock = threading.Lock()
         # self._operation_mark = False
-
-        # # if self._logfile:
-        # #     logdir = os.path.dirname(logfile) or '.'
-        # #     if not os.path.exists(logdir):
-        # #         os.makedirs(logdir)
-        # #     if os.path.exists(logfile):
-        # #         backfile = logfile+'.'+time.strftime('%Y%m%d%H%M%S')
-        # #         os.rename(logfile, backfile)
-
-        # # Only for android phone method=<adb|screencap>
-        # def _snapshot_method(method):
-        #     if method and self._devtype == 'android':
-        #         self.dev._snapshot_method = method
 
     def _tmp_filename(self, prefix='tmp-', ext='.png'):
         return '%s%s%s' %(prefix, time.time(), ext)
@@ -375,14 +357,16 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self.adb(['pull', phone_tmp_file, local_tmp_file])
         self.adb_shell(['rm', phone_tmp_file])
 
-        pil_image = Image.open(local_tmp_file)
-        os.remove(local_tmp_file)
-
-        # Fix rotation not rotate right.
-        (img_w, img_h) = pil_image.size
-        if self.minicap_rotation in [1, 3] and img_w < img_h:
-            pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
-        return pil_image
+        try:
+            pil_image = Image.open(local_tmp_file)
+            # Fix rotation not rotate right.
+            (img_w, img_h) = pil_image.size
+            if self.minicap_rotation in [1, 3] and img_w < img_h:
+                pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
+            return pil_image
+        except IOError:
+            os.remove(local_tmp_file)
+            raise IOError("Screenshot use minicap failed.")
 
     def _screenshot_uiauto(self):
         tmp_file = os.path.join(__tmp__, self._tmp_filename())
@@ -414,13 +398,20 @@ class AndroidDevice(CommonWrap, UiaDevice):
             PIL.Image object
 
         Raises:
-            TypeError
+            TypeError, IOError
         """
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
             screen = self._screenshot_uiauto()
         elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
             screen = self._screenshot_minicap()
+        elif self.screenshot_method == consts.SCREENSHOT_METHOD_AUTO:
+            try:
+                screen = self._screenshot_minicap()
+                self.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
+            except IOError:
+                screen = self._screenshot_uiauto()
+                self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
         else:
             raise TypeError('Invalid screenshot_method')
 

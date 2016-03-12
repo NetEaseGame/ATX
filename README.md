@@ -197,8 +197,10 @@ print d.wlan_ip
 d.sleep(5) # sleep 5s
 d.adb_shell('uptime')
 
-# this is default
-d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
+# this is default (first check minicap and then check uiautomator)
+d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO
+# alternative
+# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
 # alternative
 # d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP
 
