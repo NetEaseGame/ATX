@@ -124,7 +124,7 @@ class Watcher(object):
         elif isinstance(selector, AutomatorDeviceObject):
             if not selector.exists:
                 return None
-            info = selector.info['visibleBounds']
+            info = selector.info['bounds']
             x = (info['left'] + info['right']) / 2
             y = (info['bottom'] + info['top']) / 2
             return (x, y)
@@ -157,7 +157,7 @@ class Watcher(object):
                 # sys.stdout.flush()
         # sys.stdout.write('\n')
 
-def read_image(self, img):
+def read_image(img):
     if isinstance(img, basestring):
         return ac.imread(img)
     # FIXME(ssx): need support other types
