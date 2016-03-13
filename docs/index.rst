@@ -10,10 +10,9 @@ Documentation
 -------------
 
 .. toctree::
-    :titleonly:
+    :maxdepth: 3
 
-.. automodule:: airtest
-    :undoc-members:
+    usage
 
 Indices and tables
 ==================

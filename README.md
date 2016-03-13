@@ -67,8 +67,8 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	For the develop version, (maybe not stable), Sync with github master code
 
 	```
-	 pip install -i https://testpypi.python.org/pypi -U --pre atx
-	 ```
+	pip install --upgrade --pre atx
+	```
 
 
 3. 安装android依赖
