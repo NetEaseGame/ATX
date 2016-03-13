@@ -53,6 +53,9 @@ def from_pillow(pil_image):
 def to_pillow(image):
     return Image.fromarray(image[:, :, ::-1].copy())
 
+    # There is another way
+    # img_bytes = cv2.imencode('.png', image)[1].tostring()
+    # return Image.open(StringIO(img_bytes))
 
 def url_to_image(url, flag=cv2.IMREAD_COLOR):
     """ download the image, convert it to a NumPy array, and then read
