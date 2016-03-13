@@ -63,7 +63,7 @@ def url_to_image(url, flag=cv2.IMREAD_COLOR):
     return image
 
 
-def crop(image, top=0, bottom=None, left=0, right=None):
+def crop(image, left=0, top=0, right=None, bottom=None):
     (h, w) = image.shape[:2]
     if bottom is None:
         bottom = h
