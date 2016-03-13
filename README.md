@@ -183,7 +183,9 @@ click_image(atx.ImageSelector('start.png', offset=(0, 0)))
 ```
 
 ### 其他接口
-本来想着用sphinx自动生成文档来着，没想到竟然学了几个小时没学会. 我先写一些常用的方法吧
+[Documentation on Readthedocs](http://atx.readthedocs.org/en/latest/?badge=latest)
+
+接口可以参考sphinx自动生成文档，一些常用的方法，我用代码例子的方法告诉你
 
 ```python
 import atx
