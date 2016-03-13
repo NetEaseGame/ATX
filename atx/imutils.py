@@ -5,6 +5,8 @@
 # https://github.com/jrosebr1/imutils
 #
 
+import re
+import os
 import sys
 import cv2
 
@@ -26,6 +28,17 @@ def read_image(self, img):
     # FIXME(ssx): need support other types
     return img
 
+def open(image):
+    if isinstance(image, basestring):
+        name = image
+        if re.match(r'^https?://', name):
+            return url_to_image(name)
+        if os.path.isfile(name):
+            return cv2.imread(name)
+        raise IOError("Open image(%s) not found" % name)
+
+    return image
+
 
 def from_pillow(pil_image):
     """ Convert from pillow image to opencv """
@@ -38,7 +51,7 @@ def from_pillow(pil_image):
 
 
 def to_pillow(image):
-    return Image.fromarray(image[:, :, ::-1])
+    return Image.fromarray(image[:, :, ::-1].copy())
 
 
 def url_to_image(url, flag=cv2.IMREAD_COLOR):
@@ -50,16 +63,22 @@ def url_to_image(url, flag=cv2.IMREAD_COLOR):
     return image
 
 
-def pil_to_opencv(pil_image):
-    # convert PIL to OpenCV
-    pil_image = pil_image.convert('RGB')
-    cv2_image = np.array(pil_image)
-    # Convert RGB to BGR 
-    cv2_image = cv2_image[:, :, ::-1].copy()
-    return cv2_image
+def crop(image, top=0, bottom=None, left=0, right=None):
+    (h, w) = image.shape[:2]
+    if bottom is None:
+        bottom = h
+    if right is None:
+        right = w
+    return image[top:bottom, left:right]
 
 
 if __name__ == '__main__':
-    image = url_to_image('https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png')
-    cv2.imwrite('baidu.png', image)
-    to_pillow(image).save('b2.png')
+    # image = open('https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png')
+    image = open('baidu.png')
+    image = open(image)
+    # cv2.imwrite('baidu.png', image)
+    print image.shape
+    image = crop(image, bottom=200, top=100, left=50, right=200)
+    print image.shape
+    cv2.imwrite('tmp.png', image)
+    # to_pillow(image).save('b2.png')

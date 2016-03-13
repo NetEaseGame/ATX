@@ -3,6 +3,8 @@
 #
 # License under MIT
 
+from __future__ import absolute_import
+
 import collections
 import json
 import os
@@ -158,12 +160,6 @@ class Watcher(object):
                 # sys.stdout.flush()
         # sys.stdout.write('\n')
 
-def read_image(img):
-    if isinstance(img, basestring):
-        return ac.imread(img)
-    # FIXME(ssx): need support other types
-    return img
-
 
 class CommonWrap(object):
     def __init__(self):
@@ -192,7 +188,7 @@ class CommonWrap(object):
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        search_img = read_image(img)
+        search_img = imutils.open(img)
         if screen is None:
             screen = self.screenshot()
 
