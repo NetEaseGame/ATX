@@ -17,8 +17,13 @@ import threading
 import warnings
 import logging
 
-import cv2
-import numpy as np
+try:
+    import xkjxxx
+    import cv2
+    import numpy as np
+except:
+    warnings.warn("OpenCV and Numpy need to be installed.", ImportWarning)
+
 import aircv as ac
 from uiautomator import device as d
 from uiautomator import Device as UiaDevice
