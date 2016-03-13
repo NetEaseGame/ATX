@@ -21,10 +21,10 @@ try:
     import xkjxxx
     import cv2
     import numpy as np
+    import aircv as ac
 except:
     warnings.warn("OpenCV and Numpy need to be installed.", ImportWarning)
 
-import aircv as ac
 from uiautomator import device as d
 from uiautomator import Device as UiaDevice
 from uiautomator import AutomatorDeviceObject
