@@ -106,7 +106,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 	_PS: 这里其实有个好的IDE截图的最好了，现在是用Tkinter做的，比较简洁，但是可以跨平台，效果也还可以_
 
-	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.touch_image('button.png')`
+	截图后的文件另存为 `button.png`, `test.py` 最后增加一行 `d.click_image('button.png')`
 
 	重新运行 `python test.py`, 此时差不多可以看到代码可以点击那个按钮了
 
@@ -163,25 +163,23 @@ PIL.Image (1.0.4+)
 1.0.3的版本返回的是 Opencv Image Object
 
 ### 点击图片(制作中)
-`touch_image(img)`
+`click_image(image)`
 
-img support two types string(file path) or TouchImage 
-
-from airtest.types import TouchImage
+image support string or pillow image
 
 Parameters
 
 Name      | Type      | Description
 ----------|-----------|------------
-img       |string     | 需要点击的图片
+image     | string    | 需要点击的图片
 
 Example
 
 ```
-touch_image('start.png')
+click_image('start.png')
 
 # or (todo)
-touch_image(TouchImage(file='start.png', offset=(0, 0)))
+click_image(atx.ImageSelector('start.png', offset=(0, 0)))
 ```
 
 ### 其他接口
@@ -209,14 +207,14 @@ d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO
 
 # if image not show in 10s, ImageNotFoundError will raised
 try:
-	d.touch_image('button.png', timeout=10.0)
+	d.click_image('button.png', timeout=10.0)
 except atx.ImageNotFoundError:
 	print('Image not found')
 
 # watcher, trigger when screenshot is called
 timeout = 50 # 50s
 with d.watch('enter game', timeout) as w:
-	w.on('enter-game').touch()
+	w.on('enter-game').click()
 	w.on('inside.png').quit()
 	w.on(text='Login').quit() # UI Component
 

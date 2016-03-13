@@ -106,7 +106,7 @@ class Watcher(object):
     def _match(self, selector, screen):
         ''' returns position(x, y) or None'''
         if isinstance(selector, ImageSelector):
-            ret = self._dev.exists(selector.image, screen=screen)
+            ret = self._dev.match(selector.image, screen=screen)
             if ret is None:
                 return None
 
@@ -138,9 +138,9 @@ class Watcher(object):
             if pos is None:
                 continue
 
-            if evt.actions & Watcher.ACTION_TOUCH:
-                log.debug('trigger watch touch: %s', pos)
-                self._dev.touch(*pos)
+            if evt.actions & Watcher.ACTION_CLICK:
+                log.debug('trigger watch click: %s', pos)
+                self._dev.click(*pos)
 
             if evt.actions & Watcher.ACTION_QUIT:
                 self._run = False
@@ -176,7 +176,11 @@ class CommonWrap(object):
         sys.stdout.write("\n")
 
     def exists(self, img, screen=None):
-        """Check if image exists
+        """Check if image exists in screen, alias for match"""
+        self.match(img, screen)
+
+    def match(self, img, screen=None):
+        """Check if image position in screen
 
         Args:
             img: string or opencv image
@@ -214,8 +218,12 @@ class CommonWrap(object):
         confidence = ret['confidence']
         return FindPoint(position, confidence, self.image_match_method)
 
-    def touch_image(self, img, timeout=20.0, wait_change=False):
-        """Simulate touch according image position
+    def touch_image(self, *args, **kwargs):
+        """ALias for click_image"""
+        self.click_image(*args, **kwargs)
+
+    def click_image(self, img, timeout=20.0, wait_change=False):
+        """Simulate click according image position
 
         Args:
             img: filename or an opencv image object
@@ -232,7 +240,7 @@ class CommonWrap(object):
         start_time = time.time()
         found = False
         while time.time() - start_time < timeout:
-            point = self.exists(search_img)
+            point = self.match(search_img)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
@@ -363,6 +371,10 @@ class AndroidDevice(CommonWrap, UiaDevice):
         return screen
 
     def touch(self, x, y):
+        """ Alias for click """
+        self.click(x, y)
+
+    def click(self, x, y):
         """
         Touch specify position
 
