@@ -12,6 +12,7 @@ import cv2
 
 import numpy as np
 from PIL import Image
+from StringIO import StringIO
 
 # import any special Python 2.7 packages
 if sys.version_info.major == 2:
@@ -22,11 +23,8 @@ elif sys.version_info.major == 3:
     from urllib.request import urlopen
 
 
-def read_image(self, img):
-    if isinstance(img, basestring):
-        return cv2.imread(img)
-    # FIXME(ssx): need support other types
-    return img
+__sys_open = open
+
 
 def open(image):
     if isinstance(image, basestring):
@@ -34,10 +32,18 @@ def open(image):
         if re.match(r'^https?://', name):
             return url_to_image(name)
         if os.path.isfile(name):
-            return cv2.imread(name)
+            img = cv2.imread(name)
+            if img is None:
+                raise IOError("Image format error: %s" % name)
         raise IOError("Open image(%s) not found" % name)
 
     return image
+
+def open_as_pillow(filename):
+    """ This way can delete file immediately """
+    with __sys_open(filename, 'rb') as f:
+        data = StringIO(f.read())
+        return Image.open(data)
 
 
 def from_pillow(pil_image):

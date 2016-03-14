@@ -13,6 +13,7 @@ import re
 import sys
 import subprocess
 import time
+import tempfile
 import threading
 import warnings
 import logging
@@ -164,6 +165,9 @@ class Watcher(object):
                 sys.stdout.flush()
         sys.stdout.write('\n')
 
+def remove_force(name):
+    if os.path.isfile(name):
+        os.remove(name)
 
 class CommonWrap(object):
     def __init__(self):
@@ -298,10 +302,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         # self._click_timeout = 20.0 # if icon not found in this time, then panic
         # self._delay_after_click = 0.5 # when finished click, wait time
         # self._loglock = threading.Lock()
-        # self._operation_mark = False
-
-    def _tmp_filename(self, prefix='tmp-', ext='.png'):
-        return '%s%s%s' %(prefix, time.time(), ext)
 
     @property
     def wlan_ip(self):
@@ -339,7 +339,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         """
         rotation = self.minicap_rotation 
         if self.minicap_rotation is None:
-            rotation = d.info['displayRotation']
+            rotation = self.info['displayRotation']
 
         # rotation not working on SumSUNG 9502
         return '{x}x{y}@{x}x{y}/{r}'.format(
@@ -348,31 +348,35 @@ class AndroidDevice(CommonWrap, UiaDevice):
             r=rotation*90)
         
     def _screenshot_minicap(self):
-        phone_tmp_file = '/data/local/tmp/'+self._tmp_filename(ext='.jpg')
-        local_tmp_file = os.path.join(__tmp__, self._tmp_filename(ext='.jpg'))
+        phone_tmp_file = '/data/local/tmp/_atx_screen.jpg'
+        local_tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
             self._minicap_params(), phone_tmp_file)
-        self.adb_shell(command)
-        self.adb(['pull', phone_tmp_file, local_tmp_file])
-        self.adb_shell(['rm', phone_tmp_file])
-
         try:
-            pil_image = Image.open(local_tmp_file)
+            self.adb_shell(command)
+            self.adb(['pull', phone_tmp_file, local_tmp_file])
+            image = imutils.open_as_pillow(local_tmp_file)
+
             # Fix rotation not rotate right.
-            (img_w, img_h) = pil_image.size
-            if self.minicap_rotation in [1, 3] and img_w < img_h:
-                pil_image = pil_image.rotate(90, Image.BILINEAR, expand=True)
-            return pil_image
+            (width, height) = image.size
+            if self.minicap_rotation in [1, 3] and width < height:
+                image = image.rotate(90, Image.BILINEAR, expand=True)
+            return image
         except IOError:
-            os.remove(local_tmp_file)
             raise IOError("Screenshot use minicap failed.")
+        finally:
+            # remove_force(local_tmp_file)
+            self.adb_shell(['rm', phone_tmp_file])
 
     def _screenshot_uiauto(self):
-        tmp_file = os.path.join(__tmp__, self._tmp_filename())
+        tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
         self._uiauto.screenshot(tmp_file)
-        screen = Image.open(tmp_file)
-        os.remove(tmp_file)
-        return screen
+        try:
+            return imutils.open_as_pillow(tmp_file)
+        except IOError:
+            raise IOError("Screenshot use uiautomator failed.")
+        finally:
+            remove_force(tmp_file)
 
     def touch(self, x, y):
         """ Alias for click """
@@ -446,6 +450,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
             cmds.extend(list(command))
         else:
             cmds.append(command)
+        # print cmds
         output = subprocess.check_output(cmds, stderr=subprocess.STDOUT)
         return output.replace('\r\n', '\n')
 

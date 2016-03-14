@@ -230,7 +230,7 @@ d.stop_app(package_name)
 里面的API是直接通过继承的方式支持的。
 
 ## FAQ
-1. 如果连接远程机器上的安卓设备(测试过，并不好使，可能跟pyuiautomator依赖`adb forword`有关)
+1. 如果连接远程机器上的安卓设备
 
 	远程机器上使用如下命令启动命令
 
