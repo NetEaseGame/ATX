@@ -13,19 +13,27 @@
 # > Tutorial canvas tk
 # http://www.tutorialspoint.com/python/tk_canvas.htm
 
+import threading
 import Tkinter as tk
 import tkSimpleDialog
-from PIL import Image, ImageTk
+from Queue import Queue
 
 import atx
+from PIL import Image, ImageTk
 
 
 class CropIDE(object):
     def __init__(self, title='AirtestX Basic GUI', device=None):
         self._device = device
         self._root = tk.Tk()
-        self._init_items()
         self._root.title(title)
+        self._queue = Queue()
+
+        self._refresh_text = tk.StringVar()
+        self._refresh_text.set("Refresh")
+        self._init_items()
+        self._init_thread()
+
         self._lastx = 0
         self._lasty = 0
         self._bounds = None # crop area
@@ -46,15 +54,34 @@ class CropIDE(object):
         frm_screen = tk.Frame(root, bg='#aaa')
         frm_screen.grid(column=1, row=0)
 
-        tk.Button(frm_control, text="Refresh", command=self._redraw).grid(column=0, row=0, sticky=tk.W)
+        tk.Button(frm_control, textvariable=self._refresh_text, command=self._redraw).grid(column=0, row=0, sticky=tk.W)
         tk.Button(frm_control, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
-        tk.Button(frm_control, text="Save crop", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
+        tk.Button(frm_control, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
 
         self.canvas = tk.Canvas(frm_screen, bg="blue", bd=0, highlightthickness=0, relief='ridge')
         self.canvas.grid(column=0, row=0, padx=10, pady=10)
         self.canvas.bind("<Button-1>", self._stroke_start)
         self.canvas.bind("<B1-Motion>", self._stroke_move)
         self.canvas.bind("<B1-ButtonRelease>", self._stroke_done)
+
+    def _worker(self):
+        que = self._queue
+        while True:
+            (func, args, kwargs) = que.get()
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                print e
+            finally:
+                que.task_done()
+    
+    def _run_async(self, func, args=(), kwargs={}):
+        self._queue.put((func, args, kwargs))
+
+    def _init_thread(self):
+        th = threading.Thread(name='thread', target=self._worker)
+        th.daemon = True
+        th.start()
 
     def _fix_bounds(self, bounds):
         bounds = [x/self._ratio for x in bounds]
@@ -84,8 +111,13 @@ class CropIDE(object):
             # cv2.imwrite(save_to, image)
 
     def _redraw(self):
-        image = self._device.screenshot()
-        self.draw_image(image)
+        def foo():
+            image = self._device.screenshot()
+            self.draw_image(image)
+            self._refresh_text.set("Refresh")
+
+        self._run_async(foo)
+        self._refresh_text.set("Refreshing ...")
         self._bounds = None
         self._reset()
 
