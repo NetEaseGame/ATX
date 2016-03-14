@@ -56,8 +56,10 @@ class ImageSelector(object):
     
 
 class Watcher(object):
+    ACTION_CLICK = 1 <<0
     ACTION_TOUCH = 1 <<0
     ACTION_QUIT = 1 <<1
+
     Event = collections.namedtuple('WatchEvent', ['selector', 'actions'])
 
     def __init__(self, device, name=None, timeout=None):
@@ -82,7 +84,6 @@ class Watcher(object):
         if isinstance(image, basestring):
             self._stored_selector = ImageSelector(image)
         elif text:
-            print 'stored selector'
             self._stored_selector = self._dev(text=text)
 
         if actions:
@@ -91,7 +92,10 @@ class Watcher(object):
         return self
 
     def touch(self):
-        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_TOUCH))
+        return self.click()
+
+    def click(self):
+        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_CLICK))
         return self
 
     def quit(self):
@@ -155,10 +159,10 @@ class Watcher(object):
             if self.timeout is not None:
                 if time.time() - start_time > self.timeout:
                     raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
-                # sys.stdout.write("\rWatching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-                log.debug("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-                # sys.stdout.flush()
-        # sys.stdout.write('\n')
+                sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                #log.debug("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                sys.stdout.flush()
+        sys.stdout.write('\n')
 
 
 class CommonWrap(object):
