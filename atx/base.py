@@ -10,6 +10,12 @@ import time
 import logging
 import threading
 
+random.seed(time.time())
+
+def id_generator(n=5):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(n))
+
+
 def dirname(name):
     if os.path.isabs(name):
         return os.path.dirname(name)
@@ -34,7 +40,7 @@ def exec_cmd(*cmds, **kwargs):
     shell = kwargs.get('shell', False)
     try:
         import sh
-        log.debug('RUN(timeout=%ds): %s'%(timeout, ' '.join(cmds)))
+        # log.debug('RUN(timeout=%ds): %s'%(timeout, ' '.join(cmds)))
         if shell:
             cmds = list(cmds)
             cmds[:0] = ['bash', '-c']
@@ -42,10 +48,10 @@ def exec_cmd(*cmds, **kwargs):
         try:
             r = c(*cmds[1:], _err_to_out=True, _out=sys.stdout, _env=env, _timeout=timeout)
         except:
-            log.error('EXEC_CMD error, cmd: %s'%(' '.join(cmds)))
+            # log.error('EXEC_CMD error, cmd: %s'%(' '.join(cmds)))
             raise
     except ImportError:
-        log.debug('RUN(timeout=XX): %s'%(' '.join(cmds)))
+        # log.debug('RUN(timeout=XX): %s'%(' '.join(cmds)))
         if shell:
             cmds = ' '.join(cmds)
         r = subprocess.Popen(cmds, env=env, stdout=sys.stdout, stderr=sys.stderr, shell=shell)
@@ -59,4 +65,3 @@ def random_name(name):
             c = random.choice(string.ascii_lowercase)
         out.append(c)
     return ''.join(out)
-

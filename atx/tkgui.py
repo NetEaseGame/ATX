@@ -147,8 +147,8 @@ class CropIDE(object):
         self._root.mainloop()
         
 
-def main(serial):
-    d = atx.connect(serial)
+def main(serial, **kwargs):
+    d = atx.connect(serial, **kwargs)
     gui = CropIDE('AirtestX IDE SN: %s' % serial, screenshot=d.screenshot)
     gui.draw_image(d.screenshot())
     gui.mainloop()

@@ -29,6 +29,7 @@ from PIL import Image
 from atx import consts
 from atx import errors
 from atx import patch
+from atx import base
 from atx import logutils
 from atx import imutils
 
@@ -243,7 +244,7 @@ class CommonWrap(object):
         Raises:
             ImageNotFoundError: An error occured when img not found in current screen.
         """
-        search_img = self._read_img(img)
+        search_img = imutils.open(img)
         log.info('touch image: %s', img)
         start_time = time.time()
         found = False
@@ -293,6 +294,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         UiaDevice.__init__(self, serialno, **kwargs)
         CommonWrap.__init__(self)
 
+        self._randid = base.id_generator(5)
         self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
 
@@ -346,9 +348,9 @@ class AndroidDevice(CommonWrap, UiaDevice):
             x=self.display.width,
             y=self.display.height,
             r=rotation*90)
-        
+    
     def _screenshot_minicap(self):
-        phone_tmp_file = '/data/local/tmp/_atx_screen.jpg'
+        phone_tmp_file = '/data/local/tmp/_atx_screen-{}.jpg'.format(self._randid)
         local_tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
             self._minicap_params(), phone_tmp_file)

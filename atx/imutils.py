@@ -35,6 +35,7 @@ def open(image):
             img = cv2.imread(name)
             if img is None:
                 raise IOError("Image format error: %s" % name)
+            return img
         raise IOError("Open image(%s) not found" % name)
 
     return image
