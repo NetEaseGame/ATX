@@ -21,7 +21,8 @@ import atx
 
 
 class CropIDE(object):
-    def __init__(self, title='AirtestX Basic GUI', screenshot=None):
+    def __init__(self, title='AirtestX Basic GUI', device=None):
+        self._device = device
         self._root = tk.Tk()
         self._init_items()
         self._root.title(title)
@@ -34,18 +35,20 @@ class CropIDE(object):
         self._color = 'red' # draw color
         self._tkimage = None # keep reference
         self._image = None
-        self._screenshot = screenshot
         self._ratio = 0.5
 
     def _init_items(self):
         root = self._root
-        frm_control = tk.Frame(root, bg='blue')
+        root.resizable(0,0)
+
+        frm_control = tk.Frame(root)
         frm_control.grid(column=0, row=0)
         frm_screen = tk.Frame(root, bg='#aaa')
-        frm_screen.grid(column=0, row=1)
+        frm_screen.grid(column=1, row=0)
 
         tk.Button(frm_control, text="Refresh", command=self._redraw).grid(column=0, row=0, sticky=tk.W)
-        tk.Button(frm_control, text="Save crop", command=self._save_crop).grid(column=1, row=0, sticky=tk.W)
+        tk.Button(frm_control, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
+        tk.Button(frm_control, text="Save crop", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
 
         self.canvas = tk.Canvas(frm_screen, bg="blue", bd=0, highlightthickness=0, relief='ridge')
         self.canvas.grid(column=0, row=0, padx=10, pady=10)
@@ -81,7 +84,7 @@ class CropIDE(object):
             # cv2.imwrite(save_to, image)
 
     def _redraw(self):
-        image = self._screenshot()
+        image = self._device.screenshot()
         self.draw_image(image)
         self._bounds = None
         self._reset()
@@ -149,7 +152,7 @@ class CropIDE(object):
 
 def main(serial, **kwargs):
     d = atx.connect(serial, **kwargs)
-    gui = CropIDE('AirtestX IDE SN: %s' % serial, screenshot=d.screenshot)
+    gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d) #screenshot=d.screenshot)
     gui.draw_image(d.screenshot())
     gui.mainloop()
 
