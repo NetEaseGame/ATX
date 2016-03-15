@@ -176,6 +176,14 @@ class CommonWrap(object):
         self.resolution = None
 
     def sleep(self, secs):
+        """Sleep some seconds
+
+        Args:
+            secs: float seconds
+
+        Returns:
+            self
+        """
         secs = int(secs)
         for i in reversed(range(secs)):
             sys.stdout.write('\r')
@@ -183,6 +191,7 @@ class CommonWrap(object):
             sys.stdout.flush()
             time.sleep(1)
         sys.stdout.write("\n")
+        return self
 
     def exists(self, img, screen=None):
         """Check if image exists in screen, alias for match"""
@@ -301,9 +310,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
         self.minicap_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
         self.last_screenshot = None
-        # self._click_timeout = 20.0 # if icon not found in this time, then panic
-        # self._delay_after_click = 0.5 # when finished click, wait time
-        # self._loglock = threading.Lock()
 
     @property
     def wlan_ip(self):
@@ -520,24 +526,6 @@ class AndroidDevice(CommonWrap, UiaDevice):
     #         return self.wait(img, seconds)
     #     except:
     #         return None        
-
-    # def center(self):
-    #     '''
-    #     Center position
-    #     '''
-    #     w, h = self.shape()
-    #     return w/2, h/2
-
-    # def drag(self, fpt, tpt, duration=0.5):
-    #     ''' 
-    #     Drag from one place to another place
-
-    #     @param fpt,tpt: filename or position
-    #     @param duration: float (duration of the event in seconds)
-    #     '''
-    #     fpt = self._val_to_point(fpt)
-    #     tpt = self._val_to_point(tpt)
-    #     return self.dev.drag(fpt, tpt, duration)
 
     # def type(self, text):
     #     '''

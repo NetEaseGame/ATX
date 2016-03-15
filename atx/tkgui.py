@@ -16,11 +16,25 @@
 import threading
 import Tkinter as tk
 import tkSimpleDialog
+import tkFileDialog
 from Queue import Queue
 
 import atx
 from PIL import Image, ImageTk
 
+
+def insert_code(filename, code, save=True, marker='# ATX CODE'):
+    """ Auto append code """
+    content = ''
+    for line in open(filename, 'rb'):
+        if line.strip() == marker:
+            cnt = line.find(marker)
+            content += line[:cnt] + code
+        content += line
+    if save:
+        with open(filename, 'wb') as f:
+            f.write(content)
+    return content
 
 class CropIDE(object):
     def __init__(self, title='AirtestX Basic GUI', device=None):
@@ -31,13 +45,17 @@ class CropIDE(object):
 
         self._refresh_text = tk.StringVar()
         self._refresh_text.set("Refresh")
+        self._gencode_text = tk.StringVar()
+        self._attachfile_text = tk.StringVar()
+
         self._init_items()
         self._init_thread()
 
         self._lastx = 0
         self._lasty = 0
         self._bounds = None # crop area
-        self._center = (0, 0) # center point, used for offset
+        self._center = (0, 0) # center point
+        self._offset = (0, 0) # offset to image center
         self._size = (90, 90)
         self._moved = False # click or click and move
         self._color = 'red' # draw color
@@ -47,16 +65,29 @@ class CropIDE(object):
 
     def _init_items(self):
         root = self._root
-        root.resizable(0,0)
+        root.resizable(0, 0)
 
-        frm_control = tk.Frame(root)
-        frm_control.grid(column=0, row=0)
+        frm_control = tk.Frame(root, bg='#bbb')
+        frm_control.grid(column=0, row=0, padx=5, sticky=tk.NW)
         frm_screen = tk.Frame(root, bg='#aaa')
         frm_screen.grid(column=1, row=0)
 
-        tk.Button(frm_control, textvariable=self._refresh_text, command=self._redraw).grid(column=0, row=0, sticky=tk.W)
-        tk.Button(frm_control, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
-        tk.Button(frm_control, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
+        frm_ctrl_btns = tk.Frame(frm_control)
+        frm_ctrl_btns.grid(column=0, row=0, sticky=tk.W)
+        tk.Label(frm_control, text='-'*30).grid(column=0, row=1, sticky=tk.EW)
+        frm_ctrl_code = tk.Frame(frm_control)
+        frm_ctrl_code.grid(column=0, row=2, sticky=tk.EW)
+
+        tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._redraw).grid(column=0, row=0, sticky=tk.W)
+        tk.Button(frm_ctrl_btns, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
+        tk.Button(frm_ctrl_btns, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
+
+        tk.Label(frm_ctrl_code, text='Generated code').grid(column=0, row=0, sticky=tk.W)
+        tk.Entry(frm_ctrl_code, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
+        tk.Button(frm_ctrl_code, text='Run code', command=self._run_code).grid(column=0, row=2, sticky=tk.W)
+        tk.Button(frm_ctrl_code, text='Insert and Run', command=self._run_and_insert).grid(column=0, row=3, sticky=tk.W)
+        tk.Button(frm_ctrl_code, text='Select File', command=self._run_selectfile).grid(column=0, row=4, sticky=tk.W)
+        tk.Label(frm_ctrl_code, textvariable=self._attachfile_text).grid(column=0, row=5, sticky=tk.W)
 
         self.canvas = tk.Canvas(frm_screen, bg="blue", bd=0, highlightthickness=0, relief='ridge')
         self.canvas.grid(column=0, row=0, padx=10, pady=10)
@@ -108,7 +139,30 @@ class CropIDE(object):
                 save_to += '.png'
             print('Save to:', save_to)
             self._image.crop(bounds).save(save_to)
-            # cv2.imwrite(save_to, image)
+            if self._offset == (0, 0):
+                self._gencode_text.set('click_image("%s")' % save_to)
+            else:
+                code = 'click_image(atx.ImageSelector("{name}", offset=({x}, {y})))'.format(
+                    name=save_to, x=self._offset[0], y=self._offset[1])
+                self._gencode_text.set(code)
+
+    def _run_code(self):
+        code = 'self._device.'+self._gencode_text.get()
+        exec(code)
+
+    def _run_and_insert(self):
+        self._run_code()
+        filename = self._attachfile_text.get().strip()
+        code_snippet = self._gencode_text.get().strip()
+        if filename and code_snippet:
+            insert_code(filename, code_snippet+'\n')
+
+    def _run_selectfile(self):
+        filename = tkFileDialog.askopenfilename(**dict(
+            filetypes=[('All files', '.*'), ('Python', '.py')],
+            title='Select file'))
+        self._attachfile_text.set(filename)
+        print filename
 
     def _redraw(self):
         def foo():
@@ -118,10 +172,12 @@ class CropIDE(object):
 
         self._run_async(foo)
         self._refresh_text.set("Refreshing ...")
-        self._bounds = None
         self._reset()
 
     def _reset(self):
+        self._bounds = None
+        self._offset = (0, 0)
+        self._center = (0, 0)
         self.canvas.delete('boundsLine')
         self.canvas.delete('clickPosition')
 
@@ -146,6 +202,17 @@ class CropIDE(object):
         x, y = c.canvasx(event.x), c.canvasy(event.y)
         if self._moved:
             x, y = (self._lastx+x)/2, (self._lasty+y)/2
+            self._offset = (0, 0)
+        elif self._bounds is None:
+            # print x, y
+            self._gencode_text.set('click(%d, %d)' % (x/self._ratio, y/self._ratio))
+        elif self._bounds is not None:
+            (x0, y0, x1, y1) = self._fix_bounds(self._bounds)
+            cx, cy = (x/self._ratio, y/self._ratio)
+            mx, my = (x0+x1)/2, (y0+y1)/2
+            self._offset = (offx, offy) = (cx-mx, cy-my)
+            self._gencode_text.set('offset=(%d, %d)' % (offx, offy))
+        # print self._bounds
         self._center = (x, y) # rember position
         self.tag_point(x, y)
         self.canvas.itemconfigure('boundsLine', width=2)

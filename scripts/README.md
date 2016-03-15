@@ -18,3 +18,4 @@ monkey_record.py and monkey_playback from
 
 ### AndroidManifest.xml parser
 python-androguard: <https://code.google.com/p/androguard/wiki/Usage#Androaxml>
+
