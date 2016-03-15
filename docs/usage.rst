@@ -1,7 +1,7 @@
 Method for android and iOS
 --------------------------
 
-.. autoclass:: atx.device.CommonWrap
+.. autoclass:: atx.device.DeviceMixin
     :members:
 
 

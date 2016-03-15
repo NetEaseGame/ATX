@@ -170,7 +170,7 @@ def remove_force(name):
     if os.path.isfile(name):
         os.remove(name)
 
-class CommonWrap(object):
+class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.resolution = None
@@ -293,7 +293,7 @@ class CommonWrap(object):
         w._dev = self
         return w
 
-class AndroidDevice(CommonWrap, UiaDevice):
+class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
         self._host = kwargs.get('host', '127.0.0.1')
         self._port = kwargs.get('port', 5037)
@@ -301,7 +301,7 @@ class AndroidDevice(CommonWrap, UiaDevice):
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
         UiaDevice.__init__(self, serialno, **kwargs)
-        CommonWrap.__init__(self)
+        DeviceMixin.__init__(self)
 
         self._randid = base.id_generator(5)
         self._serial = serialno
