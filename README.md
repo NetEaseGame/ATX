@@ -259,6 +259,39 @@ d.stop_app(package_name)
 
 	海马玩监听的端口是本机的26944，如果需要测试脚本运行在远程，用tcp转发到0.0.0.0就好了。方法有很多，微软自带的[netsh](https://technet.microsoft.com/en-us/library/cc776297(WS.10).aspx#BKMK_1) 或者直接参考目录下的 [scripts/simple-tcp-proxy.py](scripts/simple-tcp-proxy.py) 用代码实现
 
+4. minicap是什么, 如何安装?
+
+	minicap是[openstf](https://github.com/openstf)开源项目中的一个子项目，用于手机快速的截图. 连接手机到电脑上之后，运行文件 [scripts/install-minicap.py](scripts/install-minicap.py)
+
+
+5. 批量运行脚本
+
+	python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
+
+	```
+	# coding: utf-8
+
+	import unittest
+	import atx
+
+	d = atx.connect()
+
+	class SimpleTestCase(unittest.TestCase):
+	    def setUp(self):
+	        name = 'com.netease.txx'
+	        d.stop_app(name).start_app(name)
+
+	    def test_login(self):
+	        d.click_image("confirm.png")
+	        d.click_image("enter-game.png")
+	        with d.watch('Enter game', 20) as w:
+	            w.on("user.png").quit()
+
+
+	if __name__ == '__main__':
+	    unittest.main()
+	```
+
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
 
