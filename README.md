@@ -253,6 +253,12 @@ d.stop_app(package_name)
 
 	设置完后，当遇到其他分辨率的手机，就会自动去缩放。
 
+3. 是否可以在模拟器上运行自动测试
+
+	测试后，发现是可以的。我直接用了当前市场上最流行的[海马玩 版本0.9.0 Beta](http://www.droid4x.cn/) 安装完之后使用 `adb connect 127.0.0.1:26944` 连接上，之后的操作就跟普通的手机一样了。_注: 根据海马玩版本的不同，端口可能也不一定一样_
+
+	海马玩监听的端口26944是本机的如果需要测试脚本运行在远程，也是有办法。用个简单的tcp转发到0.0.0.0就好了。方法有很多，微软自带的[netsh](https://technet.microsoft.com/en-us/library/cc776297(WS.10).aspx#BKMK_1) 或者直接参考目录下的 [scripts/simple-tcp-proxy.py](scripts/simple-tcp-proxy.py) 用代码实现
+
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
 
