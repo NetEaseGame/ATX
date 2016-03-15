@@ -46,15 +46,21 @@ DISPLAY_RE = re.compile(
 
 
 class ImageSelector(object):
-    def __init__(self, image):
+    def __init__(self, image, offset=(0, 0), anchor=0):
         self._name = None
-        self._image = image
+        self._image = imutils.open(image)
         if isinstance(image, basestring):
             self._name = image
+            self._offset = offset
 
     @property
     def image(self):
         return self._image
+
+    @property
+    def offset(self):
+        return self._offset
+    
     
 
 class Watcher(object):
@@ -201,19 +207,25 @@ class DeviceMixin(object):
         """Check if image position in screen
 
         Args:
-            img: string or opencv image
-            screen: opencv image, optional, if not None, screenshot will be called
+            img: Image file name or opencv image object
+            screen: opencv image, optional, if not None, screenshot method will be called
 
         Returns:
-            None or FindPoint
+            None or FindPoint, For example:
+
+            FindPoint(pos=(20, 30), method='tmpl', confidence=0.801)
 
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        search_img = imutils.open(img)
+        if not isinstance(img, ImageSelector):
+            selector = ImageSelector(img)
+        # search_img = imutils.open(img)
+        search_img = selector.image
         if screen is None:
             screen = self.screenshot()
 
+        offx, offy = offset = selector.offset
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
@@ -221,6 +233,8 @@ class DeviceMixin(object):
                 ow, oh = self.resolution
                 fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
                 search_img = cv2.resize(search_img, (0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+                offx, offy = int(offx*fx), int(offy*fy)
+
                 # TODO(useless)
                 # cv2.imwrite('resize-tmp.png', search_img)
                 # cv2.imwrite('current-screen.png', screen)
@@ -232,7 +246,9 @@ class DeviceMixin(object):
 
         if ret is None:
             return None
-        position = ret['result']
+        (x, y) = ret['result']
+        # fix by offset
+        position = (x+offx, y+offy)
         confidence = ret['confidence']
         return FindPoint(position, confidence, self.image_match_method)
 

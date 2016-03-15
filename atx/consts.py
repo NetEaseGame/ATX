@@ -11,3 +11,16 @@ IMAGE_MATCH_METHOD_SIFT = 'sift'
 EVENT_UIAUTO_TOUCH = 1 <<0
 EVENT_UIAUTO_CLICK = 1 <<0 # alias for touch
 EVENT_UIAUTO_SWIPE = 2 <<0
+
+# 1 - 2 - 3
+# 4 - 5 - 6
+# 7 - 8 - 9
+
+NW = 1
+N = 2
+NE = 3
+W = 4
+E = 6
+SW = 7
+S = 8
+SE = 9
