@@ -13,6 +13,7 @@
 # > Tutorial canvas tk
 # http://www.tutorialspoint.com/python/tk_canvas.htm
 
+import time
 import threading
 import Tkinter as tk
 import tkSimpleDialog
@@ -46,10 +47,13 @@ class CropIDE(object):
         self._refresh_text = tk.StringVar()
         self._refresh_text.set("Refresh")
         self._gencode_text = tk.StringVar()
+        self._auto_refresh_var = tk.IntVar()
         self._attachfile_text = tk.StringVar()
+        self._running = False # if background is running
 
         self._init_items()
         self._init_thread()
+        self._init_refresh()
 
         self._lastx = 0
         self._lasty = 0
@@ -78,10 +82,12 @@ class CropIDE(object):
         frm_ctrl_code = tk.Frame(frm_control)
         frm_ctrl_code.grid(column=0, row=2, sticky=tk.EW)
 
-        tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._redraw).grid(column=0, row=0, sticky=tk.W)
+        self._btn_refresh = tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._redraw)
+        self._btn_refresh.grid(column=0, row=0, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Save screenshot", command=self._save_screenshot).grid(column=0, row=3, sticky=tk.W)
+        tk.Checkbutton(frm_ctrl_btns, text="Auto refresh", variable=self._auto_refresh_var, command=self._run_check_refresh).grid(column=0, row=4, sticky=tk.W)
 
         tk.Label(frm_ctrl_code, text='Generated code').grid(column=0, row=0, sticky=tk.W)
         tk.Entry(frm_ctrl_code, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
@@ -89,6 +95,7 @@ class CropIDE(object):
         tk.Button(frm_ctrl_code, text='Insert and Run', command=self._run_and_insert).grid(column=0, row=3, sticky=tk.W)
         tk.Button(frm_ctrl_code, text='Select File', command=self._run_selectfile).grid(column=0, row=4, sticky=tk.W)
         tk.Label(frm_ctrl_code, textvariable=self._attachfile_text).grid(column=0, row=5, sticky=tk.W)
+        tk.Button(frm_ctrl_code, text='Reset', command=self._reset).grid(column=0, row=6, sticky=tk.W)
 
         self.canvas = tk.Canvas(frm_screen, bg="blue", bd=0, highlightthickness=0, relief='ridge')
         self.canvas.grid(column=0, row=0, padx=10, pady=10)
@@ -107,6 +114,11 @@ class CropIDE(object):
             finally:
                 que.task_done()
     
+    def _run_check_refresh(self):
+        auto = self._auto_refresh_var.get()
+        state = tk.DISABLED if auto else tk.NORMAL
+        self._btn_refresh.config(state=state)
+
     def _run_async(self, func, args=(), kwargs={}):
         self._queue.put((func, args, kwargs))
 
@@ -114,6 +126,14 @@ class CropIDE(object):
         th = threading.Thread(name='thread', target=self._worker)
         th.daemon = True
         th.start()
+
+    def _init_refresh(self):
+        now = time.strftime("%H:%M:%S")
+        # print now
+        if not self._running and self._auto_refresh_var.get() == 1:
+            # print 'redraw'
+            self._redraw()
+        self._root.after(200, self._init_refresh)
 
     def _fix_bounds(self, bounds):
         bounds = [x/self._ratio for x in bounds]
@@ -176,13 +196,21 @@ class CropIDE(object):
 
     def _redraw(self):
         def foo():
+            self._running = True
             image = self._device.screenshot()
             self.draw_image(image)
             self._refresh_text.set("Refresh")
 
+            if self._center != (0, 0):
+                self.tag_point(*self._center)
+            if self._bounds is not None:
+                self._draw_bounds(self._bounds)
+                self.canvas.itemconfigure('boundsLine', width=2)
+            self._running = False
+
         self._run_async(foo)
         self._refresh_text.set("Refreshing ...")
-        self._reset()
+        # self._reset()
 
     def _reset(self):
         self._bounds = None
