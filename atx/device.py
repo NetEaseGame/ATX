@@ -45,7 +45,7 @@ DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
 
-class ImageSelector(object):
+class Patten(object):
     def __init__(self, image, offset=(0, 0), anchor=0):
         self._name = None
         self._image = imutils.open(image)
@@ -90,7 +90,7 @@ class Watcher(object):
             None
         """
         if isinstance(image, basestring):
-            self._stored_selector = ImageSelector(image)
+            self._stored_selector = Patten(image)
         elif text:
             self._stored_selector = self._dev(text=text)
 
@@ -117,7 +117,7 @@ class Watcher(object):
 
     def _match(self, selector, screen):
         ''' returns position(x, y) or None'''
-        if isinstance(selector, ImageSelector):
+        if isinstance(selector, Patten):
             ret = self._dev.match(selector.image, screen=screen)
             if ret is None:
                 return None
@@ -180,6 +180,7 @@ class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.resolution = None
+        self._bounds = None
 
     def sleep(self, secs):
         """Sleep some seconds
@@ -218,8 +219,8 @@ class DeviceMixin(object):
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        if not isinstance(img, ImageSelector):
-            selector = ImageSelector(img)
+        if not isinstance(img, Patten):
+            selector = Patten(img)
         # search_img = imutils.open(img)
         search_img = selector.image
         if screen is None:
@@ -251,6 +252,10 @@ class DeviceMixin(object):
         position = (x+offx, y+offy)
         confidence = ret['confidence']
         return FindPoint(position, confidence, self.image_match_method)
+
+    def region(self):
+        """TODO"""
+        return self
 
     def touch_image(self, *args, **kwargs):
         """ALias for click_image"""
@@ -289,7 +294,7 @@ class DeviceMixin(object):
             start_time = time.time()
             while time.time()-start_time < timeout:
                 screen_img = self.screenshot()
-                ret = ac.find_template(screen_img, search_img)
+                ret = self.match(search_img)
                 if ret is None:
                     break
 

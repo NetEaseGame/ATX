@@ -17,7 +17,7 @@ except pkg_resources.DistributionNotFound:
 
 from atx.consts import *
 from atx.errors import *
-from atx.device import Watcher
+from atx.device import Patten
 from atx import imutils
 
 
