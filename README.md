@@ -116,12 +116,21 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 ## 配置项
 ```
-#
-d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR # 默认
+
+d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO # 默认
+# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR # 可选
 # d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP # 可选
 
 d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
 # d.image_match_method = atx.IMAGE_MATCH_METHOD_SIFT # 特征点匹配, 可选
+
+d.image_match_threshold = 0.8 # 默认(模版匹配相似度)
+
+d.rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
+# 0: power key bottom
+# 1: power key right
+# 2: power key top
+# 4: power key left
 ```
 
 ## 接口
@@ -279,7 +288,7 @@ d.stop_app(package_name)
 	d.resolution = (1280, 1920)
 	```
 
-	设置完后，当遇到其他分辨率的手机，就会自动去缩放。
+	设置完后，当遇到其他分辨率的手机，就会自动去缩放。因为AirtestX主要针对游戏用户，横屏的时候，缩放是根据Y轴缩放的，竖排则根据X轴。offset则是同时计算X和Y的放大比率。可能有点抽象，理解不了也没关系
 
 3. 是否可以在模拟器上运行自动测试
 
@@ -305,6 +314,7 @@ d.stop_app(package_name)
 
 	- <https://github.com/codeskyblue/android-uiautomator-server>
 	- <https://github.com/codeskyblue/airtest-uiautomator>
+3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 
 ## License
 This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.

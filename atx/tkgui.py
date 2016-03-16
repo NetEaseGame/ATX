@@ -210,7 +210,7 @@ class CropIDE(object):
             (x0, y0, x1, y1) = self._fix_bounds(self._bounds)
             cx, cy = (x/self._ratio, y/self._ratio)
             mx, my = (x0+x1)/2, (y0+y1)/2
-            self._offset = (offx, offy) = (cx-mx, cy-my)
+            self._offset = (offx, offy) = map(int, (cx-mx, cy-my))
             self._gencode_text.set('offset=(%d, %d)' % (offx, offy))
         # print self._bounds
         self._center = (x, y) # rember position

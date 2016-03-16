@@ -36,7 +36,7 @@ from atx import imutils
 
 log = logutils.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method'])
+FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
@@ -54,6 +54,9 @@ class Pattern(object):
         if isinstance(image, basestring):
             self._name = image
 
+    def __str__(self):
+        return 'Pattern(name: {}, offset: {})'.format(self._name, self.offset)
+    
     @property
     def image(self):
         return self._image
@@ -118,24 +121,23 @@ class Watcher(object):
     def _match(self, selector, screen):
         ''' returns position(x, y) or None'''
         if isinstance(selector, Pattern):
-            ret = self._dev.match(selector.image, screen=screen)
+            ret = self._dev.exists(selector.image, screen=screen)
             if ret is None:
                 return None
+            return ret.pos
 
-            # FIXME(ssx): Image match confidence should can set
-            exists = False
-            if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
-                if ret.confidence > 0.8:
-                    exists = True
-                # else:
-                    # print("Skip confidence:", ret.confidence)
-            elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
-                matches, total = ret.confidence
-                if 1.0*matches/total > 0.5:
-                    exists = True
+            # exists = False
+            # if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
+            #     if ret.confidence > 0.8:
+            #         exists = True
+            #     # else:
+            #         # print("Skip confidence:", ret.confidence)
+            # elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
+            #     matches, total = ret.confidence
+            #     if 1.0*matches/total > 0.5:
+            #         exists = True
 
-            if exists:
-                return ret.pos
+            # if exists:
         elif isinstance(selector, AutomatorDeviceObject):
             if not selector.exists:
                 return None
@@ -180,6 +182,7 @@ class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.resolution = None
+        self.image_match_threshold = 0.8
         self._bounds = None
 
     def sleep(self, secs):
@@ -201,39 +204,58 @@ class DeviceMixin(object):
         return self
 
     def exists(self, img, screen=None):
-        """Check if image exists in screen, alias for match"""
-        self.match(img, screen)
+        """Check if image exists in screen
 
-    def match(self, img, screen=None):
+        Returns:
+            If exists, return FindPoint, or
+            return None if result.confidence < self.image_match_threshold
+        """
+        ret = self.match(img, screen)
+        if ret is None:
+            return None
+        if not ret.matched:
+            return None
+        return ret
+
+    def match(self, pattern, screen=None, threshold=None):
         """Check if image position in screen
 
         Args:
-            img: Image file name or opencv image object
+            pattern: Image file name or opencv image object
             screen: opencv image, optional, if not None, screenshot method will be called
 
         Returns:
             None or FindPoint, For example:
 
-            FindPoint(pos=(20, 30), method='tmpl', confidence=0.801)
+            FindPoint(pos=(20, 30), method='tmpl', confidence=0.801, matched=True)
+
+            Only when confidence > self.image_match_threshold, matched will be True
 
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        if not isinstance(img, Pattern):
-            selector = Pattern(img)
+        if not isinstance(pattern, Pattern):
+            pattern = Pattern(pattern)
         # search_img = imutils.open(img)
-        search_img = selector.image
+        search_img = pattern.image
         if screen is None:
             screen = self.screenshot()
+        if threshold is None:
+            threshold = self.image_match_threshold
 
-        dx, dy = selector.offset
+        dx, dy = pattern.offset
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
             if self.resolution is not None:
                 ow, oh = self.resolution
                 fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
-                search_img = cv2.resize(search_img, (0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+                # For horizontal screen, scale by Y
+                # For vertical screen, scale by X
+                # Offset scale by X and Y
+                # FIXME(ssx): need test here, I never tried before.
+                scale = fy if self.rotation in (1, 3) else fx
+                search_img = cv2.resize(search_img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
                 dx, dy = int(dx*fx), int(dy*fy)
 
                 # TODO(useless)
@@ -251,7 +273,16 @@ class DeviceMixin(object):
         # fix by offset
         position = (x+dx, y+dy)
         confidence = ret['confidence']
-        return FindPoint(position, confidence, self.image_match_method)
+
+        matched = True
+        if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+            if confidence < self.image_match_threshold:
+                matched = False
+        elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
+            matches, total = confidence
+            if 1.0*matches/total > 0.5: # FIXME(ssx): sift just write here
+                matched = True
+        return FindPoint(position, confidence, self.image_match_method, matched=matched)
 
     def region(self):
         """TODO"""
@@ -284,6 +315,10 @@ class DeviceMixin(object):
                 sys.stdout.write('.')
                 sys.stdout.flush()
                 continue
+            if not point.matched:
+                log.debug('Ignore confidence: %s', point.confidence)
+                continue
+            log.debug('confidence: %s', point.confidence)
             self.touch(*point.pos)
             found = True
             break
@@ -328,7 +363,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
 
-        self.minicap_rotation = None
+        self.screen_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
         self.last_screenshot = None
 
@@ -360,15 +395,29 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         w, h = d.info['displayWidth'], d.info['displayHeight']
         w, h = min(w, h), max(w, h)
         return collections.namedtuple('Display', ['width', 'height'])(w, h)
-            
+    
+    @property
+    def rotation(self):
+        """
+        Rotaion of the phone
+
+        0: normal
+        1: power key on the right
+        2: power key on the top
+        3: power key on the left
+        """
+        if self.screen_rotation in range(4):
+            return self.screen_rotation
+        return self.info['displayRotation']
+    
     def _minicap_params(self):
         """
         Used about 0.1s
         uiautomator d.info is now well working with device which has virtual menu.
         """
-        rotation = self.minicap_rotation 
-        if self.minicap_rotation is None:
-            rotation = self.info['displayRotation']
+        rotation = self.screen_rotation 
+        if self.screen_rotation is None:
+            rotation = self.rotation
 
         # rotation not working on SumSUNG 9502
         return '{x}x{y}@{x}x{y}/{r}'.format(
@@ -388,7 +437,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
             # Fix rotation not rotate right.
             (width, height) = image.size
-            if self.minicap_rotation in [1, 3] and width < height:
+            if self.screen_rotation in [1, 3] and width < height:
                 image = image.rotate(90, Image.BILINEAR, expand=True)
             return image
         except IOError:
