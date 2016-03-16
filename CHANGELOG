@@ -1,6 +1,50 @@
 CHANGES
 =======
 
+1.0.5
+-----
+
+* update ide screen
+* add offset in Pattern, add screen_method_threshold and rotation config
+* fix spell
+* add todo
+* add offset support not tested
+* name change CommonWrap -> DeviceMixin
+* add desc how to install minicap to phone
+* add code generate insert code support
+* add simulator to play test
+* put refresh screen to a thread
+* change gui style
+
+1.0.4
+-----
+
+* fix tags
+* fix stupid bug
+* update license data
+* fix connect remote device
+* fix watch not click bug
+* add docs
+* mock some moduless
+* remove cv2 deps
+* add deps of cv2 and numpy
+* fix again
+* tr catch import for rth build ok
+* update doc on rtd
+* use click instead of touch
+* update doc about ide
+* finish the first tk ide
+* add rectangle
+* fix .
+* update gui
+* image funcs move to imutils.py
+* add imutils
+* fix bounds bug, and read_image bug
+* add conf SCREENSHOT_METHOD_AUTO
+* fix ide, but still now working in mac
+* connect remove args needed, add is_app_alive func and last_screenshot prop
+* update watch method, remove useless files
+* screenshot return value change to PIL.Image, remove useless code
 * remove log from base.py
 * update pypi badge
 * add pypi badge
