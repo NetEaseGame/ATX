@@ -3,11 +3,12 @@
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/dm/atx.svg)](https://pypi.python.org/pypi/atx)
+[![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
 
 
 改版自一个老项目 <https://github.com/netease/airtest>
 
-该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，虽然有点类似于Sikuli, Appium
+该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
 
 airtest已经有人用，但是这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
 
@@ -43,10 +44,13 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 ## 安装
 1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
 
-	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本，前往下载地址<https://github.com/NetEase/aircv/releases>，
-	把相应的numpy和opencv下载下来。安装方法很简单
+	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本，如果pip安装不上，就需要把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)
+	安装方法很简单，例如 `pip install np.whl`, pip最好版本高一点(>=8.1.0)，避免出错
 
-	例如 `pip install numpy-1.10.4.mkl-cp27-none-win32.whl`, pip最好版本高一点，避免出错
+	```
+	pip install http://goandroid.qiniudn.com/opencv_python-2.4.12-cp27-none-win32.whl
+	pip install http://goandroid.qiniudn.com/numpy-1.10.4.mkl-cp27-none-win32.whl
+	```
 
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
 
@@ -127,10 +131,10 @@ d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
 d.image_match_threshold = 0.8 # 默认(模版匹配相似度)
 
 d.rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
-# 0: power key bottom
-# 1: power key right
-# 2: power key top
-# 4: power key left
+# 0: home key bottom(normal)
+# 1: home key right
+# 2: home key top
+# 3: home key left
 ```
 
 ## 接口
@@ -165,14 +169,12 @@ Parameters
 ---------|--------|------------
 filename | string | **Optional** 保存的文件名
 
-返回值
+Returns
 
-PIL.Image (1.0.4+)
+PIL.Image
 
-1.0.3的版本返回的是 Opencv Image Object
-
-### 点击图片(制作中)
-`click_image(image)`
+### 坐标点击
+`click(x, y)`
 
 image support string or pillow image
 
@@ -180,21 +182,19 @@ Parameters
 
 Name      | Type      | Description
 ----------|-----------|------------
-image     | string    | 需要点击的图片
+x, y      | int       | 坐标值
 
 Example
 
 ```
-click_image('start.png')
-
-# or (todo)
-click_image(atx.ImageSelector('start.png', offset=(0, 0)))
+click(20， 30）
 ```
 
 ### 其他接口
-[Documentation on Readthedocs](http://atx.readthedocs.org/en/latest/?badge=latest)
 
-接口可以参考sphinx自动生成文档，一些常用的方法，我用代码例子的方法告诉你
+接口可以参考sphinx自动生成文档
+[Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
+一些常用的方法，我用代码例子的方法告诉你
 
 ```python
 import atx
@@ -287,6 +287,7 @@ d.stop_app(package_name)
 	```
 	d.resolution = (1280, 1920)
 	```
+	注意第一个数要比第二个数小
 
 	设置完后，当遇到其他分辨率的手机，就会自动去缩放。因为AirtestX主要针对游戏用户，横屏的时候，缩放是根据Y轴缩放的，竖排则根据X轴。offset则是同时计算X和Y的放大比率。可能有点抽象，理解不了也没关系
 
@@ -304,7 +305,7 @@ d.stop_app(package_name)
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
 
-图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还酬和能用吧
+图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还凑合能用吧
 
 其他待补充
 
