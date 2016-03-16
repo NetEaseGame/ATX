@@ -45,13 +45,14 @@ DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
 
-class Patten(object):
+class Pattern(object):
     def __init__(self, image, offset=(0, 0), anchor=0):
         self._name = None
         self._image = imutils.open(image)
+        self._offset = offset
+        
         if isinstance(image, basestring):
             self._name = image
-            self._offset = offset
 
     @property
     def image(self):
@@ -62,7 +63,6 @@ class Patten(object):
         return self._offset
     
     
-
 class Watcher(object):
     ACTION_CLICK = 1 <<0
     ACTION_TOUCH = 1 <<0
@@ -90,7 +90,7 @@ class Watcher(object):
             None
         """
         if isinstance(image, basestring):
-            self._stored_selector = Patten(image)
+            self._stored_selector = Pattern(image)
         elif text:
             self._stored_selector = self._dev(text=text)
 
@@ -117,7 +117,7 @@ class Watcher(object):
 
     def _match(self, selector, screen):
         ''' returns position(x, y) or None'''
-        if isinstance(selector, Patten):
+        if isinstance(selector, Pattern):
             ret = self._dev.match(selector.image, screen=screen)
             if ret is None:
                 return None
@@ -219,14 +219,14 @@ class DeviceMixin(object):
         Raises:
             SyntaxError: when image_match_method is invalid
         """
-        if not isinstance(img, Patten):
-            selector = Patten(img)
+        if not isinstance(img, Pattern):
+            selector = Pattern(img)
         # search_img = imutils.open(img)
         search_img = selector.image
         if screen is None:
             screen = self.screenshot()
 
-        offx, offy = offset = selector.offset
+        dx, dy = selector.offset
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
@@ -234,7 +234,7 @@ class DeviceMixin(object):
                 ow, oh = self.resolution
                 fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
                 search_img = cv2.resize(search_img, (0, 0), fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
-                offx, offy = int(offx*fx), int(offy*fy)
+                dx, dy = int(dx*fx), int(dy*fy)
 
                 # TODO(useless)
                 # cv2.imwrite('resize-tmp.png', search_img)
@@ -249,7 +249,7 @@ class DeviceMixin(object):
             return None
         (x, y) = ret['result']
         # fix by offset
-        position = (x+offx, y+offy)
+        position = (x+dx, y+dy)
         confidence = ret['confidence']
         return FindPoint(position, confidence, self.image_match_method)
 
@@ -293,7 +293,7 @@ class DeviceMixin(object):
         if found and wait_change:
             start_time = time.time()
             while time.time()-start_time < timeout:
-                screen_img = self.screenshot()
+                # screen_img = self.screenshot()
                 ret = self.match(search_img)
                 if ret is None:
                     break

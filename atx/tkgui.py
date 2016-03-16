@@ -142,7 +142,7 @@ class CropIDE(object):
             if self._offset == (0, 0):
                 self._gencode_text.set('click_image("%s")' % save_to)
             else:
-                code = 'click_image(atx.ImageSelector("{name}", offset=({x}, {y})))'.format(
+                code = 'click_image(atx.Pattern("{name}", offset=({x}, {y})))'.format(
                     name=save_to, x=self._offset[0], y=self._offset[1])
                 self._gencode_text.set(code)
 
