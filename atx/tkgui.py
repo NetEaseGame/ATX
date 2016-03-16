@@ -81,6 +81,7 @@ class CropIDE(object):
         tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._redraw).grid(column=0, row=0, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
+        tk.Button(frm_ctrl_btns, text="Save screenshot", command=self._save_screenshot).grid(column=0, row=3, sticky=tk.W)
 
         tk.Label(frm_ctrl_code, text='Generated code').grid(column=0, row=0, sticky=tk.W)
         tk.Entry(frm_ctrl_code, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
@@ -127,6 +128,15 @@ class CropIDE(object):
         y1 = min(h, y1)
         return map(int, [x0, y0, x1, y1])
 
+    def _save_screenshot(self):
+        save_to = tkSimpleDialog.askstring("Save screenshot", "Enter filename")
+        if not save_to:
+            return
+        if save_to.find('.') == -1:
+            save_to += '.png'
+        print('Save to:', save_to)
+        self._image.save(save_to)    
+
     def _save_crop(self):
         print self._bounds
         if self._bounds is None:
@@ -140,9 +150,9 @@ class CropIDE(object):
             print('Save to:', save_to)
             self._image.crop(bounds).save(save_to)
             if self._offset == (0, 0):
-                self._gencode_text.set('click_image("%s")' % save_to)
+                self._gencode_text.set('d.click_image("%s")' % save_to)
             else:
-                code = 'click_image(atx.Pattern("{name}", offset=({x}, {y})))'.format(
+                code = 'd.click_image(atx.Pattern("{name}", offset=({x}, {y})))'.format(
                     name=save_to, x=self._offset[0], y=self._offset[1])
                 self._gencode_text.set(code)
 
