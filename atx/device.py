@@ -187,6 +187,7 @@ class DeviceMixin(object):
         self.resolution = None
         self.image_match_threshold = 0.8
         self._bounds = None
+        self._event_handlers = []
 
     def sleep(self, secs):
         """Sleep some seconds
@@ -239,7 +240,6 @@ class DeviceMixin(object):
         """
         if not isinstance(pattern, Pattern):
             pattern = Pattern(pattern)
-        # search_img = imutils.open(img)
         search_img = pattern.image
         if screen is None:
             screen = self.screenshot()
@@ -295,6 +295,23 @@ class DeviceMixin(object):
         """ALias for click_image"""
         self.click_image(*args, **kwargs)
 
+    def add_listener(self, fn, event_flags):
+        """Listen event
+        Args:
+            fn: function call when event happends
+            event_flags: for example
+                EVENT_UIAUTO_CLICK | EVENT_UIAUTO_SWIPE
+
+        Returns:
+            None
+        """
+        self._event_handlers.append((fn, event_flags))
+
+    def _trigger_event(self, event_flag, event):
+        for (fn, flag) in self._event_handlers:
+            if flag & event_flag:
+                fn(event)
+
     def click_image(self, img, timeout=20.0, wait_change=False):
         """Simulate click according image position
 
@@ -323,6 +340,7 @@ class DeviceMixin(object):
                 continue
             log.debug('confidence: %s', point.confidence)
             self.touch(*point.pos)
+            self._trigger_event(consts.EVENT_UIAUTO_CLICK, point)
             found = True
             break
         sys.stdout.write('\n')
@@ -335,7 +353,6 @@ class DeviceMixin(object):
                 ret = self.match(search_img)
                 if ret is None:
                     break
-
         if not found:
             raise errors.ImageNotFoundError('Not found image %s' %(img,))
 

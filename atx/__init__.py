@@ -30,7 +30,7 @@ def connect(*args, **kwargs):
         None
 
     Raises:
-        SyntaxError
+        SyntaxError, EnvironmentError
     """
     serialno = None
     if len(args) == 1:
