@@ -13,8 +13,10 @@
 # > Tutorial canvas tk
 # http://www.tutorialspoint.com/python/tk_canvas.htm
 
+import os
 import time
 import threading
+import logging
 import Tkinter as tk
 import tkSimpleDialog
 import tkFileDialog
@@ -24,14 +26,20 @@ import atx
 from PIL import Image, ImageTk
 
 
-def insert_code(filename, code, save=True, marker='# ATX CODE'):
+def insert_code(filename, code, save=True, marker='# ATX CODE END'):
     """ Auto append code """
     content = ''
+    found = False
     for line in open(filename, 'rb'):
-        if line.strip() == marker:
+        if not found and line.strip() == marker:
+            found = True
             cnt = line.find(marker)
             content += line[:cnt] + code
         content += line
+    if not found:
+        if not content.endswith('\n'):
+            content += '\n'
+        content += code + marker + '\n'
     if save:
         with open(filename, 'wb') as f:
             f.write(content)
@@ -128,7 +136,7 @@ class CropIDE(object):
         th.start()
 
     def _init_refresh(self):
-        now = time.strftime("%H:%M:%S")
+        # now = time.strftime("%H:%M:%S")
         # print now
         if not self._running and self._auto_refresh_var.get() == 1:
             # print 'redraw'
@@ -148,12 +156,22 @@ class CropIDE(object):
         y1 = min(h, y1)
         return map(int, [x0, y0, x1, y1])
 
+    def _fix_path(self, path):
+        try:
+            return os.path.relpath(path, os.getcwd())
+        except:
+            return path
+        # if not relpath.startswith('..'):
+            # path = relpath
+        # return path
+
     def _save_screenshot(self):
-        save_to = tkSimpleDialog.askstring("Save screenshot", "Enter filename")
+        save_to = tkFileDialog.asksaveasfilename(**dict(
+            defaultextension=".png",
+            filetypes=[('PNG', '.png')],
+            title='Select file'))
         if not save_to:
             return
-        if save_to.find('.') == -1:
-            save_to += '.png'
         print('Save to:', save_to)
         self._image.save(save_to)    
 
@@ -162,22 +180,27 @@ class CropIDE(object):
         if self._bounds is None:
             return
         bounds = self._fix_bounds(self._bounds)
-        print bounds
-        save_to = tkSimpleDialog.askstring("Save cropped image", "Enter filename")
-        if save_to:
-            if save_to.find('.') == -1:
-                save_to += '.png'
-            print('Save to:', save_to)
-            self._image.crop(bounds).save(save_to)
-            if self._offset == (0, 0):
-                self._gencode_text.set('d.click_image("%s")' % save_to)
-            else:
-                code = 'd.click_image(atx.Pattern("{name}", offset=({x}, {y})))'.format(
-                    name=save_to, x=self._offset[0], y=self._offset[1])
-                self._gencode_text.set(code)
+        # print bounds
+        save_to = tkFileDialog.asksaveasfilename(**dict(
+            defaultextension=".png",
+            filetypes=[('PNG', '.png')],
+            title='Select file'))
+        # save_to = tkSimpleDialog.askstring("Save cropped image", "Enter filename")
+        if not save_to:
+            return
+        save_to = self._fix_path(save_to)
+        print('Save to:', save_to)
+        self._image.crop(bounds).save(save_to)
+        if self._offset == (0, 0):
+            self._gencode_text.set('d.click_image("%s")' % save_to)
+        else:
+            code = 'd.click_image(atx.Pattern("{name}", offset=({x}, {y})))'.format(
+                name=save_to, x=self._offset[0], y=self._offset[1])
+            self._gencode_text.set(code)
 
     def _run_code(self):
         d = self._device
+        logging.debug("run code: %s", d)
         code = self._gencode_text.get()
         exec(code)
 
