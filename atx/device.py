@@ -17,6 +17,7 @@ import tempfile
 import threading
 import warnings
 import logging
+import xml.dom.minidom
 
 import cv2
 import numpy as np
@@ -37,6 +38,8 @@ from atx import imutils
 log = logutils.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
+UINode = collections.namedtuple('UINode', ['bounds', 'checkable', 'class_name', 'text', 'resource_id', 'package'])
+Bounds = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
@@ -583,6 +586,64 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         '''
         warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
         return self.screenshot(filename)
+
+    def _parse_xml_node(self, node):
+        # ['bounds', 'checkable', 'class', 'text', 'resource_id', 'package']
+        __alias = {
+            'class': 'class_name',
+            'resource-id': 'resource_id',
+        }
+
+        def parse_bounds(text):
+            m = re.match(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', text)
+            if m is None:
+                return None
+            return Bounds(*map(int, m.groups()))
+
+        def str2bool(v):
+            return v.lower() in ("yes", "true", "t", "1")
+
+        def convstr(v):
+            return v.encode('utf-8')
+
+        parsers = {
+            'bounds': parse_bounds,
+            'text': convstr,
+            'class_name': convstr,
+            'checkable': str2bool,
+            'resource_id': convstr,
+            'package': convstr,
+        }
+        ks = {}
+        for key, value in node.attributes.items():
+            key = __alias.get(key, key)
+            f = parsers.get(key)
+            if f:
+                ks[key] = f(value)
+        return UINode(**ks)
+
+    def dump_nodes(self):
+        """Dump current screen UI to list
+        Returns:
+            List of UINode object, For
+            example:
+
+            [UINode(
+                bounds=Bounds(left=0, top=0, right=480, bottom=168),
+                checkable=False,
+                class_name='android.view.View',
+                text='',
+                resource_id='',
+                package='com.sonyericsson.advancedwidget.clock')]
+        """
+        xmldata = self._uiauto.dump()
+        dom = xml.dom.minidom.parseString(xmldata.encode('utf-8'))
+        root = dom.documentElement
+        nodes = root.getElementsByTagName('node')
+        ui_nodes = []
+        for node in nodes:
+            ui_nodes.append(self._parse_xml_node(node))
+        return ui_nodes
 
     # def safe_wait(self, img, seconds=20.0):
     #     '''
