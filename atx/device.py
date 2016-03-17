@@ -309,7 +309,7 @@ class DeviceMixin(object):
             ImageNotFoundError: An error occured when img not found in current screen.
         """
         search_img = imutils.open(img)
-        log.info('touch image: %s', img)
+        log.info('click image: %s', img)
         start_time = time.time()
         found = False
         while time.time() - start_time < timeout:

@@ -282,6 +282,10 @@ d.stop_app(package_name)
 
 	市面上大部分的手机都是 16:9 还有一部分是 4:3 其他比例的似乎了了。而游戏中元素的大小，在屏幕变化的时候，也会等比例的去缩放。16:9到4:3的缩放比例似乎也有规律可循，暂时不研究啦。
 
+	16:9的的常见分辨率 1080x1920
+
+	4:3的常见分辨率 TODO等待PR
+
 	所以通常只需要找个分辨率高点的设备，然后截个图。同样宽高比的手机就可以一次拿下。
 
 	```
@@ -295,7 +299,7 @@ d.stop_app(package_name)
 
 	测试后，发现是可以的。我直接用了当前市场上最流行的[海马玩 版本0.9.0 Beta](http://dl.haima.me/download/D4XU/win/0.9.0/Setup.exe) 安装完之后使用 `adb connect 127.0.0.1:26944` 连接上，之后的操作就跟普通的手机一样了。_注: 根据海马玩版本的不同，端口可能也不一定一样_
 
-	海马玩监听的端口是本机的26944，如果需要测试脚本运行在远程，用tcp转发到0.0.0.0就好了。方法有很多，微软自带的[netsh](https://technet.microsoft.com/en-us/library/cc776297(WS.10).aspx#BKMK_1) 或者直接参考目录下的 [scripts/simple-tcp-proxy.py](scripts/simple-tcp-proxy.py) 用代码实现
+	海马玩监听的端口是本机的26944，如果需要测试脚本运行在远程，用tcp转发到0.0.0.0就好了。方法有很多，微软自带的[netsh](https://technet.microsoft.com/en-us/library/cc776297(WS.10).aspx#BKMK_1) (测试了下并不好使,我用的win10) 或者直接参考目录下的 [scripts/simple-tcp-proxy.py](scripts/simple-tcp-proxy.py) 用代码实现
 
 4. minicap是什么, 如何安装?
 

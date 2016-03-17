@@ -177,7 +177,8 @@ class CropIDE(object):
                 self._gencode_text.set(code)
 
     def _run_code(self):
-        code = 'self._device.'+self._gencode_text.get()
+        d = self._device
+        code = self._gencode_text.get()
         exec(code)
 
     def _run_and_insert(self):
