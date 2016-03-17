@@ -39,13 +39,31 @@ log = logutils.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
 UINode = collections.namedtuple('UINode', ['bounds', 'checkable', 'class_name', 'text', 'resource_id', 'package'])
-Bounds = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
+# Bounds = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
 
 DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
+
+__boundstuple = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
+
+class Bounds(__boundstuple):
+    def __init__(self, *args, **kwargs):
+        super(Bounds, self).__init__(*args, **kwargs)
+        self._area = None
+
+    def is_inside(self, x, y):
+        v = self
+        return x > v.left and x < v.right and y > v.top and y < v.bottom
+
+    @property
+    def area(self):
+        if not self._area:
+            v = self
+            self._area = (v.right-v.left) * (v.bottom-v.top)
+        return self._area
 
 
 class Pattern(object):
@@ -637,6 +655,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             f = parsers.get(key)
             if f:
                 ks[key] = f(value)
+        for key in parsers.keys():
+            ks[key] = ks.get(key)
+
         return UINode(**ks)
 
     def dump_nodes(self):

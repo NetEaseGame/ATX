@@ -74,6 +74,9 @@ class CropIDE(object):
         self._tkimage = None # keep reference
         self._image = None
         self._ratio = 0.5
+        self._uinodes = [] # ui dump
+
+        self._init_vars()
 
     def _init_items(self):
         root = self._root
@@ -90,7 +93,7 @@ class CropIDE(object):
         frm_ctrl_code = tk.Frame(frm_control)
         frm_ctrl_code.grid(column=0, row=2, sticky=tk.EW)
 
-        self._btn_refresh = tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._redraw)
+        self._btn_refresh = tk.Button(frm_ctrl_btns, textvariable=self._refresh_text, command=self._refresh_screen)
         self._btn_refresh.grid(column=0, row=0, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
         tk.Button(frm_ctrl_btns, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
@@ -110,6 +113,11 @@ class CropIDE(object):
         self.canvas.bind("<Button-1>", self._stroke_start)
         self.canvas.bind("<B1-Motion>", self._stroke_move)
         self.canvas.bind("<B1-ButtonRelease>", self._stroke_done)
+        self.canvas.bind("<Motion>", self._mouse_move)
+
+    def _init_vars(self):
+        self.draw_image(self._device.screenshot())
+        self._uinodes = self._device.dump_nodes()
 
     def _worker(self):
         que = self._queue
@@ -140,7 +148,7 @@ class CropIDE(object):
         # print now
         if not self._running and self._auto_refresh_var.get() == 1:
             # print 'redraw'
-            self._redraw()
+            self._refresh_screen()
         self._root.after(200, self._init_refresh)
 
     def _fix_bounds(self, bounds):
@@ -161,9 +169,6 @@ class CropIDE(object):
             return os.path.relpath(path, os.getcwd())
         except:
             return path
-        # if not relpath.startswith('..'):
-            # path = relpath
-        # return path
 
     def _save_screenshot(self):
         save_to = tkFileDialog.asksaveasfilename(**dict(
@@ -218,7 +223,7 @@ class CropIDE(object):
         self._attachfile_text.set(filename)
         print filename
 
-    def _redraw(self):
+    def _refresh_screen(self):
         def foo():
             self._running = True
             image = self._device.screenshot()
@@ -231,10 +236,10 @@ class CropIDE(object):
                 self._draw_bounds(self._bounds)
                 self.canvas.itemconfigure('boundsLine', width=2)
             self._running = False
+            self._uinodes = self._device.dump_nodes()
 
         self._run_async(foo)
         self._refresh_text.set("Refreshing ...")
-        # self._reset()
 
     def _reset(self):
         self._bounds = None
@@ -267,7 +272,7 @@ class CropIDE(object):
             self._offset = (0, 0)
         elif self._bounds is None:
             # print x, y
-            self._gencode_text.set('click(%d, %d)' % (x/self._ratio, y/self._ratio))
+            self._gencode_text.set('d.click(%d, %d)' % (x/self._ratio, y/self._ratio))
         elif self._bounds is not None:
             (x0, y0, x1, y1) = self._fix_bounds(self._bounds)
             cx, cy = (x/self._ratio, y/self._ratio)
@@ -279,6 +284,24 @@ class CropIDE(object):
         self.tag_point(x, y)
         self.canvas.itemconfigure('boundsLine', width=2)
 
+    def _mouse_move(self, event):
+        c = self.canvas
+        x, y = c.canvasx(event.x), c.canvasy(event.y)
+        x, y = x/self._ratio, y/self._ratio
+        # print x, y
+        selected_node = None
+        min_area = 1000000000000000
+        for node in self._uinodes:
+            if node.bounds.is_inside(x, y):
+                if node.bounds.area < min_area:
+                    selected_node = node
+                    min_area = node.bounds.area
+        if selected_node:
+            args = [v*self._ratio for v in selected_node.bounds]
+            self.canvas.delete('ui-bounds')
+            self.canvas.create_rectangle(*args, outline='blue', tags='ui-bounds', width=2)#, fill="blue")
+        # print selected_node
+        
     def _draw_bounds(self, bounds):
         c = self.canvas
         (x0, y0, x1, y1) = self._bounds
@@ -313,8 +336,7 @@ class CropIDE(object):
 
 def main(serial, **kwargs):
     d = atx.connect(serial, **kwargs)
-    gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d) #screenshot=d.screenshot)
-    gui.draw_image(d.screenshot())
+    gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)
     gui.mainloop()
 
 def test():

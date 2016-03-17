@@ -41,8 +41,9 @@ def touch():
 if __name__ == '__main__':
 
     # # stop_app()
-    print 'inside'
-    screenshot()
+    #print 'inside'
+    #screenshot()
+    print d.dump_nodes()
     # w.on('setting.png', atx.Watcher.ACTION_TOUCH)
     # w.on('common.png', atx.Watcher.ACTION_TOUCH)
 
