@@ -74,6 +74,12 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	pip install --upgrade --pre atx
 	```
 
+	最近Pypi似乎有点抽风, 最新的版本需要从源码安装才行
+
+	```
+	pip install -U git+https://github.com/codeskyblue/AirtestX.git
+	```
+
 
 3. 安装android依赖
 
