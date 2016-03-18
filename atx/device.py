@@ -6,18 +6,14 @@
 from __future__ import absolute_import
 
 import collections
-import json
 import os
-import platform
 import re
 import sys
 import subprocess
 import time
 import tempfile
-import threading
 import warnings
 import logging
-import functools
 import xml.dom.minidom
 
 import cv2
@@ -119,21 +115,24 @@ class Watcher(object):
         self.touched = {}
         self.timeout = timeout
 
-    def on(self, pattern, text=None):
+    def on(self, image=None, text=None):
         """Trigger when some object exists
         Args:
-            pattern: image filename or Pattern
+            image: image filename or Pattern
             text: For uiautomator
 
         Returns:
             None
         """
-        if isinstance(pattern, basestring):
-            self._stored_selector = Pattern(pattern)
+        if isinstance(image, basestring):
+            self._stored_selector = Pattern(image)
+        elif isinstance(image, Pattern):
+            self._stored_selector = image
         elif text:
             self._stored_selector = self._dev(text=text)
         else:
-            self._stored_selector = pattern
+            raise SyntaxError("unsupported type: %s", image)
+            
         return self
 
     def touch(self):
