@@ -23,8 +23,12 @@ import tkFileDialog
 from Queue import Queue
 
 import atx
+from atx import logutils
 from PIL import Image, ImageTk
 
+log = logutils.getLogger('tkgui')
+log.setLevel(logging.DEBUG)
+log.debug("GUI Started.")
 
 def insert_code(filename, code, save=True, marker='# ATX CODE END'):
     """ Auto append code """
@@ -55,7 +59,7 @@ class CropIDE(object):
         self._refresh_text = tk.StringVar()
         self._refresh_text.set("Refresh")
         self._gencode_text = tk.StringVar()
-        self._auto_refresh_var = tk.IntVar()
+        self._auto_refresh_var = tk.BooleanVar()
         self._uiauto_detect_var = tk.BooleanVar()
         self._attachfile_text = tk.StringVar()
         self._running = False # if background is running
@@ -76,6 +80,8 @@ class CropIDE(object):
         self._image = None
         self._ratio = 0.5
         self._uinodes = [] # ui dump
+        self._selected_node = None
+        self._hovered_node = None
 
         self._init_vars()
 
@@ -111,7 +117,8 @@ class CropIDE(object):
         frm_code_btns = tk.Frame(frm_code)
         frm_code_btns.grid(column=0, row=2, sticky=(tk.W, tk.E))
         tk.Button(frm_code_btns, text='Run', command=self._run_code).grid(column=0, row=0, sticky=tk.W)
-        tk.Button(frm_code_btns, text='Insert and Run', command=self._run_and_insert).grid(column=1, row=0, sticky=tk.W)
+        self._btn_runedit = tk.Button(frm_code_btns, state=tk.DISABLED, text='Insert and Run', command=self._run_and_insert)
+        self._btn_runedit.grid(column=1, row=0, sticky=tk.W)
         tk.Button(frm_code, text='Select File', command=self._run_selectfile).grid(column=0, row=4, sticky=tk.W)
         tk.Label(frm_code, textvariable=self._attachfile_text).grid(column=0, row=5, sticky=tk.W)
         tk.Button(frm_code, text='Reset', command=self._reset).grid(column=0, row=6, sticky=tk.W)
@@ -152,7 +159,7 @@ class CropIDE(object):
         th.start()
 
     def _init_refresh(self):
-        if not self._running and self._auto_refresh_var.get() == 1:
+        if not self._running and self._auto_refresh_var.get():
             self._refresh_screen()
         self._root.after(200, self._init_refresh)
 
@@ -182,11 +189,11 @@ class CropIDE(object):
             title='Select file'))
         if not save_to:
             return
-        print('Save to:', save_to)
+        log.info('Save to: %s', save_to)
         self._image.save(save_to)    
 
     def _save_crop(self):
-        print self._bounds
+        log.debug('crop bounds: %s', self._bounds)
         if self._bounds is None:
             return
         bounds = self._fix_bounds(self._bounds)
@@ -197,7 +204,7 @@ class CropIDE(object):
         if not save_to:
             return
         save_to = self._fix_path(save_to)
-        print('Save to:', save_to)
+        log.info('Crop save to: %s', save_to)
         self._image.crop(bounds).save(save_to)
         if self._offset == (0, 0):
             self._gencode_text.set('d.click_image("%s")' % save_to)
@@ -224,6 +231,8 @@ class CropIDE(object):
             filetypes=[('All files', '.*'), ('Python', '.py')],
             title='Select file'))
         self._attachfile_text.set(filename)
+        if filename:
+            self._btn_runedit.config(state=tk.NORMAL)
         print filename
 
     def _refresh_screen(self):
@@ -233,30 +242,18 @@ class CropIDE(object):
             self.draw_image(image)
             self._refresh_text.set("Refresh")
 
-            if self._center != (0, 0):
-                self.tag_point(*self._center)
-            if self._bounds is not None:
-                self._draw_bounds(self._bounds)
-                self.canvas.itemconfigure('select-bounds', width=2)
+            self._draw_lines()
             self._running = False
             self._uinodes = self._device.dump_nodes()
 
         self._run_async(foo)
         self._refresh_text.set("Refreshing ...")
 
-    def _reset(self):
-        self._bounds = None
-        self._offset = (0, 0)
-        self._center = (0, 0)
-        self.canvas.delete('select-bounds')
-        self.canvas.delete('select-point')
-        self.canvas.delete('ui-bounds')
-
     def _stroke_start(self, event):
         self._moved = False
         c = self.canvas
         self._lastx, self._lasty = c.canvasx(event.x), c.canvasy(event.y)
-        print 'click:', self._lastx, self._lasty
+        log.debug('mouse position: %s', (self._lastx, self._lasty))
 
     def _stroke_move(self, event):
         self._moved = True
@@ -270,18 +267,25 @@ class CropIDE(object):
     def _stroke_done(self, event):
         c = self.canvas
         x, y = c.canvasx(event.x), c.canvasy(event.y)
-        if self._moved:
+        if self._moved: # drag action
             x, y = (self._lastx+x)/2, (self._lasty+y)/2
             self._offset = (0, 0)
         elif self._bounds is None:
-            self._gencode_text.set('d.click(%d, %d)' % (x/self._ratio, y/self._ratio))
+            cx, cy = (x/self._ratio, y/self._ratio)
+            if self._uiauto_detect_var.get() and self._hovered_node:
+                self._selected_node = self._hovered_node
+                log.debug("select node: %s", repr(self._selected_node))
+                log.debug("center: %s", self._selected_node.bounds.center)
+                # self._device.click(cx, cy)
+
+            self._gencode_text.set('d.click(%d, %d)' % (cx, cy))
+
         elif self._bounds is not None:
             (x0, y0, x1, y1) = self._fix_bounds(self._bounds)
             cx, cy = (x/self._ratio, y/self._ratio)
             mx, my = (x0+x1)/2, (y0+y1)/2
             self._offset = (offx, offy) = map(int, (cx-mx, cy-my))
             self._gencode_text.set('offset=(%d, %d)' % (offx, offy))
-        # print self._bounds
         self._center = (x, y) # rember position
         self._draw_lines()
         self.canvas.itemconfigure('select-bounds', width=2)
@@ -290,7 +294,6 @@ class CropIDE(object):
         self._image = image
         self._size = (width, height) = image.size
         w, h = int(width*self._ratio), int(height*self._ratio)
-        # print w, h
         image = image.copy()
         image.thumbnail((w, h), Image.ANTIALIAS)
         tkimage = ImageTk.PhotoImage(image)
@@ -298,19 +301,31 @@ class CropIDE(object):
         self.canvas.config(width=w, height=h)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=tkimage)
 
-    def _draw_bounds(self, bounds):
+    def _draw_bounds(self, bounds, color=None, tags='select-bounds'):
+        if not color:
+            color=self._color
         c = self.canvas
-        (x0, y0, x1, y1) = self._bounds
-        c.create_rectangle(x0, y0, x1, y1, outline=self._color, tags='select-bounds', width=5)#, fill="blue")
-        # c.create_line((x0, y0, x1, y1), fill=self._color, width=2, tags='select-bounds', dash=(4, 4))
-        # c.create_line((x0, y1, x1, y0), fill=self._color, width=2, tags='select-bounds', dash=(4, 4))
+        (x0, y0, x1, y1) = bounds
+        c.create_rectangle(x0, y0, x1, y1, outline=color, tags='select-bounds', width=2)
 
     def _draw_lines(self):
         if self._center and self._center != (0, 0):
             x, y = self._center
-            self.tag_point(x, y)
+            self.draw_point(x, y)
         if self._bounds:
             self._draw_bounds(self._bounds)
+        if self._hovered_node:
+            # print self._hovered_node.bounds
+            bounds = [v*self._ratio for v in self._hovered_node.bounds]
+            self._draw_bounds(bounds, color='blue', tags='ui-bounds')
+
+    def _reset(self):
+        self._bounds = None
+        self._offset = (0, 0)
+        self._center = (0, 0)
+        self.canvas.delete('select-bounds')
+        self.canvas.delete('select-point')
+        self.canvas.delete('ui-bounds')
 
     def _mouse_move(self, event):
         if not self._uiauto_detect_var.get():
@@ -319,27 +334,23 @@ class CropIDE(object):
         x, y = c.canvasx(event.x), c.canvasy(event.y)
         x, y = x/self._ratio, y/self._ratio
         # print x, y
-        selected_node = None
+        hovered_node = None
         min_area = None
         for node in self._uinodes:
             if node.bounds.is_inside(x, y):
                 if min_area is None or node.bounds.area < min_area:
-                    selected_node = node
+                    hovered_node = node
                     min_area = node.bounds.area
-        if selected_node:
-            args = [v*self._ratio for v in selected_node.bounds]
-            self.canvas.delete('ui-bounds')
-            self.canvas.create_rectangle(*args, outline='blue', tags='ui-bounds', width=2)#, fill="blue")
-        print selected_node
+        if hovered_node:
+            self._hovered_node = hovered_node
+            self._reset()
+            self._draw_lines()
 
-    def tag_point(self, x, y):
-        # coord = 10, 50, 110, 150
+    def draw_point(self, x, y):
         self.canvas.delete('select-point')
         r = max(min(self._size)/30*self._ratio, 5)
         self.canvas.create_line(x-r, y, x+r, y, width=2, fill=self._color, tags='select-point')
         self.canvas.create_line(x, y-r, x, y+r, width=2, fill=self._color, tags='select-point')
-        # coord = x-r, y-r, x+r, y+r
-        # self.canvas.create_oval(coord, fill='gray', stipple="gray50", tags='select-point')
 
     def mainloop(self):
         self._root.mainloop()
@@ -355,8 +366,7 @@ def test():
     gui = CropIDE('AirtestX IDE')
     image = Image.open('screen.png')
     gui.draw_image(image)
-    gui.tag_point(100, 100)
-    # gui.canvas.create_rectangle(10, 60, 30, 70, fill="red", stipple="gray12")
+    gui.draw_point(100, 100)
     gui.mainloop()
 
 

@@ -38,7 +38,15 @@ from atx import imutils
 log = logutils.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
-UINode = collections.namedtuple('UINode', ['bounds', 'checkable', 'class_name', 'text', 'resource_id', 'package'])
+UINode = collections.namedtuple('UINode', [
+    'xml',
+    'bounds', 
+    'selected', 'checkable', 'clickable', 'scrollable', 'focusable', 'enabled', 'focused', 'long_clickable',
+    'password',
+    'class_name',
+    'index', 'resource_id',
+    'text', 'content_desc',
+    'package'])
 # Bounds = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +72,11 @@ class Bounds(__boundstuple):
             v = self
             self._area = (v.right-v.left) * (v.bottom-v.top)
         return self._area
+
+    @property
+    def center(self):
+        v = self
+        return (v.left+v.right)/2, (v.top+v.bottom)/2
 
 
 class Pattern(object):
@@ -627,6 +640,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         __alias = {
             'class': 'class_name',
             'resource-id': 'resource_id',
+            'content-desc': 'content_desc',
+            'long-clickable': 'long_clickable',
         }
 
         def parse_bounds(text):
@@ -645,18 +660,31 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             'bounds': parse_bounds,
             'text': convstr,
             'class_name': convstr,
-            'checkable': str2bool,
             'resource_id': convstr,
             'package': convstr,
+            'checkable': str2bool,
+            'scrollable': str2bool,
+            'focused': str2bool,
+            'clickable': str2bool,
+            'enabled': str2bool,
+            'selected': str2bool,
+            'long_clickable': str2bool,
+            'focusable': str2bool,
+            'password': str2bool,
+            'index': int,
+            'content_desc': convstr,
         }
         ks = {}
         for key, value in node.attributes.items():
             key = __alias.get(key, key)
             f = parsers.get(key)
-            if f:
+            if value is None:
+                ks[key] = None
+            elif f:
                 ks[key] = f(value)
         for key in parsers.keys():
             ks[key] = ks.get(key)
+        ks['xml'] = node
 
         return UINode(**ks)
 
