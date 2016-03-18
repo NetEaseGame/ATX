@@ -3,6 +3,7 @@
 import os
 import time
 import atx
+import logging
 from atx import consts
 print 'Version:', atx.version
 
@@ -11,18 +12,6 @@ d = atx.connect(None)
 # print d.screenshot('screen.png')
 
 def screenshot():
-    # height = d.info['displayHeight']
-    # height = 1920 # this is for my phone
-    # params = '{x}x{y}@{x}x{y}/{r}'.format(
-    #     x=d.info['displayWidth'], y=height, r=d.info['displayRotation'])
-    # start = time.time()
-    # command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > /data/local/tmp/screen2.png'.format(params)
-    # # print d.touch_image('a.png')
-    # d.shell(command)
-    # os.system('adb pull /data/local/tmp/screen2.png')
-    # print time.time()-start
-    # Image now save in screen2.png
-    # d._minicap()
     start = time.time()
     #d.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
     d.screenshot('ttt.png')
@@ -39,7 +28,10 @@ def touch():
     d.touch_image('button.png')
 
 if __name__ == '__main__':
-
+    log = logging.getLogger('atx')
+    log.setLevel(logging.DEBUG)
+    with d.watch('simulator', 10) as w:
+        w.on(atx.Pattern("mmm.png", offset=(-79, -13))).click()
     # # stop_app()
     #print 'inside'
     #screenshot()

@@ -28,7 +28,7 @@ from PIL import Image, ImageTk
 
 log = logutils.getLogger('tkgui')
 log.setLevel(logging.DEBUG)
-log.debug("GUI Started.")
+
 
 def insert_code(filename, code, save=True, marker='# ATX CODE END'):
     """ Auto append code """
@@ -357,6 +357,7 @@ class CropIDE(object):
         
 
 def main(serial, **kwargs):
+    log.debug("GUI Started.")
     d = atx.connect(serial, **kwargs)
     gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)
     gui.mainloop()

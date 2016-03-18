@@ -35,8 +35,9 @@ from atx import logutils
 from atx import imutils
 
 
-log = logutils.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log = logutils.getLogger('atx')
+log.setLevel(logging.INFO)
+
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
 UINode = collections.namedtuple('UINode', [
     'xml',
@@ -47,7 +48,6 @@ UINode = collections.namedtuple('UINode', [
     'index', 'resource_id',
     'text', 'content_desc',
     'package'])
-# Bounds = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 __tmp__ = os.path.join(__dir__, '__cache__')
@@ -117,23 +117,21 @@ class Watcher(object):
         self.touched = {}
         self.timeout = timeout
 
-    def on(self, image=None, actions=None, text=None):
+    def on(self, pattern, text=None):
         """Trigger when some object exists
         Args:
-            image: string location of an image
-            flags: ACTION_TOUCH | ACTION_QUIT
+            pattern: image filename or Pattern
+            text: For uiautomator
 
         Returns:
             None
         """
-        if isinstance(image, basestring):
-            self._stored_selector = Pattern(image)
+        if isinstance(pattern, basestring):
+            self._stored_selector = Pattern(pattern)
         elif text:
             self._stored_selector = self._dev(text=text)
-
-        if actions:
-            self._events.append(Watcher.Event(image, actions))
-            self._stored_selector = None
+        else:
+            self._stored_selector = pattern
         return self
 
     def touch(self):
@@ -156,22 +154,10 @@ class Watcher(object):
         ''' returns position(x, y) or None'''
         if isinstance(selector, Pattern):
             ret = self._dev.exists(selector.image, screen=screen)
+            log.debug('watch match: %s, confidence: %s', selector, ret)
             if ret is None:
                 return None
             return ret.pos
-
-            # exists = False
-            # if ret.method == consts.IMAGE_MATCH_METHOD_TMPL:
-            #     if ret.confidence > 0.8:
-            #         exists = True
-            #     # else:
-            #         # print("Skip confidence:", ret.confidence)
-            # elif ret.method == consts.IMAGE_MATCH_METHOD_SIFT:
-            #     matches, total = ret.confidence
-            #     if 1.0*matches/total > 0.5:
-            #         exists = True
-
-            # if exists:
         elif isinstance(selector, AutomatorDeviceObject):
             if not selector.exists:
                 return None
@@ -204,7 +190,6 @@ class Watcher(object):
                 if time.time() - start_time > self.timeout:
                     raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
                 sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-                #log.debug("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
                 sys.stdout.flush()
         sys.stdout.write('\n')
 
