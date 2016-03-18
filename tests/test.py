@@ -30,12 +30,17 @@ def touch():
 if __name__ == '__main__':
     log = logging.getLogger('atx')
     log.setLevel(logging.DEBUG)
+
+    def foo(evt):
+        print 'good', evt
+        d.click(*evt.pos)
+
     with d.watch('simulator', 10) as w:
-        w.on(atx.Pattern("mmm.png", offset=(-79, -13))).click()
+        w.on(atx.Pattern("mmm.png", offset=(-79, -13))).do(foo).quit()
     # # stop_app()
     #print 'inside'
     #screenshot()
-    print d.dump_nodes()
+    # print d.dump_nodes()
     # w.on('setting.png', atx.Watcher.ACTION_TOUCH)
     # w.on('common.png', atx.Watcher.ACTION_TOUCH)
 

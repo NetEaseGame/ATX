@@ -17,6 +17,7 @@ import tempfile
 import threading
 import warnings
 import logging
+import functools
 import xml.dom.minidom
 
 import cv2
@@ -105,7 +106,8 @@ class Watcher(object):
     ACTION_TOUCH = 1 <<0
     ACTION_QUIT = 1 <<1
 
-    Event = collections.namedtuple('WatchEvent', ['selector', 'actions'])
+    Handler = collections.namedtuple('Handler', ['selector', 'action'])
+    Event = collections.namedtuple('Event', ['selector', 'pos'])
 
     def __init__(self, device, name=None, timeout=None):
         self._events = []
@@ -138,11 +140,32 @@ class Watcher(object):
         return self.click()
 
     def click(self):
-        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_CLICK))
+        self._events.append(Watcher.Handler(self._stored_selector, Watcher.ACTION_CLICK))
         return self
 
     def quit(self):
-        self._events.append(Watcher.Event(self._stored_selector, Watcher.ACTION_QUIT))
+        self._events.append(Watcher.Handler(self._stored_selector, Watcher.ACTION_QUIT))
+
+    def do(self, func):
+        """Trigger with function call
+        Args:
+            func: function which will called when object found. For example.
+
+            def foo(event):
+                print event.pos # (x, y) position
+            
+            w.on('kitty.png').do(foo)
+        
+        Returns:
+            Watcher object
+
+        Raises:
+            SyntaxError
+        """
+        if not callable(func):
+            raise SyntaxError("%s should be a function" % func)
+        self._events.append(Watcher.Handler(self._stored_selector, func))
+        return self
 
     def __enter__(self):
         return self
@@ -172,11 +195,12 @@ class Watcher(object):
             if pos is None:
                 continue
 
-            if evt.actions & Watcher.ACTION_CLICK:
-                log.debug('trigger watch click: %s', pos)
+            if callable(evt.action):
+                evt.action(Watcher.Event(evt.selector, pos))
+            elif evt.action == Watcher.ACTION_CLICK:
+                log.info('trigger watch click: %s', pos)
                 self._dev.click(*pos)
-
-            if evt.actions & Watcher.ACTION_QUIT:
+            elif evt.action == Watcher.ACTION_QUIT:
                 self._run = False
 
     def _run_watch(self):

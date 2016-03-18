@@ -229,11 +229,16 @@ except atx.ImageNotFoundError:
 	print('Image not found')
 
 # watcher, trigger when screenshot is called
+def foo(event):
+	print 'It happens', event
+	d.click(*event.pos)
+
 timeout = 50 # 50s
 with d.watch('enter game', timeout) as w:
 	w.on('enter-game').click()
 	w.on('inside.png').quit()
 	w.on(text='Login').quit() # UI Component
+	w.on('outside.png').do(foo)
 
 # click by UI component
 d(text='Enter').click()
