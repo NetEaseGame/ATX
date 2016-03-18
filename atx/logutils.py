@@ -4,14 +4,10 @@
 import logging
 
 
-_inited = {}
-
 def getLogger(name):
     logger = logging.getLogger(name)
-    #name = name.split('.', 1)[0]
-    if not _inited.get(name):
+    if len(logger.handlers) == 0:
         ch = logging.StreamHandler()
-        _inited[name] = ch
         fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
         formatter = logging.Formatter(fmt)
         ch.setFormatter(formatter)
@@ -26,4 +22,3 @@ if __name__ == '__main__':
     log.debug("dd Hello")
     log = getLogger('test')
     log.warn("dd Hello")
-
