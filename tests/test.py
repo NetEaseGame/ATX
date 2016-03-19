@@ -31,12 +31,13 @@ if __name__ == '__main__':
     log = logging.getLogger('atx')
     log.setLevel(logging.DEBUG)
 
-    def foo(evt):
-        print 'good', evt
-        d.click(*evt.pos)
+    d.screen.off()
+    #def foo(evt):
+        #print 'good', evt
+        #d.click(*evt.pos)
 
-    with d.watch('simulator', 10) as w:
-        w.on(atx.Pattern("mmm.png", offset=(-79, -13))).do(foo).quit()
+    #with d.watch('simulator', 10) as w:
+        #w.on(atx.Pattern("mmm.png", offset=(-79, -13))).do(foo).quit()
     # # stop_app()
     #print 'inside'
     #screenshot()

@@ -212,7 +212,7 @@ d.start_app(package_name)
 
 print d.wlan_ip
 # expect 10.1.x.x
-d.sleep(5) # sleep 5s
+d.delay(5) # delay 5s
 d.adb_shell('uptime')
 
 # this is default (first check minicap and then check uiautomator)

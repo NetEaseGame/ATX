@@ -228,9 +228,8 @@ class DeviceMixin(object):
         self._bounds = None
         self._event_handlers = []
 
-    def sleep(self, secs):
-        """Sleep some seconds
-
+    def delay(self, secs):
+        """Delay some seconds
         Args:
             secs: float seconds
 
@@ -435,6 +434,14 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """ Check if app in running in foreground """
         return d.info['currentPackageName'] == package_name
 
+
+    def sleep(self, secs=None):
+        """Depreciated. use delay instead."""
+        if secs is None:
+            self._uiauto.sleep()
+        else:
+            self.delay(secs)
+            
     @property
     @patch.run_once
     def display(self):
