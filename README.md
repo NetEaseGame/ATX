@@ -48,8 +48,12 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	安装方法很简单，例如 `pip install np.whl`, pip最好版本高一点(>=8.1.0)，避免出错
 
 	```
+	# For Win32
 	pip install http://goandroid.qiniudn.com/opencv_python-2.4.12-cp27-none-win32.whl
 	pip install http://goandroid.qiniudn.com/numpy-1.10.4.mkl-cp27-none-win32.whl
+	# For AMD64
+	pip install http://goandroid.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	pip install http://goandroid.qiniucdn.com/numpy-1.10.4.mkl-cp27-none-win_amd64.whl
 	```
 
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
