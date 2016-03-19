@@ -228,6 +228,12 @@ try:
 except atx.ImageNotFoundError:
 	print('Image not found')
 
+# click offset image
+d.click_image(atx.Pattern('button.png', offset=(100, 20)))
+
+# image with specific resolution
+d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
+
 # watcher, trigger when screenshot is called
 def foo(event):
 	print 'It happens', event
@@ -308,7 +314,7 @@ d.stop_app(package_name)
 	```
 	注意第一个数要比第二个数小
 
-	设置完后，当遇到其他分辨率的手机，就会自动去缩放。因为AirtestX主要针对游戏用户，横屏的时候，缩放是根据Y轴缩放的，竖排则根据X轴。offset则是同时计算X和Y的放大比率。可能有点抽象，理解不了也没关系
+	设置完后，当遇到其他分辨率的手机，就会自动去缩放。因为AirtestX主要针对游戏用户，横屏的时候，缩放是根据Y轴缩放的，竖排则根据X轴。可能有点抽象，理解不了也没关系
 
 3. 是否可以在模拟器上运行自动测试
 

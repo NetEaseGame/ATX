@@ -102,7 +102,7 @@ class CropIDE(object):
 
         self._btn_refresh = tk.Button(frm_screenshot, textvariable=self._refresh_text, command=self._refresh_screen)
         self._btn_refresh.grid(column=0, row=0, sticky=tk.W)
-        tk.Button(frm_screenshot, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
+        # tk.Button(frm_screenshot, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
         tk.Button(frm_screenshot, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
         
         tk.Button(frm_screenshot, text="Save screenshot", command=self._save_screenshot).grid(column=0, row=3, sticky=tk.W)
@@ -359,6 +359,7 @@ class CropIDE(object):
 def main(serial, **kwargs):
     log.debug("GUI Started.")
     d = atx.connect(serial, **kwargs)
+    d.wakeup()
     gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)
     gui.mainloop()
 

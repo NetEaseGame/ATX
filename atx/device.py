@@ -77,10 +77,19 @@ class Bounds(__boundstuple):
 
 
 class Pattern(object):
-    def __init__(self, image, offset=(0, 0), anchor=0):
+    def __init__(self, image, offset=(0, 0), anchor=0, rsl=None, resolution=None):
+        """
+        Args:
+            image: image filename or image URL
+            offset: offset of image center
+            anchor: not supported
+            resolution: image origin screen resolution
+            rsl: alias of resolution
+        """
         self._name = None
         self._image = imutils.open(image)
         self._offset = offset
+        self._resolution = rsl or resolution
         
         if isinstance(image, basestring):
             self._name = image
@@ -95,6 +104,11 @@ class Pattern(object):
     @property
     def offset(self):
         return self._offset
+
+    @property
+    def resolution(self):
+        return self._resolution
+    
     
     
 class Watcher(object):
@@ -288,8 +302,9 @@ class DeviceMixin(object):
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
-            if self.resolution is not None:
-                ow, oh = self.resolution
+            resolution = pattern.resolution or self.resolution
+            if resolution is not None:
+                ow, oh = resolution
                 fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
                 # For horizontal screen, scale by Y
                 # For vertical screen, scale by X
@@ -297,11 +312,8 @@ class DeviceMixin(object):
                 # FIXME(ssx): need test here, I never tried before.
                 scale = fy if self.rotation in (1, 3) else fx
                 search_img = cv2.resize(search_img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-                dx, dy = int(dx*fx), int(dy*fy)
+                dx, dy = int(dx*scale), int(dy*scale)
 
-                # TODO(useless)
-                # cv2.imwrite('resize-tmp.png', search_img)
-                # cv2.imwrite('current-screen.png', screen)
             ret = ac.find_template(screen, search_img)
         elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             ret = ac.find_sift(screen, search_img, min_match_count=10)
@@ -441,7 +453,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             self._uiauto.sleep()
         else:
             self.delay(secs)
-            
+
     @property
     @patch.run_once
     def display(self):
