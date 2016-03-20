@@ -3,7 +3,3 @@
 
 	- bounds
 	- region(left, right, top, bottom)
-2. Patten
-
-	- filename
-	- offset

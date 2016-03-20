@@ -1,4 +1,0 @@
-recursive-include airtest/htmltemplate *.js *.html *.json *.css *.map
-recursive-include airtest/binfiles air* *.apk
-recursive-include airtest/androaxml *.zip
-recursive-include airtest/webgui *

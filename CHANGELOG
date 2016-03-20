@@ -1,6 +1,34 @@
 CHANGES
 =======
 
+* opencv install add win amd64 easy install method
+* add resolution for Pattern, close #3
+* depreciated sleep, use delay instead
+* move all cli command to direcotry cmds
+* fix instance bug
+* watch object add func:do
+* fix #1
+* update secure of travis
+
+1.0.6
+-----
+
+* Add desc how to install from source
+* better uidump tkgui support
+* UI detect update
+* support ui dump in ide, which looks very nice
+* add gui
+* make tkgui save kindly
+* add event listener
+* update readme example resolution
+* analysis all current screen size
+* fix gui run code bug
+* add parse ui node dump_nodes() function
+* update desc
+* add auto refresh support
+* add screenshot button and d
+* update change log
+
 1.0.5
 -----
 
