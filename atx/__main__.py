@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # USAGE
 # python -matx -s ESLKJXX gui
@@ -7,7 +8,7 @@ import functools
 import argparse
 
 from atx.cmds import tkgui, minicap, tcpproxy, webide
-from atx.cmds import minicap
+
 
 def _gui(args):
     tkgui.main(args.serial, host=args.host)
@@ -26,7 +27,7 @@ def _webide(args):
 
 def main():
     ap = argparse.ArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument("-s", "--serial", required=False, help="Android SerialNo")
     ap.add_argument("-H", "--host", required=False, default='127.0.0.1', help="Adb host")
     ap.add_argument("-P", "--port", required=False, type=int, default=5037, help="Adb port")
@@ -46,7 +47,7 @@ def main():
     parser_tcpproxy.set_defaults(func=_tcpproxy)
 
     parser_webide = add_parser('webide')
-    parser_webide.add_argument('--no-browser', dest='no_browser', default=False, type=bool, help='Not open browser')
+    parser_webide.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
     parser_webide.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
     parser_webide.set_defaults(func=_webide)
 

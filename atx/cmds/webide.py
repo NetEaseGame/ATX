@@ -19,6 +19,7 @@ def get_valid_port():
     for port in range(10010, 10100):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = sock.connect_ex(('127.0.0.1', port))
+        sock.close()
         if result != 0:
             return port
 
@@ -40,6 +41,7 @@ def main(**kws):
     application = make_app({
         'static_path': os.path.join(__dir__, 'static'),
         'template_path': os.path.join(__dir__, 'static'),
+        'debug': True,
     })
     port = kws.get('port', None)
     if not port:

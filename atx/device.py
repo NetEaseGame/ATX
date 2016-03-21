@@ -30,6 +30,7 @@ from atx import patch
 from atx import base
 from atx import logutils
 from atx import imutils
+from atx import adb
 
 
 log = logutils.getLogger('atx')
@@ -108,7 +109,6 @@ class Pattern(object):
     @property
     def resolution(self):
         return self._resolution
-    
     
     
 class Watcher(object):
@@ -423,6 +423,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
         self._host = kwargs.get('host', '127.0.0.1')
         self._port = kwargs.get('port', 5037)
+        self._adb = adb.Adb(serialno, self._host, self._port)
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
@@ -442,10 +443,21 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """ Wlan IP """
         return self.adb_shell(['getprop', 'dhcp.wlan0.ipaddress']).strip()
 
+    def forward(self, device_port, local_port=None):
+        """Forward device port to local
+        Args:
+            device_port: port inside device
+            local_port: port on PC, if this value is None, a port will random pick one.
+
+        Returns:
+            tuple, (host, local_port)
+        """
+        port = self._adb.forward(device_port, local_port)
+        return (self._host, port)
+
     def is_app_alive(self, package_name):
         """ Check if app in running in foreground """
         return d.info['currentPackageName'] == package_name
-
 
     def sleep(self, secs=None):
         """Depreciated. use delay instead."""
@@ -480,9 +492,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Rotaion of the phone
 
         0: normal
-        1: power key on the right
-        2: power key on the top
-        3: power key on the left
+        1: home key on the right
+        2: home key on the top
+        3: home key on the left
         """
         if self.screen_rotation in range(4):
             return self.screen_rotation
@@ -510,7 +522,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             self._minicap_params(), phone_tmp_file)
         try:
             self.adb_shell(command)
-            self.adb(['pull', phone_tmp_file, local_tmp_file])
+            self.adb_cmd(['pull', phone_tmp_file, local_tmp_file])
             image = imutils.open_as_pillow(local_tmp_file)
 
             # Fix rotation not rotate right.
@@ -587,7 +599,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self.last_screenshot = screen
         return screen
 
-    def adb(self, command):
+    def adb_cmd(self, command):
         '''
         Run adb command, for example: adb(['pull', '/data/local/tmp/a.png'])
 
@@ -621,9 +633,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             command output
         '''
         if isinstance(command, list) or isinstance(command, tuple):
-            return self.adb(['shell'] + list(command))
+            return self.adb_cmd(['shell'] + list(command))
         else:
-            return self.adb(['shell'] + [command])
+            return self.adb_cmd(['shell'] + [command])
 
     def start_app(self, package_name):
         '''

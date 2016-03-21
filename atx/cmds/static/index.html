@@ -8,15 +8,61 @@
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
+    <link rel="stylesheet" href="{{static_url('index.css')}}">
   </head>
   <body>
-    <h1>你好，AirtestX！</h1>
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid"> <!-- container class -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">AirtestX IDE</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Home</a></li>
+              <!-- <li><a href="#about">About</a></li> -->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container-fluid" style="height: 100%">
+      <div class="col-md-12" style="height: 100%">
+        <div class="col-md-3">
+          <h1>你好，AirtestX！</h1>
+        </div>
+        <div class="col-md-9" style="height: 99%">
+          <div id="blocklyDiv" style="position: relative; width: 100%; height: 100%"></div>
+          <!-- <div id="blocklyArea" style="position: relative;"> -->
+          <!-- </div> -->
+        </div>
+      </div>
+    </div>
+
+    <xml id="toolbox" style="display: none">
+      <block type="controls_if"></block>
+      <block type="controls_repeat_ext"></block>
+      <block type="logic_compare"></block>
+      <block type="math_number"></block>
+      <block type="math_arithmetic"></block>
+      <block type="text"></block>
+      <block type="text_print"></block>
+    </xml>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/master/blockly_compressed.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/master/blocks_compressed.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/master/msg/js/en.js"></script>
+
     <script src="{{static_url('index.js')}}"></script>
     <!-- Google Analytics Code -->
     <script>
