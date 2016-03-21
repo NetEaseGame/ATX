@@ -9,6 +9,9 @@ class BaseError(Exception):
     def __str__(self):
         return repr(self.value)
 
+class DeviceNotFoundError(BaseError):
+    pass
+
 class ImageNotFoundError(BaseError):
     pass
 
