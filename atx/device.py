@@ -48,7 +48,6 @@ UINode = collections.namedtuple('UINode', [
     'package'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-__tmp__ = os.path.join(__dir__, '__cache__')
 
 DISPLAY_RE = re.compile(
     '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
@@ -153,6 +152,7 @@ class Watcher(object):
         return self.click()
 
     def click(self):
+        """Touch"""
         self._events.append(Watcher.Handler(self._stored_selector, Watcher.ACTION_CLICK))
         return self
 
@@ -272,6 +272,10 @@ class DeviceMixin(object):
         if not ret.matched:
             return None
         return ret
+
+    def touch(self, x, y):
+        """ Alias for click """
+        self.click(x, y)
 
     def match(self, pattern, screen=None, threshold=None):
         """Check if image position in screen
@@ -545,10 +549,6 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             raise IOError("Screenshot use uiautomator failed.")
         finally:
             remove_force(tmp_file)
-
-    def touch(self, x, y):
-        """ Alias for click """
-        self.click(x, y)
 
     def click(self, x, y):
         """

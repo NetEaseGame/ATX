@@ -25,6 +25,7 @@ def _tcpproxy(args):
 def _webide(args):
     webide.main(open_browser=(not args.no_browser), port=args.web_port)
 
+
 def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
