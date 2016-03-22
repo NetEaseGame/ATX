@@ -8,6 +8,7 @@ import socket
 import tornado.ioloop
 import tornado.web
 from atx import logutils
+from atx import base
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,14 +26,20 @@ def get_valid_port():
 
     raise SystemError("Can not find a unused port, amazing!")
 
+IMAGE_PATH = ['.', 'imgs', 'images']
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render('index.html')
+        imgs = base.search_image(path=IMAGE_PATH)
+        imgs = [(os.path.basename(name), name) for name in imgs]
+        self.render('index.html', images=imgs)
 
 
 def make_app(settings={}):
+    static_path = os.getcwd()
     application = tornado.web.Application([
         (r"/", MainHandler),
+        (r'/static_imgs/(.*)', tornado.web.StaticFileHandler, {'path': static_path}),
     ], **settings)
     return application
 
