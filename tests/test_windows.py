@@ -39,7 +39,10 @@ def test():
     win = Window(exe_file=filepath)
     print win.position
     print win.size
-    win.test()
+    win._screenshot('screenshot.bmp')
+    win._input_left_mouse(300, 200)
+    win._screenshot('screenshot2.bmp')
+    win.pilimage.save('test.png')
 
 
 if __name__ == '__main__':

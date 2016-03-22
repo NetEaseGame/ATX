@@ -12,6 +12,7 @@ import win32process
 from PIL import Image
 
 from atx.device import DeviceMixin
+from atx.errors import WindowAppNotFoundError
 
 def find_process_id(exe_file):
     exe_file = os.path.normpath(exe_file).lower()
@@ -64,7 +65,7 @@ class Window(object):
                 if hs: hwnd = hs[0]
 
         if hwnd == 0:
-            raise DeviceNotFoundError("WindowsDevice not found!")
+            raise WindowAppNotFoundError("WindowsDevice not found!")
 
         # self._window_name = win32gui.GetWindowText(hwnd)
         # self._window_pid = pid
@@ -126,50 +127,33 @@ class Window(object):
 
     @property
     def pilimage(self):
-
-
         _bits = self.image.GetBitmapBits()
-        w, h = self.size
-        s = len(_bits)
+        width, height = self.size
 
         bits = []
-        for i in range(s/4):
+        for i in range(len(_bits)/4):
             ## change to rpg here, by set alpha = -1
             bits.append(struct.pack('4b', _bits[4*i+2], _bits[4*i+1], _bits[4*i+0], -1))
 
         ## do a turn over
         _bits = []
-        for i in range(h):
-            for j in range(w):
-                _bits.append( bits[(h-1-i)*w+ j] )
+        for i in range(height):
+            for j in range(width):
+                _bits.append( bits[(height-1-i)*width+ j] )
         _bits = "".join(_bits)
 
-        img = Image.frombuffer('RGBA', (w, h), _bits)
+        img = Image.frombuffer('RGBA', (width, height), _bits)
         return img
 
-    def screenshot(self, filepath):
+    def _screenshot(self, filepath):
         dirpath = os.path.dirname(os.path.abspath(filepath))
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
         self.image.SaveBitmapFile(self._memdc, filepath)
         time.sleep(0.5)
 
-    def set_cursor(self):
-        """show mouse position when cursor is inside window."""
-        cur = win32gui.LoadCursor(0, win32con.IDC_CROSS)
-        win32gui.SetCursor(cur)
-
     def drag(self):
         pass
-
-
-    def test(self):
-        # self.screenshot('screenshot.bmp')
-        # self._input_left_mouse(300, 200)
-        # self.screenshot('screenshot2.bmp')
-        # self.pilimage.save('test.png')
-        self.set_cursor()
-        win32api.SetCursorPos((100, 100))
 
 
 class WindowsDevice(DeviceMixin):
@@ -194,17 +178,6 @@ class WindowsDevice(DeviceMixin):
             img.save(filename)
         return img
 
-    def touch(self, x, y):
-        """Touch specified position
-
-        Args:
-            x, y: int, pixel distance from window (left, top) as origin
-
-        Returns:
-            None
-        """
-        self.click(x, y)
-
     def click(self, x, y):
         """Simulate click within window screen.
 
@@ -226,3 +199,9 @@ class WindowsDevice(DeviceMixin):
             None
         """
         self._win._input_keyboard(text)
+
+    @property
+    def display(self):
+        """Display size in pixels."""
+        w, h = self._win.size
+        return collections.namedtuple('Display', ['width', 'height'])(w, h)
