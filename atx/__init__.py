@@ -15,13 +15,9 @@ try:
 except pkg_resources.DistributionNotFound:
     version = 'unknown'
 
-# from atx import device
-# from atx import patch
-# from atx import imutils
 from atx.consts import *
 from atx.errors import *
 from atx.device import Pattern
-# from atx.android_device import AndroidDevice
 
 
 def connect(*args, **kwargs):
@@ -36,10 +32,6 @@ def connect(*args, **kwargs):
         SyntaxError, EnvironmentError
     """
     platform = kwargs.pop('platform', 'android')
-    # devclss = {
-    #     'android': android_device.AndroidDevice,
-    # }
-    # cls = devclss.get(platform)
 
     cls = None
     if platform == 'android':
@@ -80,18 +72,3 @@ def connect(*args, **kwargs):
 #         if hasattr(self._m, key):
 #             return getattr(self._m, key)
 #         raise AttributeError('Monitor object has no attribute "%s"' % key)
-
-
-# def getDevices(device='android'):
-#     ''' 
-#     @return devices list 
-#     '''
-#     subprocess.call(['adb', 'start-server'])
-#     output = subprocess.check_output(['adb', 'devices'])
-#     result = []
-#     for line in str(output).splitlines()[1:]:
-#         ss = line.strip().split()
-#         if len(ss) == 2:
-#             (devno, state) = ss
-#             result.append((devno, state))
-#     return result
