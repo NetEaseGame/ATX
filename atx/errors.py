@@ -9,7 +9,7 @@ class BaseError(Exception):
     def __str__(self):
         return repr(self.value)
 
-class WindowAppNotFoundError(BaseError):
+class WindowsAppNotFoundError(BaseError):
     pass
 
 class ImageNotFoundError(BaseError):

@@ -12,7 +12,7 @@ import win32process
 from PIL import Image
 
 from atx.device import DeviceMixin
-from atx.errors import WindowAppNotFoundError
+from atx.errors import WindowsAppNotFoundError
 
 def find_process_id(exe_file):
     exe_file = os.path.normpath(exe_file).lower()
@@ -65,7 +65,7 @@ class Window(object):
                 if hs: hwnd = hs[0]
 
         if hwnd == 0:
-            raise WindowAppNotFoundError("WindowsDevice not found!")
+            raise WindowsAppNotFoundError("WindowsDevice not found!")
 
         # self._window_name = win32gui.GetWindowText(hwnd)
         # self._window_pid = pid
