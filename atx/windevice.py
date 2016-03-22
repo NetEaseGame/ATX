@@ -18,9 +18,10 @@ def find_process_id(exe_file):
     exe_file = os.path.normpath(exe_file).lower()
     command = "wmic process get processid,commandline"
     for line in os.popen(command).read().lower().splitlines():
-        line = line.split()
+        line = line.strip()
         if not line:
             continue
+        line = line.split()
         pid = line[-1]
         cmd = " ".join(line[:-1])
         if not cmd:
@@ -49,6 +50,8 @@ class Window(object):
                         return False
                     return True
                 win32gui.EnumWindows(callback, None)
+            if hwnd == 0:
+                raise WindowsAppNotFoundError("Windows Application <%s> not found!" % window_name)
 
         if hwnd == 0 and exe_file is not None:
             pid = find_process_id(exe_file)
@@ -63,9 +66,14 @@ class Window(object):
                 hs = []
                 win32gui.EnumWindows(callback, hs)
                 if hs: hwnd = hs[0]
+            if hwnd == 0:
+                raise WindowsAppNotFoundError("Windows Application <%s> is not running!" % exe_file)
 
+        ## if window_name & exe_file both are None, use the screen.
+        self._is_desktop = False
         if hwnd == 0:
-            raise WindowsAppNotFoundError("WindowsDevice not found!")
+            hwnd = win32gui.GetDesktopWindow()
+            self._is_desktop = True
 
         # self._window_name = win32gui.GetWindowText(hwnd)
         # self._window_pid = pid
@@ -77,11 +85,22 @@ class Window(object):
 
     @property
     def position(self):
+        if self._is_desktop:
+            left = win32api.GetSystemMetrics(win32con.SM_XVIRTUALSCREEN)
+            top = win32api.GetSystemMetrics(win32con.SM_YVIRTUALSCREEN)
+            width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+            height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+            return (left, top, left+width, top+height)
+
         return win32gui.GetWindowRect(self._handle)
-        # return win32gui.GetClientRect(self._handle)
 
     @property
     def size(self):
+        if self._is_desktop:
+            width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+            height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+            return (width, height)
+            
         left, top, right, bottom = self.position
         return (right - left, bottom - top)
 

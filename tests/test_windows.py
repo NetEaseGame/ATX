@@ -33,16 +33,22 @@ from atx.windevice import Window, WindowsDevice
 #'LoadBitmapFile', 'LoadPPMFile', 'Paint', 'SaveBitmapFile'
 
 def test():
-    name = u"Windows 任务管理器"
-    filepath = "C:\\Windows\\System32\\calc.exe"
-    # win = Window(name.encode("gbk"))
-    win = Window(exe_file=filepath)
-    print win.position
-    print win.size
-    win._screenshot('screenshot.bmp')
-    win._input_left_mouse(300, 200)
-    win._screenshot('screenshot2.bmp')
-    win.pilimage.save('test.png')
+    try:
+        name = u"Windows 任务管理器"
+        win = Window(name.encode("gbk"))
+        win._screenshot('taskman.bmp')
+    except Exception as e:
+        print e.message
+
+    try:
+        filepath = "C:\\Windows\\System32\\calc.exe"
+        win = Window(exe_file=filepath)
+        win._screenshot('calc.bmp')
+    except Exception as e:
+        print e.message
+
+    win = Window()
+    win.pilimage.save('screen.png')
 
 
 if __name__ == '__main__':
