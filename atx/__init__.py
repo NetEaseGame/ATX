@@ -17,7 +17,7 @@ except pkg_resources.DistributionNotFound:
 
 from atx.consts import *
 from atx.errors import *
-from atx.device import Pattern
+from atx.device import Pattern, Bounds
 
 
 def connect(*args, **kwargs):

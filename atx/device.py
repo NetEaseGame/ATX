@@ -6,6 +6,7 @@
 from __future__ import absolute_import
 
 import collections
+import copy
 import os
 import re
 import sys
@@ -61,6 +62,9 @@ class Bounds(__boundstuple):
     def center(self):
         v = self
         return (v.left+v.right)/2, (v.top+v.bottom)/2
+
+    def __mul__(self, mul):
+        return Bounds(*(int(v*mul) for v in self))
 
 
 class Pattern(object):
@@ -286,21 +290,29 @@ class DeviceMixin(object):
         if threshold is None:
             threshold = self.image_match_threshold
 
+        scale = 1.0
+        resolution = pattern.resolution or self.resolution
+        if resolution is not None:
+            ow, oh = resolution
+            fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
+            # For horizontal screen, scale by Y
+            # For vertical screen, scale by X
+            scale = fy if self.rotation in (1, 3) else fx
+            search_img = cv2.resize(search_img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+            cv2.imwrite('resized.png', search_img)
+
+        # crop part of the screen
+        screen_bounds = self._bounds
+        if self._bounds is not None:
+            screen_bounds *= scale
+            screen = screen.crop(screen_bounds)
+
         dx, dy = pattern.offset
+        dx, dy = int(dx*scale), int(dy*scale)
+
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
         if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
-            resolution = pattern.resolution or self.resolution
-            if resolution is not None:
-                ow, oh = resolution
-                fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
-                # For horizontal screen, scale by Y
-                # For vertical screen, scale by X
-                # Offset scale by X and Y
-                # FIXME(ssx): need test here, I never tried before.
-                scale = fy if self.rotation in (1, 3) else fx
-                search_img = cv2.resize(search_img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-                dx, dy = int(dx*scale), int(dy*scale)
 
             ret = ac.find_template(screen, search_img)
         elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
@@ -313,6 +325,9 @@ class DeviceMixin(object):
         (x, y) = ret['result']
         # fix by offset
         position = (x+dx, y+dy)
+        if screen_bounds:
+            x, y = position
+            position = (x+screen_bounds.left, y+screen_bounds.top)
         confidence = ret['confidence']
 
         matched = True
@@ -325,9 +340,22 @@ class DeviceMixin(object):
                 matched = True
         return FindPoint(position, confidence, self.image_match_method, matched=matched)
 
-    def region(self):
-        """TODO"""
-        return self
+    def region(self, bounds):
+        """Set region of the screen area
+        Args:
+            bounds: Bounds object
+
+        Returns:
+            A new AndroidDevice object
+
+        Raises:
+            SyntaxError
+        """
+        if not isinstance(bounds, Bounds):
+            raise SyntaxError("region param bounds must be isinstance of Bounds")
+        _d = copy.copy(self)
+        _d._bounds = bounds
+        return _d
 
     def touch_image(self, *args, **kwargs):
         """ALias for click_image"""
@@ -406,3 +434,8 @@ class DeviceMixin(object):
         w = Watcher(self, name, timeout)
         w._dev = self
         return w
+
+if __name__ == '__main__':
+    b = Bounds(1, 2, 3, 4)
+    print b
+    print b * 1.0
