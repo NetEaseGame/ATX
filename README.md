@@ -249,12 +249,6 @@ click(20， 30）
 * 图片查找与点击
 
 	```py
-	# if image not show in 10s, ImageNotFoundError will raised
-	try:
-		d.click_image('button.png', timeout=10.0)
-	except atx.ImageNotFoundError:
-		print('Image not found')
-
 	# find image position
 	if d.exists('button.png'):
 		print 'founded'
@@ -262,11 +256,20 @@ click(20， 30）
 	# take screenshot
 	d.screenshot('screen.png')
 
+	# click position
+	d.click(50, 100) # x, y
+	
 	# click offset image
 	d.click_image(atx.Pattern('button.png', offset=(100, 20)))
 
 	# image with specific resolution
 	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
+
+	# if image not show in 10s, ImageNotFoundError will raised
+	try:
+		d.click_image('button.png', timeout=10.0)
+	except atx.ImageNotFoundError:
+		print('Image not found')
 
 	# 在特定的区域内查找匹配的图像(IDE暂时还不支持如此高级的操作)
 	nd = d.region(atx.Bounds(50, 50, 180, 300))
@@ -304,7 +307,7 @@ click(20， 30）
 
 	python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
 
-	```
+	```py
 	# coding: utf-8
 
 	import unittest

@@ -46,9 +46,20 @@ UINode = collections.namedtuple('UINode', [
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
+        """Initial AndroidDevice
+        Args:
+            serialno: string specify which device
+
+        Returns:
+            AndroidDevice object
+
+        Raises:
+            EnvironmentError
+        """
         self._host = kwargs.get('host', '127.0.0.1')
         self._port = kwargs.get('port', 5037)
         self._adb = adb.Adb(serialno, self._host, self._port)
+        serialno = self._adb.device_serial()
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
