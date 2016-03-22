@@ -8,9 +8,9 @@ Method for android and iOS
 Method only for android
 --------------------------
 
-.. autoclass:: atx.device.AndroidDevice
+.. autoclass:: atx.android_device.AndroidDevice
     :members:
 
     .. attribute:: serial
 
-        Android device serial number.
+        Android device serial number. **Optional**
