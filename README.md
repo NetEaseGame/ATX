@@ -305,7 +305,7 @@ click(20， 30）
 
 ## 批量运行脚本
 
-	python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
+python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
 
 	```py
 	# coding: utf-8

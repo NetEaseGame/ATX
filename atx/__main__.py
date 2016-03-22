@@ -4,11 +4,12 @@
 # USAGE
 # python -matx -s ESLKJXX gui
 
-import functools
 import argparse
+import functools
+import json
 
 from atx.cmds import tkgui, minicap, tcpproxy, webide
-
+import atx.androaxml as apkparse
 
 def _gui(args):
     tkgui.main(args.serial, host=args.host)
@@ -25,6 +26,13 @@ def _tcpproxy(args):
 def _webide(args):
     webide.main(open_browser=(not args.no_browser), port=args.web_port)
 
+
+def _apkparse(args):
+    (pkg_name, activity) = apkparse.parse_apk(args.filename)
+    print json.dumps({
+        'package-name': pkg_name,
+        'main-activity': activity,
+    }, indent=4)
 
 def main():
     ap = argparse.ArgumentParser(
@@ -51,6 +59,10 @@ def main():
     parser_webide.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
     parser_webide.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
     parser_webide.set_defaults(func=_webide)
+    
+    parser_webide = add_parser('apkparse')
+    parser_webide.add_argument('filename', help='Apk filename')
+    parser_webide.set_defaults(func=_apkparse)
 
     args = ap.parse_args()
     args.func(args)
