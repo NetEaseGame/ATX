@@ -25,10 +25,23 @@ from atx import consts
 from atx import errors
 from atx import patch
 from atx import base
-from atx import logutils
 from atx import imutils
 from atx import adb
-from atx.device import DeviceMixin
+from atx.device import DeviceMixin, Bounds
+
+
+DISPLAY_RE = re.compile(
+    '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
+
+UINode = collections.namedtuple('UINode', [
+    'xml',
+    'bounds', 
+    'selected', 'checkable', 'clickable', 'scrollable', 'focusable', 'enabled', 'focused', 'long_clickable',
+    'password',
+    'class_name',
+    'index', 'resource_id',
+    'text', 'content_desc',
+    'package'])
 
 
 class AndroidDevice(DeviceMixin, UiaDevice):
@@ -69,7 +82,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
     def is_app_alive(self, package_name):
         """ Check if app in running in foreground """
-        return d.info['currentPackageName'] == package_name
+        return self.info['currentPackageName'] == package_name
 
     def sleep(self, secs=None):
         """Depreciated. use delay instead."""
@@ -94,7 +107,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             w, h = min(w, h), max(w, h)
             return collections.namedtuple('Display', ['width', 'height'])(w, h)
 
-        w, h = d.info['displayWidth'], d.info['displayHeight']
+        w, h = self.info['displayWidth'], self.info['displayHeight']
         w, h = min(w, h), max(w, h)
         return collections.namedtuple('Display', ['width', 'height'])(w, h)
     
@@ -156,7 +169,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         except IOError:
             raise IOError("Screenshot use uiautomator failed.")
         finally:
-            remove_force(tmp_file)
+            base.remove_force(tmp_file)
 
     def click(self, x, y):
         """

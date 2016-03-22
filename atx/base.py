@@ -65,3 +65,8 @@ def random_name(name):
             c = random.choice(string.ascii_lowercase)
         out.append(c)
     return ''.join(out)
+
+
+def remove_force(name):
+    if os.path.isfile(name):
+        os.remove(name)

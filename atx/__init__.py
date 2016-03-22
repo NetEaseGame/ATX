@@ -4,21 +4,24 @@
 """This module is to make mobile test more easily
 """
 
+from __future__ import absolute_import
+
 import sys
 import signal
 
-import patch
-import device
 import pkg_resources
 try:
     version = pkg_resources.get_distribution("atx").version
 except pkg_resources.DistributionNotFound:
     version = 'unknown'
 
+# from atx import device
+# from atx import patch
+# from atx import imutils
 from atx.consts import *
 from atx.errors import *
 from atx.device import Pattern
-from atx import imutils
+# from atx.android_device import AndroidDevice
 
 
 def connect(*args, **kwargs):
@@ -32,20 +35,20 @@ def connect(*args, **kwargs):
     Raises:
         SyntaxError, EnvironmentError
     """
-    serialno = None
-    if len(args) == 1:
-        serialno = args[0]
-    elif len(args) > 1:
-        raise SyntaxError("Too many serial numbers")
-
     platform = kwargs.pop('platform', 'android')
-    devclss = {
-        'android': device.AndroidDevice,
-    }
-    cls = devclss.get(platform)
+    # devclss = {
+    #     'android': android_device.AndroidDevice,
+    # }
+    # cls = devclss.get(platform)
+
+    cls = None
+    if platform == 'android':
+        devcls = __import__('atx.android_device')
+        cls = devcls.android_device.AndroidDevice
+    
     if cls is None:
-        raise SyntaxError('Platform not exists')
-    return cls(serialno, **kwargs)
+        raise SyntaxError('Platform: %s not exists' % platform)
+    return cls(*args, **kwargs)
 
 
 # def _sig_handler(signum, frame):
