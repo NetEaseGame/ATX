@@ -37,6 +37,9 @@ def connect(*args, **kwargs):
     if platform == 'android':
         devcls = __import__('atx.android_device')
         cls = devcls.android_device.AndroidDevice
+    elif platform == 'windows':
+        devcls = __import__('atx.windows_device')
+        cls = devcls.windows_device.WindowsDevice
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
@@ -47,28 +50,3 @@ def connect(*args, **kwargs):
 #     print >>sys.stderr, 'Signal INT catched !!!'
 #     sys.exit(1)
 # signal.signal(signal.SIGINT, _sig_handler)
-
-
-# class Device(object):
-#     '''
-#     Create a new device instance and use this instance to control device
-#     '''
-#     def __init__(self, addr, logfile=None):
-#         '''
-#         @addr: eg: android://<serialno> or ios://127.0.0.1
-#         '''
-#         from . import devsuit
-#         module, loc, p = _parse_addr(addr)
-#         if p.path and p.netloc:
-#             serialno = p.path.lstrip('/')
-#             addr = p.netloc
-#         else:
-#             serialno = p.netloc
-#             addr = ''
-#         dev = module.Device(serialno, addr) # FIXME(ssx): may not fit well with ios
-#         self._m = devsuit.DeviceSuit(p.scheme, dev, logfile=logfile)
-
-#     def __getattr__(self, key):
-#         if hasattr(self._m, key):
-#             return getattr(self._m, key)
-#         raise AttributeError('Monitor object has no attribute "%s"' % key)
