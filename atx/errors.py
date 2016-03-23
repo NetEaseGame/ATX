@@ -17,3 +17,9 @@ class ImageNotFoundError(BaseError):
 
 class WatchTimeoutError(BaseError):
     pass
+
+class AssertError(BaseError):
+    pass
+
+class AssertExistsError(AssertError):
+    pass

@@ -40,6 +40,9 @@ def connect(*args, **kwargs):
     elif platform == 'windows':
         devcls = __import__('atx.windows_device')
         cls = devcls.windows_device.WindowsDevice
+    elif platform == 'dummy': # for py.test use
+        devcls = __import__('atx.dummy_device')
+        cls = devcls.dummy_device.DummyDevice
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
