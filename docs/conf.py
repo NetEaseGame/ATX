@@ -211,7 +211,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'airtestdoc'
+htmlhelp_basename = 'airtestxdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -263,7 +263,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'airtest', u'airtest Documentation',
+    (master_doc, 'AirtestX', u'AirtestX Documentation',
      [author], 1)
 ]
 
@@ -277,8 +277,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'airtest', u'airtest Documentation',
-     author, 'airtest', 'One line description of project.',
+    (master_doc, 'AirtestX', u'AirtestX Documentation',
+     author, 'AirtestX', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -300,5 +300,6 @@ class Mock(object):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['cv2', 'numpy']
+
+MOCK_MODULES = ['cv2', 'numpy', 'win32ui', 'win32con', 'win32api', 'win32gui', 'win32process']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
