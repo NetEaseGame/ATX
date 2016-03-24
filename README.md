@@ -24,6 +24,10 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 
 网易内部用户暂时请直接联系 hzsunshx
 
+## Features
+1. Android test support (Image and UI)
+2. Windows support (Image)
+
 ## 与原版主要变化
 * 简化安装方式，只需要安装opencv以及通过pip安装atx(airtestX的简称）无其他依赖
 * 支持原生UI元素的查找和点击
