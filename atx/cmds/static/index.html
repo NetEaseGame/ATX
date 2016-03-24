@@ -8,6 +8,7 @@
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//oss.maxcdn.com/fancybox/2.1.5/jquery.fancybox.min.css">
     <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
     <link rel="stylesheet" href="{{static_url('index.css')}}">
   </head>
@@ -40,8 +41,8 @@
             {% for basename, image_path in images %}
               <li class="list-group-item">
                 {{basename}}
-                <a href="#" class="pull-right">
-                  <img class="img-rounded" style="height: 2em; border: 2px solid gray; padding: 2px" src="/static_imgs/{{image_path}}"/>
+                <a href="/static_imgs/{{image_path}}" class="pull-right fancybox" title="{{image_path}}" rel="gallery">
+                  <img class="img-rounded" style="height: 2em; border: 2px solid gray; padding: 1px" src="/static_imgs/{{image_path}}"/>
                 </a>
               </li>
             {% end %}
@@ -67,12 +68,13 @@
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="//oss.maxcdn.com/mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+    <script src="//oss.maxcdn.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="//cdn.rawgit.com/codeskyblue/blockly/master/blockly_compressed.js"></script>
     <script src="//cdn.rawgit.com/codeskyblue/blockly/master/blocks_compressed.js"></script>
     <script src="//cdn.rawgit.com/codeskyblue/blockly/master/msg/js/en.js"></script>
-
     <script src="{{static_url('index.js')}}"></script>
     <!-- Google Analytics Code -->
     <script>

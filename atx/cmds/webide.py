@@ -30,7 +30,7 @@ IMAGE_PATH = ['.', 'imgs', 'images']
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        imgs = base.search_image(path=IMAGE_PATH)
+        imgs = base.list_images(path=IMAGE_PATH)
         imgs = [(os.path.basename(name), name) for name in imgs]
         self.render('index.html', images=imgs)
 

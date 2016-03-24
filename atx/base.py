@@ -75,29 +75,41 @@ def remove_force(name):
 
 
 VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
-def search_image(name=None, path=['.']):
-    """ look for the image real path """
-    if name and os.path.isfile(name):
-        return name
-
-    images = {}
+def list_images(path=['.']):
     for image_dir in set(path):
         if not os.path.isdir(image_dir):
             continue
         for filename in os.listdir(image_dir):
             bname, ext = os.path.splitext(filename)
-            if ext in VALID_IMAGE_EXTS:
-                filepath = os.path.join(image_dir, filename)
-                images[filename] = images[bname] = filepath
+            if ext not in VALID_IMAGE_EXTS:
+                continue
 
-    if name is None:
-        return list(set(images.values()))
-    else:
-        name = os.path.normpath(name)
-        return images.get(name)
+            filepath = os.path.join(image_dir, filename)
+            if os.name == 'nt': # windows
+                yield unicode(filepath, 'gbk')
+            else:
+                yield unicode(filepath, 'utf-8')
+
+
+def search_image(name=None, path=['.']):
+    """
+    look for the image real path, if name is None, then return all images under path.
+    FIXME(ssx): this code is just looking wired.
+    """
+    unicode_name = name if isinstance(name, unicode) else unicode(name, 'utf-8')
+
+    for encoding in ('utf-8', 'gbk'):
+        encode_name = unicode_name.encode(encoding)
+        for image_dir in path:
+            if not os.path.isdir(image_dir):
+                continue
+            image_path = os.path.join(image_dir, encode_name)
+            if os.path.isfile(image_path):
+                return image_path
+    return None
 
 
 if __name__ == '__main__':
-    print search_image('oo.png')
+    print search_image('你好.png')
     print search_image('oo')
     print search_image()
