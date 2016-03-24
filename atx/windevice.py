@@ -26,11 +26,8 @@ def find_process_id(exe_file):
         cmd = " ".join(line[:-1])
         if not cmd:
             continue
-        elif cmd.startswith("'"):
-            pos = cmd.find("'", 1)
-            cmd = cmd[1:pos]
-        elif cmd.startswith('"'):
-            pos = cmd.find('"', 1)
+        elif cmd.startswith("'") or cmd.startswith('"'):
+            pos = cmd.find(cmd[0], 1)
             cmd = cmd[1:pos]
         else:
             cmd = cmd.split()[0]
@@ -44,28 +41,29 @@ class Window(object):
         if window_name is not None:
             hwnd = win32gui.FindWindow(None, window_name)
             if hwnd == 0:
-                def callback(h, arg):
+                def callback(h, extra):
                     if window_name in win32gui.GetWindowText(h):
-                        hwnd = h
-                        return False
+                        extra.append(h)
                     return True
-                win32gui.EnumWindows(callback, None)
+                extra = []
+                win32gui.EnumWindows(callback, extra)
+                if extra: hwnd = extra[0]
             if hwnd == 0:
                 raise WindowsAppNotFoundError("Windows Application <%s> not found!" % window_name)
 
         if hwnd == 0 and exe_file is not None:
             pid = find_process_id(exe_file)
             if pid is not None:
-                def callback(h, hs):
+                def callback(h, extra):
                     if win32gui.IsWindowVisible(h) and win32gui.IsWindowEnabled(h):
                         _, p = win32process.GetWindowThreadProcessId(h)
                         if p == pid:
-                            hs.append(h)
+                            extra.append(h)
                         return True
                     return True
-                hs = []
-                win32gui.EnumWindows(callback, hs)
-                if hs: hwnd = hs[0]
+                extra = []
+                win32gui.EnumWindows(callback, extra)
+                if extra: hwnd = extra[0]
             if hwnd == 0:
                 raise WindowsAppNotFoundError("Windows Application <%s> is not running!" % exe_file)
 

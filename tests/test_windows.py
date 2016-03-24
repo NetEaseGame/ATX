@@ -38,14 +38,14 @@ def test():
         win = Window(name.encode("gbk"))
         win._screenshot('taskman.bmp')
     except Exception as e:
-        print e.message
+        print str(e)
 
     try:
         filepath = "C:\\Windows\\System32\\calc.exe"
         win = Window(exe_file=filepath)
         win._screenshot('calc.bmp')
     except Exception as e:
-        print e.message
+        print str(e)
 
     win = Window()
     win.pilimage.save('screen.png')
