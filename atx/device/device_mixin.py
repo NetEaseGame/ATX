@@ -416,9 +416,9 @@ class DeviceMixin(object):
         """Simulate click according image position
 
         Args:
-            pattern (str or Pattern): filename or an opencv image object.
-            timeout (float): if image not found during this time, ImageNotFoundError will raise.
-            wait_change (bool): wait until background image changed.
+            - pattern (str or Pattern): filename or an opencv image object.
+            - timeout (float): if image not found during this time, ImageNotFoundError will raise.
+            - wait_change (bool): wait until background image changed.
 
         Returns:
             None
