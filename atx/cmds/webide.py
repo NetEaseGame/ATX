@@ -35,11 +35,17 @@ class MainHandler(tornado.web.RequestHandler):
         self.render('index.html', images=imgs)
 
 
+class StaticFileHandler(tornado.web.StaticFileHandler):
+    def get(self, path=None, include_body=True):
+        path = path.encode(base.SYSTEM_ENCODING) # fix for windows
+        super(StaticFileHandler, self).get(path, include_body)
+
+
 def make_app(settings={}):
     static_path = os.getcwd()
     application = tornado.web.Application([
         (r"/", MainHandler),
-        (r'/static_imgs/(.*)', tornado.web.StaticFileHandler, {'path': static_path}),
+        (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
     ], **settings)
     return application
 

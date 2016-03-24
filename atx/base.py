@@ -74,8 +74,15 @@ def remove_force(name):
         os.remove(name)
 
 
+SYSTEM_ENCODING = 'gbk' if os.name == 'nt' else 'utf-8'
 VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
+
+
+def auto_decode(s, encoding='utf-8'):
+    return s if isinstance(s, unicode) else unicode(s, encoding)
+
 def list_images(path=['.']):
+    """ Return list of image files """
     for image_dir in set(path):
         if not os.path.isdir(image_dir):
             continue
@@ -85,10 +92,7 @@ def list_images(path=['.']):
                 continue
 
             filepath = os.path.join(image_dir, filename)
-            if os.name == 'nt': # windows
-                yield unicode(filepath, 'gbk')
-            else:
-                yield unicode(filepath, 'utf-8')
+            yield auto_decode(filepath, SYSTEM_ENCODING)
 
 
 def search_image(name=None, path=['.']):
@@ -96,16 +100,14 @@ def search_image(name=None, path=['.']):
     look for the image real path, if name is None, then return all images under path.
     FIXME(ssx): this code is just looking wired.
     """
-    unicode_name = name if isinstance(name, unicode) else unicode(name, 'utf-8')
+    name = auto_decode(name)
 
-    for encoding in ('utf-8', 'gbk'):
-        encode_name = unicode_name.encode(encoding)
-        for image_dir in path:
-            if not os.path.isdir(image_dir):
-                continue
-            image_path = os.path.join(image_dir, encode_name)
-            if os.path.isfile(image_path):
-                return image_path
+    for image_dir in path:
+        if not os.path.isdir(image_dir):
+            continue
+        image_path = os.path.join(auto_decode(image_dir), name)
+        if os.path.isfile(image_path):
+            return image_path.encode(SYSTEM_ENCODING)
     return None
 
 
