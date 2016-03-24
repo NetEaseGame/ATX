@@ -197,6 +197,20 @@ class DeviceMixin(object):
         self.image_match_threshold = 0.8
         self._bounds = None
         self._event_handlers = []
+        self._search_path = ['.']
+
+    def _pattern_open(self, image):
+        if isinstance(image, Pattern):
+            return image
+        elif isinstance(image, basestring):
+            image_path = base.search_image(image, self._search_path)
+            if image_path is None:
+                raise IOError('image file not found: {}'.format(image))
+            return Pattern(image_path)
+        elif 'numpy' in str(type(image)):
+            return Pattern(image)
+        else:
+            raise TypeError("Not supported image type: {}".format(type(image)))
 
     def delay(self, secs):
         """Delay some seconds
@@ -215,14 +229,14 @@ class DeviceMixin(object):
         sys.stdout.write("\n")
         return self
 
-    def exists(self, img, screen=None):
+    def exists(self, pattern, screen=None):
         """Check if image exists in screen
 
         Returns:
             If exists, return FindPoint, or
             return None if result.confidence < self.image_match_threshold
         """
-        ret = self.match(img, screen)
+        ret = self.match(pattern, screen)
         if ret is None:
             return None
         if not ret.matched:
@@ -266,10 +280,9 @@ class DeviceMixin(object):
             Only when confidence > self.image_match_threshold, matched will be True
 
         Raises:
-            SyntaxError: when image_match_method is invalid
+            TypeError: when image_match_method is invalid
         """
-        if not isinstance(pattern, Pattern):
-            pattern = Pattern(pattern)
+        pattern = self._pattern_open(pattern)
         search_img = pattern.image
 
         pattern_scale = self._cal_scale(pattern)
@@ -293,7 +306,7 @@ class DeviceMixin(object):
         elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             ret = ac.find_sift(screen, search_img, min_match_count=10)
         else:
-            raise SyntaxError("Invalid image match method: %s" %(match_method,))
+            raise TypeError("Invalid image match method: %s" %(match_method,))
 
         if ret is None:
             return None
@@ -324,10 +337,10 @@ class DeviceMixin(object):
             A new AndroidDevice object
 
         Raises:
-            SyntaxError
+            TypeError
         """
         if not isinstance(bounds, Bounds):
-            raise SyntaxError("region param bounds must be isinstance of Bounds")
+            raise TypeError("region param bounds must be isinstance of Bounds")
         _d = copy.copy(self)
         _d._bounds = bounds
         return _d
@@ -362,7 +375,7 @@ class DeviceMixin(object):
             if flag & event_flag:
                 fn(event)
 
-    def assert_exists(self, image, timeout=20.0):
+    def assert_exists(self, pattern, timeout=20.0):
         """Assert if image exists
         Args:
             image: image filename # not support pattern for now
@@ -374,8 +387,10 @@ class DeviceMixin(object):
         Raises:
             AssertExistsError
         """
-        search_img = imutils.open(image)
-        log.info('assert exists image: %s', image)
+        pattern = self._pattern_open(pattern)
+        search_img = pattern.image
+        # search_img = imutils.open(image)
+        log.info('assert exists image: %s', pattern)
         start_time = time.time()
         while time.time() - start_time < timeout:
             point = self.match(search_img)
@@ -391,9 +406,9 @@ class DeviceMixin(object):
             break
         else:
             sys.stdout.write('\n')
-            raise errors.AssertExistsError('image not found %s' %(image,))
+            raise errors.AssertExistsError('image not found %s' %(pattern,))
 
-    def click_image(self, img, timeout=20.0, wait_change=False):
+    def click_image(self, pattern, timeout=20.0, wait_change=False):
         """Simulate click according image position
 
         Args:
@@ -406,8 +421,9 @@ class DeviceMixin(object):
         Raises:
             ImageNotFoundError: An error occured when img not found in current screen.
         """
-        search_img = imutils.open(img)
-        log.info('click image: %s', img)
+        pattern = self._pattern_open(pattern)
+        search_img = pattern.image
+        log.info('click image: %s', pattern)
         start_time = time.time()
         found = False
         while time.time() - start_time < timeout:
@@ -435,7 +451,7 @@ class DeviceMixin(object):
                 if ret is None:
                     break
         if not found:
-            raise errors.ImageNotFoundError('Not found image %s' %(img,))
+            raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
     def watch(self, name, timeout=None):
         """Return a new watcher

@@ -77,6 +77,9 @@ def remove_force(name):
 VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
 def search_image(name=None, path=['.']):
     """ look for the image real path """
+    if name and os.path.isfile(name):
+        return name
+
     images = {}
     for image_dir in set(path):
         if not os.path.isdir(image_dir):
