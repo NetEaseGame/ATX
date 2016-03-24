@@ -206,64 +206,108 @@ click(20， 30）
 [Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
 一些常用的方法，我用代码例子的方法告诉你
 
-```python
-import atx
+* 初始化的代码
 
+	```py
+	import atx
 
-d = atx.connect(None)
-package_name = 'com.example.game'
-d.start_app(package_name)
+	d = atx.connect()
+	```
 
-print d.wlan_ip
-# expect 10.1.x.x
-d.delay(5) # delay 5s
-d.adb_shell('uptime')
+* App的起停
 
-# this is default (first check minicap and then check uiautomator)
-d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO
-# alternative
-# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
-# alternative
-# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP
+	```py
+	package_name = 'com.example.game'
 
-# if image not show in 10s, ImageNotFoundError will raised
-try:
-	d.click_image('button.png', timeout=10.0)
-except atx.ImageNotFoundError:
-	print('Image not found')
+	d.stop_app(package_name)
+	# d.stop_app(package_name, clear=True) # stop and remove app data
+	d.start_app(package_name)
+	```
 
-# click offset image
-d.click_image(atx.Pattern('button.png', offset=(100, 20)))
+* 执行Shell命令
+	
+	```py
+	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
+	d.adb_shell(['uptime'])
+	print d.forward(10080)
+	# Expect (host, port)
+	print d.wlan_ip
+	# 设备的Wlan IP
+	```
 
-# image with specific resolution
-d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
+* 常用配置
+	
+	```py
+	# this is default (first check minicap and then check uiautomator)
+	d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO
+	# alternative
+	# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
+	# alternative
+	# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP
+	```
 
-# watcher, trigger when screenshot is called
-def foo(event):
-	print 'It happens', event
-	d.click(*event.pos)
+* 图片查找与点击
 
-timeout = 50 # 50s
-with d.watch('enter game', timeout) as w:
-	w.on('enter-game').click()
-	w.on('inside.png').quit()
-	w.on(text='Login').quit() # UI Component
-	w.on('outside.png').do(foo)
+	```py
+	# find image position
+	if d.exists('button.png'):
+		print 'founded'
 
-# click by UI component
-d(text='Enter').click()
+	# take screenshot
+	d.screenshot('screen.png')
 
-d.stop_app(package_name)
-```
+	# click position
+	d.click(50, 100) # x, y
+	
+	# click offset image
+	d.click_image(atx.Pattern('button.png', offset=(100, 20)))
 
-如何点击UI元素请直接看 <https://github.com/codeskyblue/airtest-uiautomator>
-里面的API是直接通过继承的方式支持的。
+	# image with specific resolution
+	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
+
+	# if image not show in 10s, ImageNotFoundError will raised
+	try:
+		d.click_image('button.png', timeout=10.0)
+	except atx.ImageNotFoundError:
+		print('Image not found')
+
+	# 在特定的区域内查找匹配的图像(IDE暂时还不支持如此高级的操作)
+	nd = d.region(atx.Bounds(50, 50, 180, 300))
+	print nd.match('folder.png')
+	```
+
+* 监控事件
+
+	```py
+	# watcher, trigger when screenshot is called
+	def foo(event):
+		print 'It happens', event
+		d.click(*event.pos)
+
+	timeout = 50 # 50s
+	with d.watch('enter game', timeout) as w:
+		w.on('enter-game').click()
+		w.on('inside.png').quit()
+		w.on(text='Login').quit() # UI Component
+		w.on('outside.png').do(foo)
+	```	
+
+* 原生UI操作
+
+	如何点击UI元素请直接看 <https://github.com/codeskyblue/airtest-uiautomator>
+	里面的API是直接通过继承的方式支持的。
+
+	```py
+	# click by UI component
+	d(text='Enter').click()
+	```
+
 
 ## 批量运行脚本
 
-	python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
+python有一个很好的测试框架 unittest (其他出色的也有nose, pytest) 等等，这里这是说下unittest 毕竟官方库, 直接上代码，一个简单的例子如下
 
-	```
+	```py
 	# coding: utf-8
 
 	import unittest

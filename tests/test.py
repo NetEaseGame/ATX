@@ -9,7 +9,6 @@ print 'Version:', atx.version
 
 d = atx.connect(None)
 
-# print d.screenshot('screen.png')
 
 def screenshot():
     start = time.time()
@@ -31,7 +30,8 @@ if __name__ == '__main__':
     log = logging.getLogger('atx')
     log.setLevel(logging.DEBUG)
 
-    d.screen.off()
+    # d.screen.off()
+
     #def foo(evt):
         #print 'good', evt
         #d.click(*evt.pos)

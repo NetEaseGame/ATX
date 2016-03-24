@@ -6,6 +6,7 @@
 from __future__ import absolute_import
 
 import collections
+import copy
 import os
 import re
 import sys
@@ -31,72 +32,43 @@ from atx import base
 from atx import logutils
 from atx import imutils
 from atx import adb
+from atx.device import Pattern, Bounds, FindPoint
 
 
 log = logutils.getLogger('atx')
 log.setLevel(logging.INFO)
 
-FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-__boundstuple = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
+    
+class WatcherItem(object):
+    """ TODO """
+    def __init__(self, pattern):
+        self._listens = [pattern]
+        self._hooks = []
 
-class Bounds(__boundstuple):
-    def __init__(self, *args, **kwargs):
-        super(Bounds, self).__init__(*args, **kwargs)
-        self._area = None
-
-    def is_inside(self, x, y):
-        v = self
-        return x > v.left and x < v.right and y > v.top and y < v.bottom
-
-    @property
-    def area(self):
-        if not self._area:
-            v = self
-            self._area = (v.right-v.left) * (v.bottom-v.top)
-        return self._area
-
-    @property
-    def center(self):
-        v = self
-        return (v.left+v.right)/2, (v.top+v.bottom)/2
-
-
-class Pattern(object):
-    def __init__(self, image, offset=(0, 0), anchor=0, rsl=None, resolution=None):
-        """
+    def do(self, func):
+        """Trigger with function call
         Args:
-            image: image filename or image URL
-            offset: offset of image center
-            anchor: not supported
-            resolution: image origin screen resolution
-            rsl: alias of resolution
-        """
-        self._name = None
-        self._image = imutils.open(image)
-        self._offset = offset
-        self._resolution = rsl or resolution
+            func: function which will called when object found. For example.
+
+            def foo(event):
+                print event.pos # (x, y) position
+            
+            w.on('kitty.png').do(foo)
         
-        if isinstance(image, basestring):
-            self._name = image
+        Returns:
+            Watcher object
 
-    def __str__(self):
-        return 'Pattern(name: {}, offset: {})'.format(self._name, self.offset)
-    
-    @property
-    def image(self):
-        return self._image
+        Raises:
+            SyntaxError
+        """
+        if not callable(func):
+            raise SyntaxError("%s should be a function" % func)
+        self._hooks.append(func)
+        return self
 
-    @property
-    def offset(self):
-        return self._offset
 
-    @property
-    def resolution(self):
-        return self._resolution
-    
-    
 class Watcher(object):
     ACTION_CLICK = 1 <<0
     ACTION_TOUCH = 1 <<0
@@ -261,6 +233,24 @@ class DeviceMixin(object):
         """ Alias for click """
         self.click(x, y)
 
+    def _cal_scale(self, pattern=None):
+        scale = 1.0
+        resolution = (pattern and pattern.resolution) or self.resolution
+        if resolution is not None:
+            ow, oh = sorted(resolution)
+            dw, dh = sorted(self.display)
+            fw, fh = 1.0*dw/ow, 1.0*dh/oh
+            # For horizontal screen, scale by Y (width)
+            # For vertical screen, scale by X (height)
+            scale = fw if self.rotation in (1, 3) else fh
+        return scale
+
+    @property
+    def bounds(self):
+        if self._bounds is None:
+            return None
+        return self._bounds * self._cal_scale()
+    
     def match(self, pattern, screen=None, threshold=None):
         """Check if image position in screen
 
@@ -281,53 +271,75 @@ class DeviceMixin(object):
         if not isinstance(pattern, Pattern):
             pattern = Pattern(pattern)
         search_img = pattern.image
-        if screen is None:
-            screen = self.screenshot()
-        if threshold is None:
-            threshold = self.image_match_threshold
+
+        pattern_scale = self._cal_scale(pattern)
+        if pattern_scale != 1.0:
+            search_img = cv2.resize(search_img, (0, 0), 
+                fx=pattern_scale, fy=pattern_scale,
+                interpolation=cv2.INTER_CUBIC)
+        
+        screen = screen or self.region_screenshot()
+        threshold = threshold or self.image_match_threshold
 
         dx, dy = pattern.offset
+        dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
+
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
-        if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
-            resolution = pattern.resolution or self.resolution
-            if resolution is not None:
-                ow, oh = resolution
-                fx, fy = 1.0*self.display.width/ow, 1.0*self.display.height/oh
-                # For horizontal screen, scale by Y
-                # For vertical screen, scale by X
-                # Offset scale by X and Y
-                # FIXME(ssx): need test here, I never tried before.
-                scale = fy if self.rotation in (1, 3) else fx
-                search_img = cv2.resize(search_img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-                dx, dy = int(dx*scale), int(dy*scale)
-
+        match_method = self.image_match_method
+        ret = None
+        if match_method == consts.IMAGE_MATCH_METHOD_TMPL:
             ret = ac.find_template(screen, search_img)
-        elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
+        elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             ret = ac.find_sift(screen, search_img, min_match_count=10)
         else:
-            raise SyntaxError("Invalid image match method: %s" %(self.image_match_method,))
+            raise SyntaxError("Invalid image match method: %s" %(match_method,))
 
         if ret is None:
             return None
         (x, y) = ret['result']
         # fix by offset
         position = (x+dx, y+dy)
+        if self.bounds:
+            x, y = position
+            position = (x+self.bounds.left, y+self.bounds.top)
         confidence = ret['confidence']
 
         matched = True
-        if self.image_match_method == consts.IMAGE_MATCH_METHOD_TMPL:
-            if confidence < self.image_match_threshold:
+        if match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+            if confidence < threshold:
                 matched = False
-        elif self.image_match_method == consts.IMAGE_MATCH_METHOD_SIFT:
+        elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
             matches, total = confidence
             if 1.0*matches/total > 0.5: # FIXME(ssx): sift just write here
                 matched = True
-        return FindPoint(position, confidence, self.image_match_method, matched=matched)
+        return FindPoint(position, confidence, match_method, matched=matched)
 
-    def region(self):
-        """TODO"""
-        return self
+    def region(self, bounds):
+        """Set region of the screen area
+        Args:
+            bounds: Bounds object
+
+        Returns:
+            A new AndroidDevice object
+
+        Raises:
+            SyntaxError
+        """
+        if not isinstance(bounds, Bounds):
+            raise SyntaxError("region param bounds must be isinstance of Bounds")
+        _d = copy.copy(self)
+        _d._bounds = bounds
+        return _d
+
+    def region_screenshot(self, filename=None):
+        if self._bounds is None:
+            return self.screenshot(filename)
+        screen = self.screenshot()
+        screen_crop = screen.crop(self.bounds)
+        if filename:
+            screen_crop.save(filename)
+        return screen_crop
 
     def touch_image(self, *args, **kwargs):
         """ALias for click_image"""
@@ -349,6 +361,37 @@ class DeviceMixin(object):
         for (fn, flag) in self._event_handlers:
             if flag & event_flag:
                 fn(event)
+
+    def assert_exists(self, image, timeout=20.0):
+        """Assert if image exists
+        Args:
+            image: image filename # not support pattern for now
+            timeout: float of seconds
+
+        Returns:
+            self
+
+        Raises:
+            AssertExistsError
+        """
+        search_img = imutils.open(image)
+        log.info('assert exists image: %s', image)
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            point = self.match(search_img)
+            if point is None:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                continue
+            if not point.matched:
+                log.debug('Ignore confidence: %s', point.confidence)
+                continue
+            log.debug('assert pass, confidence: %s', point.confidence)
+            sys.stdout.write('\n')
+            break
+        else:
+            sys.stdout.write('\n')
+            raise errors.AssertExistsError('image not found %s' %(image,))
 
     def click_image(self, img, timeout=20.0, wait_change=False):
         """Simulate click according image position
@@ -406,3 +449,8 @@ class DeviceMixin(object):
         w = Watcher(self, name, timeout)
         w._dev = self
         return w
+
+if __name__ == '__main__':
+    b = Bounds(1, 2, 3, 4)
+    print b
+    print b * 1.0

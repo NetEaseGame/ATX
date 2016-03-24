@@ -21,6 +21,7 @@ def dirname(name):
         return os.path.dirname(name)
     return os.path.dirname(os.path.abspath(name))
 
+
 def exec_cmd(*cmds, **kwargs):
     '''
     @arguments env=None, timeout=3
@@ -58,6 +59,7 @@ def exec_cmd(*cmds, **kwargs):
         return r.wait()
     return 0
 
+
 def random_name(name):
     out = []
     for c in name:
@@ -70,3 +72,29 @@ def random_name(name):
 def remove_force(name):
     if os.path.isfile(name):
         os.remove(name)
+
+
+VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
+def search_image(name=None, path=['.']):
+    """ look for the image real path """
+    images = {}
+    for image_dir in set(path):
+        if not os.path.isdir(image_dir):
+            continue
+        for filename in os.listdir(image_dir):
+            bname, ext = os.path.splitext(filename)
+            if ext in VALID_IMAGE_EXTS:
+                filepath = os.path.join(image_dir, filename)
+                images[filename] = images[bname] = filepath
+
+    if name is None:
+        return list(set(images.values()))
+    else:
+        name = os.path.normpath(name)
+        return images.get(name)
+
+
+if __name__ == '__main__':
+    print search_image('oo.png')
+    print search_image('oo')
+    print search_image()

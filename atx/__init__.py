@@ -17,7 +17,7 @@ except pkg_resources.DistributionNotFound:
 
 from atx.consts import *
 from atx.errors import *
-from atx.device import Pattern
+from atx.device import Pattern, Bounds
 
 
 def connect(*args, **kwargs):
@@ -35,8 +35,14 @@ def connect(*args, **kwargs):
 
     cls = None
     if platform == 'android':
-        devcls = __import__('atx.android_device')
-        cls = devcls.android_device.AndroidDevice
+        devcls = __import__('atx.device.android')
+        cls = devcls.device.android.AndroidDevice
+    elif platform == 'windows':
+        devcls = __import__('atx.device.windows')
+        cls = devcls.device.windows.WindowsDevice
+    elif platform == 'dummy': # for py.test use
+        devcls = __import__('atx.device.dummy')
+        cls = devcls.device.dummy.DummyDevice
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
@@ -47,28 +53,3 @@ def connect(*args, **kwargs):
 #     print >>sys.stderr, 'Signal INT catched !!!'
 #     sys.exit(1)
 # signal.signal(signal.SIGINT, _sig_handler)
-
-
-# class Device(object):
-#     '''
-#     Create a new device instance and use this instance to control device
-#     '''
-#     def __init__(self, addr, logfile=None):
-#         '''
-#         @addr: eg: android://<serialno> or ios://127.0.0.1
-#         '''
-#         from . import devsuit
-#         module, loc, p = _parse_addr(addr)
-#         if p.path and p.netloc:
-#             serialno = p.path.lstrip('/')
-#             addr = p.netloc
-#         else:
-#             serialno = p.netloc
-#             addr = ''
-#         dev = module.Device(serialno, addr) # FIXME(ssx): may not fit well with ios
-#         self._m = devsuit.DeviceSuit(p.scheme, dev, logfile=logfile)
-
-#     def __getattr__(self, key):
-#         if hasattr(self._m, key):
-#             return getattr(self._m, key)
-#         raise AttributeError('Monitor object has no attribute "%s"' % key)
