@@ -27,7 +27,8 @@ from atx import patch
 from atx import base
 from atx import imutils
 from atx import adb
-from atx.device import DeviceMixin, Bounds
+from atx.device import Bounds
+from atx.device.device_mixin import DeviceMixin
 
 
 DISPLAY_RE = re.compile(

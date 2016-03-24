@@ -35,14 +35,14 @@ def connect(*args, **kwargs):
 
     cls = None
     if platform == 'android':
-        devcls = __import__('atx.android_device')
-        cls = devcls.android_device.AndroidDevice
+        devcls = __import__('atx.device.android')
+        cls = devcls.device.android.AndroidDevice
     elif platform == 'windows':
-        devcls = __import__('atx.windows_device')
-        cls = devcls.windows_device.WindowsDevice
+        devcls = __import__('atx.device.windows')
+        cls = devcls.device.windows.WindowsDevice
     elif platform == 'dummy': # for py.test use
-        devcls = __import__('atx.dummy_device')
-        cls = devcls.dummy_device.DummyDevice
+        devcls = __import__('atx.device.dummy')
+        cls = devcls.device.dummy.DummyDevice
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)

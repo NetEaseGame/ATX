@@ -6,7 +6,8 @@ from __future__ import absolute_import
 
 import os
 
-from atx.device import DeviceMixin, Display
+from atx.device.device_mixin import DeviceMixin
+from atx.device import Display
 from PIL import Image
 
 
@@ -21,7 +22,7 @@ class DummyDevice(DeviceMixin):
     def screenshot(self, filename=None):
         """ Take a screenshot """
         # screen size: 1280x720
-        screen_path = os.path.join(__dir__, '../tests/media/dummy_screen.png')
+        screen_path = os.path.join(__dir__, '../../tests/media/dummy_screen.png')
         screen = Image.open(screen_path)
         if filename:
             screen.save(filename)

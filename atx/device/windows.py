@@ -1,5 +1,9 @@
 #-*- encoding: utf-8 -*-
-"""Windows application as a device."""
+"""
+Windows application as a device
+"""
+
+from __future__ import absolute_import
 
 import os
 import time
@@ -11,8 +15,10 @@ import win32gui
 import win32process
 from PIL import Image
 
-from atx.device import DeviceMixin
+from atx.device import Display
+from atx.device.device_mixin import DeviceMixin
 from atx.errors import WindowsAppNotFoundError
+
 
 def find_process_id(exe_file):
     exe_file = os.path.normpath(exe_file).lower()
@@ -65,11 +71,12 @@ class Window(object):
                     return True
                 hs = []
                 win32gui.EnumWindows(callback, hs)
-                if hs: hwnd = hs[0]
+                if hs:
+                    hwnd = hs[0]
             if hwnd == 0:
                 raise WindowsAppNotFoundError("Windows Application <%s> is not running!" % exe_file)
 
-        ## if window_name & exe_file both are None, use the screen.
+        # if window_name & exe_file both are None, use the screen.
         self._is_desktop = False
         if hwnd == 0:
             hwnd = win32gui.GetDesktopWindow()
@@ -151,14 +158,14 @@ class Window(object):
 
         bits = []
         for i in range(len(_bits)/4):
-            ## change to rpg here, by set alpha = -1
+            # change to rpg here, by set alpha = -1
             bits.append(struct.pack('4b', _bits[4*i+2], _bits[4*i+1], _bits[4*i+0], -1))
 
-        ## do a turn over
+        # do a turn over
         _bits = []
         for i in range(height):
             for j in range(width):
-                _bits.append( bits[(height-1-i)*width+ j] )
+                _bits.append(bits[(height-1-i)*width+ j])
         _bits = "".join(_bits)
 
         img = Image.frombuffer('RGBA', (width, height), _bits)
@@ -223,4 +230,4 @@ class WindowsDevice(DeviceMixin):
     def display(self):
         """Display size in pixels."""
         w, h = self._win.size
-        return collections.namedtuple('Display', ['width', 'height'])(w, h)
+        return Display(w, h)
