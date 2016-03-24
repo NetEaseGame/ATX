@@ -3,7 +3,7 @@
 import os
 import time
 
-from atx.windevice import Window, WindowsDevice
+from atx.device.windows import Window, WindowsDevice
 
 ##print dir(self._memdc)
 #'AbortDoc', 'Arc', 'AttachObject', 'BeginPath', 

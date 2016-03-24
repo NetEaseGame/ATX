@@ -67,16 +67,9 @@ class Window(object):
                             extra.append(h)
                         return True
                     return True
-<<<<<<< HEAD:atx/windevice.py
                 extra = []
                 win32gui.EnumWindows(callback, extra)
                 if extra: hwnd = extra[0]
-=======
-                hs = []
-                win32gui.EnumWindows(callback, hs)
-                if hs:
-                    hwnd = hs[0]
->>>>>>> df36704c41bc0240cbf72a6c11fa2ea36bf29b26:atx/device/windows.py
             if hwnd == 0:
                 raise WindowsAppNotFoundError("Windows Application <%s> is not running!" % exe_file)
 
