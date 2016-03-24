@@ -63,9 +63,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
 
 	```
-	brew install python
-	brew install pillow
-	brew install opencv
+	brew install python pillow opencv
 	```
 
 2. 安装airtest
@@ -89,7 +87,7 @@ BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并
 	```
 
 
-3. 安装android依赖
+3. 安装ADB (Android Debug Bridge)
 
 	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 

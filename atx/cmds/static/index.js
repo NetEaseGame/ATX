@@ -4,9 +4,7 @@ $(function(){
   var workspace = Blockly.inject(blocklyDiv,
     {toolbox: document.getElementById('toolbox')});
 
-  $('.fancybox').fancybox({
-  	
-  })
+  $('.fancybox').fancybox()
 })
 
 // var workspace = Blockly.inject('blocklyDiv',

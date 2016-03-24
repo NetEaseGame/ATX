@@ -87,7 +87,7 @@ class Watcher(object):
         self.touched = {}
         self.timeout = timeout
 
-    def on(self, image=None, text=None):
+    def on(self, pattern=None, text=None):
         """Trigger when some object exists
         Args:
             image: image filename or Pattern
@@ -95,15 +95,19 @@ class Watcher(object):
 
         Returns:
             None
+
+        Raises:
+            TypeError
         """
-        if isinstance(image, basestring):
-            self._stored_selector = Pattern(image)
-        elif isinstance(image, Pattern):
-            self._stored_selector = image
-        elif text:
+        if text:
             self._stored_selector = self._dev(text=text)
+        elif pattern is not None:
+            selector = self._dev.pattern_open(pattern)
+            if selector is None:
+                raise IOError("Not found pattern: {}".format(pattern))
+            self._stored_selector = selector
         else:
-            raise SyntaxError("unsupported type: %s", image)
+            raise TypeError("unsupported type: %s", pattern)
             
         return self
 
@@ -199,7 +203,7 @@ class DeviceMixin(object):
         self._event_handlers = []
         self._search_path = ['.']
 
-    def _pattern_open(self, image):
+    def pattern_open(self, image):
         if isinstance(image, Pattern):
             return image
         elif isinstance(image, basestring):
@@ -282,7 +286,7 @@ class DeviceMixin(object):
         Raises:
             TypeError: when image_match_method is invalid
         """
-        pattern = self._pattern_open(pattern)
+        pattern = self.pattern_open(pattern)
         search_img = pattern.image
 
         pattern_scale = self._cal_scale(pattern)
@@ -387,7 +391,7 @@ class DeviceMixin(object):
         Raises:
             AssertExistsError
         """
-        pattern = self._pattern_open(pattern)
+        pattern = self.pattern_open(pattern)
         search_img = pattern.image
         # search_img = imutils.open(image)
         log.info('assert exists image: %s', pattern)
@@ -412,16 +416,17 @@ class DeviceMixin(object):
         """Simulate click according image position
 
         Args:
-            img: filename or an opencv image object
-            timeout: float, if image not found during this time, ImageNotFoundError will raise.
-            wait_change: wait until background image changed.
+            pattern (str or Pattern): filename or an opencv image object.
+            timeout (float): if image not found during this time, ImageNotFoundError will raise.
+            wait_change (bool): wait until background image changed.
+
         Returns:
             None
 
         Raises:
             ImageNotFoundError: An error occured when img not found in current screen.
         """
-        pattern = self._pattern_open(pattern)
+        pattern = self.pattern_open(pattern)
         search_img = pattern.image
         log.info('click image: %s', pattern)
         start_time = time.time()
