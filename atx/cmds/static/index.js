@@ -4,12 +4,78 @@ $(function(){
   var workspace = Blockly.inject(blocklyDiv,
     {toolbox: document.getElementById('toolbox')});
 
-  function updateFunction(event) {
-    var code = Blockly.Python.workspaceToCode(workspace);
-    console.log(code);
-    $('#pythonCode').text(code);
+  function generateCode(workspace) {
+    var xml = Blockly.Xml.workspaceToDom(workspace);
+    return {
+      xmlText: Blockly.Xml.domToPrettyText(xml),
+      pythonText: Blockly.Python.workspaceToCode(workspace)
+    }
   }
-  workspace.addChangeListener(updateFunction);
+
+  function saveWorkspace() {
+    var $this = $('a[href=#save]');
+    var originHtml = $this.html();
+    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存中')
+    
+    var g = generateCode(workspace);
+    $.ajax({
+      url: '/workspace',
+      method: 'POST',
+      data: {'xml_text': g.xmlText, 'python_text': g.pythonText},
+      success: function(e){
+        console.log(e);
+        // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
+        $.notify('保存成功',
+          {className: 'success', autoHideDelay: 700});
+      },
+      error: function(e){
+        console.log(e);
+        $this.notify(e.responseText, 
+          {className: 'warn', elementPosition: 'left', autoHideDelay: 5000});
+      },
+      complete: function(){
+        $this.html(originHtml)
+      }
+    })
+  }
+
+  function updateFunction(event) {
+    var g = generateCode(workspace);
+    $('#pythonCode').text(g.pythonText);
+    if (updateFunction.timeoutKey) {
+      clearTimeout(updateFunction.timeoutKey);
+    }
+    updateFunction.timeoutKey = setTimeout(saveWorkspace, 1400);
+  }
+
+  function restoreWorkspace() {
+    $.get('/workspace')
+      .success(function(res){
+        var xml = Blockly.Xml.textToDom(res.xml_text);
+        Blockly.Xml.domToWorkspace(workspace, xml);
+      })
+      .error(function(res){
+        alert(res.responseText);
+      })
+      .complete(function(){
+        setTimeout(function(){
+          workspace.addChangeListener(updateFunction);
+        }, 700)
+      })
+  }
+
+  restoreWorkspace();
+
+  $('a[href=#save]').click(function(event){
+    event.preventDefault();
+    saveWorkspace()
+  })
+
+  $('a[href=#play]').click(function(event){
+    event.preventDefault();
+    alert("还没写 TODO")
+  })
+
 
 
   $('.fancybox').fancybox()

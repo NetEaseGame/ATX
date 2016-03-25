@@ -17,6 +17,8 @@ log = logutils.getLogger("webide")
 log.setLevel(logging.DEBUG)
 
 
+workdir = '.'
+
 def get_valid_port():
     for port in range(10010, 10100):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,6 +37,37 @@ class MainHandler(tornado.web.RequestHandler):
         imgs = [(os.path.basename(name), name) for name in imgs]
         self.render('index.html', images=imgs)
 
+    def post(self):
+        print self.get_argument('xml_text')
+        self.write("Good")
+
+
+def read_file(filename, default=''):
+    if not os.path.isfile(filename):
+        return default
+    with open(filename, 'rb') as f:
+        return f.read()
+
+
+def write_file(filename, content):
+    with open(filename, 'w') as f:
+        f.write(content)
+
+
+class WorkspaceHandler(tornado.web.RequestHandler):
+    def get(self):
+        ret = {}
+        ret['xml_text'] = read_file('blockly.xml', '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>')
+        ret['python_text'] = read_file('blockly.py')
+        self.write(ret)
+
+    def post(self):
+        log.debug("Save workspace")
+        xml_text = self.get_argument('xml_text')
+        python_text = self.get_argument('python_text')
+        write_file('blockly.xml', xml_text)
+        write_file('blockly.py', python_text)
+
 
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
@@ -46,6 +79,7 @@ def make_app(settings={}):
     static_path = os.getcwd()
     application = tornado.web.Application([
         (r"/", MainHandler),
+        (r"/workspace", WorkspaceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
     ], **settings)
     return application
@@ -60,6 +94,9 @@ def main(**kws):
     port = kws.get('port', None)
     if not port:
         port = get_valid_port()
+
+    global workdir
+    workdir = kws.get('workdir', '.')
 
     open_browser = kws.get('open_browser', True)
     if open_browser:

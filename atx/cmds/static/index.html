@@ -38,13 +38,15 @@
         <div class="col-md-3">
           <h1>图片列表</h1>
           <ul class="list-group">
-            {% for basename, image_path in images %}
+            {% if len(images) > 0 %}
+              {% for basename, image_path in images %}
               <li class="list-group-item">
                 {{basename}}
                 <a href="/static_imgs/{{image_path}}" class="pull-right fancybox" title="{{image_path}}" rel="gallery">
                   <img class="img-rounded" style="height: 2em; border: 2px solid gray; padding: 1px" src="/static_imgs/{{image_path}}"/>
                 </a>
               </li>
+              {% end %}
             {% else %}
               没有图片
             {% end %}
@@ -59,7 +61,16 @@
               <a href="#pythonDiv" aria-controls="pythonDiv" role="tab" data-toggle="tab">Python</a>
             </li>
             <li role="presentation" class="pull-right">
-              <a href="#play">运行</a>
+              <a href="#play">
+                <span class="glyphicon glyphicon-play"></span>
+                运行
+              </a>
+            </li>
+            <li role="presentation" class="pull-right">
+              <a href="#save">
+                <span class="glyphicon glyphicon-floppy-saved"></span>
+                保存
+              </a>
             </li>
           </ul>
 
@@ -89,13 +100,16 @@
     <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
     <script src="//oss.maxcdn.com/mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
     <script src="//oss.maxcdn.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+    <script src="//cdn.rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="//rawgit.com/codeskyblue/blockly/master/blockly_compressed.js"></script>
     <script src="//rawgit.com/codeskyblue/blockly/master/blocks_compressed.js"></script>
     <script src="//rawgit.com/codeskyblue/blockly/master/msg/js/en.js"></script>
     <script src="//rawgit.com/codeskyblue/blockly/master/python_compressed.js"></script>
+
     <script src="{{static_url('index.js')}}"></script>
+    
     <!-- Google Analytics Code -->
     <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
