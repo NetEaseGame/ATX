@@ -37,6 +37,7 @@ def test():
         name = u"Windows 任务管理器"
         win = Window(name.encode("gbk"))
         win._screenshot('taskman.bmp')
+        win.pilimage.save('taskman.png')
     except Exception as e:
         print str(e)
 
@@ -44,6 +45,7 @@ def test():
         filepath = "C:\\Windows\\System32\\calc.exe"
         win = Window(exe_file=filepath)
         win._screenshot('calc.bmp')
+        win.pilimage.save('calc.png')
     except Exception as e:
         print str(e)
 
