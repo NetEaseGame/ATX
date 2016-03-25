@@ -39,9 +39,13 @@ $(function(){
     })
   }
 
-  function updateFunction(event) {
+  function updateGenerate(workspace) {
     var g = generateCode(workspace);
     $('#pythonCode').text(g.pythonText);
+  }
+
+  function updateFunction(event) {
+    updateGenerate(workspace)
     if (updateFunction.timeoutKey) {
       clearTimeout(updateFunction.timeoutKey);
     }
@@ -53,6 +57,7 @@ $(function(){
       .success(function(res){
         var xml = Blockly.Xml.textToDom(res.xml_text);
         Blockly.Xml.domToWorkspace(workspace, xml);
+        updateGenerate(workspace)
       })
       .error(function(res){
         alert(res.responseText);
