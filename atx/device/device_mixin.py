@@ -273,8 +273,8 @@ class DeviceMixin(object):
         """Check if image position in screen
 
         Args:
-            pattern: Image file name or opencv image object
-            screen: opencv image, optional, if not None, screenshot method will be called
+            - pattern: Image file name or opencv image object
+            - screen: opencv image, optional, if not None, screenshot method will be called
 
         Returns:
             None or FindPoint, For example:
@@ -365,8 +365,8 @@ class DeviceMixin(object):
     def add_listener(self, fn, event_flags):
         """Listen event
         Args:
-            fn: function call when event happends
-            event_flags: for example
+            - fn: function call when event happends
+            - event_flags: for example
                 EVENT_UIAUTO_CLICK | EVENT_UIAUTO_SWIPE
 
         Returns:
@@ -382,8 +382,8 @@ class DeviceMixin(object):
     def assert_exists(self, pattern, timeout=20.0):
         """Assert if image exists
         Args:
-            image: image filename # not support pattern for now
-            timeout: float of seconds
+            - image: image filename # not support pattern for now
+            - timeout (float): seconds
 
         Returns:
             self

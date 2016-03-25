@@ -55,7 +55,7 @@ def main():
     parser_tcpproxy.add_argument('-f', '--forward', default=26944, type=int, help='Forwarded port')
     parser_tcpproxy.set_defaults(func=_tcpproxy)
 
-    parser_webide = add_parser('wlekjf')
+    parser_webide = add_parser('web')
     parser_webide.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
     parser_webide.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
     parser_webide.set_defaults(func=_webide)
