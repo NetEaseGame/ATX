@@ -15,13 +15,12 @@ import time
 import tempfile
 import warnings
 import logging
+import uuid
 import xml.dom.minidom
 
 import cv2
 import numpy as np
 import aircv as ac
-from uiautomator import device as d
-from uiautomator import Device as UiaDevice
 from uiautomator import AutomatorDeviceObject
 from PIL import Image
 
@@ -40,12 +39,38 @@ log.setLevel(logging.INFO)
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-    
+
+_Condition = collections.namedtuple('WatchCondition', ['pattern', 'exists'])
+
 class WatcherItem(object):
-    """ TODO """
-    def __init__(self, pattern):
-        self._listens = [pattern]
-        self._hooks = []
+    """
+    How to use, for
+    example:
+
+    with d.watch('xx') as w:
+        w.on('button.png').on('enter.png').click()
+        w.on('yes.png').on_not('exit.png').click()
+
+    or
+
+    w = d.watch('yy')
+    w.on('button.png').on('enter.png').click()
+    w.on('button.png').click('enter.png')
+    w.run()
+    """
+    def __init__(self, dev, handler, pattern):
+        self._dev = dev
+        self._handler = handler
+        self._hooks = handler['hooks'] = []
+        self._conditions = handler['conditions'] = [_Condition(pattern, True)]
+
+    def on(self, pattern):
+        """Trigger when pattern exists"""
+        self._conditions.append(_Condition(pattern, True))
+
+    def on_not(self, pattern):
+        """Trigger when pattern not exists"""
+        self._conditions.append(_Condition(pattern, False))
 
     def do(self, func):
         """Trigger with function call
@@ -68,6 +93,14 @@ class WatcherItem(object):
         self._hooks.append(func)
         return self
 
+    def click(self, *args, **kwargs):
+        def _inner(event):
+            if len(args) or len(kwargs):
+                self._dev.click(*args, **kwargs)
+            else:
+                self._dev.click(*event.pos)
+        return self.do(_inner)
+
 
 class Watcher(object):
     ACTION_CLICK = 1 <<0
@@ -82,10 +115,58 @@ class Watcher(object):
         self._dev = device
         self._run = False
         self._stored_selector = None
+        self._wids = []
+        self._handlers = {}
 
         self.name = name
         self.touched = {}
         self.timeout = timeout
+
+    def on_pattern(self, pattern):
+        watch_id = str(uuid.uuid1())
+        self._wids.append(watch_id)
+        handler = self._handlers[watch_id] = {}
+        return WatcherItem(self._dev, handler, pattern)
+
+    def _do_hook(self, screen):
+        patterns = set()
+        for handler in self._handlers:
+            for c in handler.conditions:
+                patterns.add(c.pattern)
+
+        matches = {}
+        for pattern in patterns:
+            matches[pattern] = self._match(pattern)
+
+        for wid in self._wids:
+            handler = self._handlers[wid]
+            pos = self._match(handler.pattern)
+            if pos is None:
+                continue
+
+            last_pos = None
+            for c in handler.conditions:
+                last_pos = matches[c.pattern]
+                exists = last_pos is not None
+                if exists != c.exists:
+                    break
+            else:
+                for fn in handler.hooks:
+                    fn(Watcher.Event(None, last_pos))
+
+    def run(self):
+        self._run = True
+        start_time = time.time()
+        while self._run:
+            screen = self._dev.screenshot()
+            self._do_hook(screen)
+
+            if self.timeout is not None:
+                if time.time() - start_time > self.timeout:
+                    raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+                sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                sys.stdout.flush()
+            sys.stdout.write('\n')
 
     def on(self, pattern=None, text=None):
         """Trigger when some object exists
