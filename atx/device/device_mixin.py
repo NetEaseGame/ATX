@@ -197,12 +197,25 @@ class Watcher(object):
 class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
-        self.resolution = None
         self.image_match_threshold = 0.8
+        self._resolution = None
         self._bounds = None
         self._event_handlers = []
         self._search_path = ['.']
 
+    @property
+    def resolution(self):
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        if value is None:
+            self._resolution = None
+        else:
+            if not isinstance(value, tuple) or len(value) != 2:
+                raise TypeError("Value should be tuple, contains two values")
+            self._resolution = tuple(sorted(value))
+    
     def pattern_open(self, image):
         if isinstance(image, Pattern):
             return image

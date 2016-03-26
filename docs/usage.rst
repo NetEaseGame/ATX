@@ -1,4 +1,4 @@
-Method for android and iOS
+Method for Android and Windows
 --------------------------
 
 .. autoclass:: atx.device.device_mixin.DeviceMixin

@@ -202,15 +202,26 @@ AirtestX毕竟是一个python库，给出代码的例子可能更好理解一些
 * 常用配置
 	
 	```py
-	# 配置截图图片的手机分辨率, 注意第一个数要小于第二个数
-	d.resolution = (1080, 1920)
+	# 配置截图图片的手机分辨率
+	d.resolution = (1920, 1080)
+	print d.resolution
+	# expect output: (1080, 1920) 实际获取到的值会把小的放在前面
 
 	# this is default (first check minicap and then check uiautomator)
-	d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO
-	# alternative
-	# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR
-	# alternative
-	# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP
+	d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO # 默认
+	# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR # 可选
+	# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP # 可选
+
+	d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
+	# d.image_match_method = atx.IMAGE_MATCH_METHOD_SIFT # 特征点匹配, 可选
+
+	# d.image_match_threshold = 0.8 # 默认(模版匹配相似度)
+
+	d.rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
+	# 0: home key bottom(normal)
+	# 1: home key right
+	# 2: home key top
+	# 3: home key left
 	```
 
 * 监控事件
@@ -231,24 +242,7 @@ AirtestX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 
 ## 配置项
-一般来说用默认的就好了
-
-```
-d.screenshot_method = atx.SCREENSHOT_METHOD_AUTO # 默认
-# d.screenshot_method = atx.SCREENSHOT_METHOD_UIAUTOMATOR # 可选
-# d.screenshot_method = atx.SCREENSHOT_METHOD_MINICAP # 可选
-
-d.image_match_method = atx.IMAGE_MATCH_METHOD_TMPL # 模版匹配, 默认
-# d.image_match_method = atx.IMAGE_MATCH_METHOD_SIFT # 特征点匹配, 可选
-
-d.image_match_threshold = 0.8 # 默认(模版匹配相似度)
-
-d.rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
-# 0: home key bottom(normal)
-# 1: home key right
-# 2: home key top
-# 3: home key left
-```
+一般来说用默认的就好了，大部分都不需要改
 
 ## 接口说明
 其实看ReadTheDocs上的文档更好一点，这里也不打算列出来多少接口 [Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
@@ -380,7 +374,6 @@ click(20， 30）
 	```
 	d.resolution = (1080, 1920)
 	```
-	注意第一个数要比第二个数小
 
 	设置完后，当遇到其他分辨率的手机，就会自动去缩放。因为AirtestX主要针对游戏用户，横屏的时候，缩放是根据Y轴缩放的，竖排则根据X轴。可能有点抽象，理解不了也没关系
 
