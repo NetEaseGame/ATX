@@ -1,6 +1,48 @@
 CHANGES
 =======
 
+1.0.7
+-----
+
+* resolution add assert check
+* update documentation
+* add update generate
+* support save workspace
+* add atx auto code converter
+* update args ... match sphinx
+* mock win32 modules
+* update doc
+* add feature title
+* fix chinese encode error on webide
+* merge wxx
+* fix image in chinese path
+* add search_path to DeviceMixin, change SyntaxError to TypeError
+* fix merge error & relocate windows device
+* merge from ssx
+* move all platform device to directory device
+* fix closure error
+* add dummy device for test
+* update todo for tomorrow
+* add windows device support
+* show images on the left
+* remove adb code, add python -matx apkparse support
+* add click doc
+* add region support
+* use screen if no window_name nor exe_file given
+* update doc
+* remove useless code
+* move android code outof device.py
+* fix rename error
+* fix import error & change error name
+* add image list in the left
+* split android_code from atx.device.py
+* move touch to base class
+* add windows device api
+* add adb forward, add blockly to tornado web
+* use bootstrap to make atx webide beautiful
+* add google analytics code
+* update requirements
+* add python -matx webide
 * opencv install add win amd64 easy install method
 * add resolution for Pattern, close #3
 * depreciated sleep, use delay instead
