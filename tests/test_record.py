@@ -22,6 +22,7 @@ import win32con
 import win32api
 import win32gui
 import win32process
+import pywintypes
 from pyHook import HookManager
 from collections import namedtuple
 
@@ -29,7 +30,7 @@ from atx.device.windows import Window, find_process_id
 
 class Recorder(object):
 
-    StepClass = namedtuple('STEP', ('idx', 'type', 'value'))
+    StepClass = namedtuple('Step', ('idx', 'type', 'value'))
 
     def __init__(self, device=None):
         self.steps = []
@@ -37,8 +38,6 @@ class Recorder(object):
         self.device = device
         if device is not None:
             self.attach(device)
-
-        self.hook_inputs()
 
     def hook_inputs(self):
         """监视用户输入，需要把监视点击和键盘的分开，键盘输入作为一个整体"""
@@ -72,13 +71,15 @@ class Recorder(object):
 
 class WindowsRecorder(Recorder):
 
-    def __init__(self, device=None, addon=False):
-        super(WindowsRecorder, self).__init__(device)
+    _addon_class = namedtuple('addon', ('atom', 'hwnd'))
 
-        _addon_class = namedtuple('addon', ('atom', 'hwnd'))
-        self.addon = _addon_class(None, None)
-        if addon:
-            self.addon = _addon_class(*self.init_addon())
+    def __init__(self, device=None, with_addon=False):
+        self.watched_hwnds = set()
+        self.addon = WindowsRecorder._addon_class(None, None)
+        self.with_addon = with_addon
+        self.hm = None
+
+        super(WindowsRecorder, self).__init__(device)
 
     def init_addon(self):
 
@@ -86,30 +87,23 @@ class WindowsRecorder(Recorder):
             print "on_create"
 
         def on_paint(hwnd, msg, wp, lp):
+            # print win32gui.GetForegroundWindow()
             if self.device is not None:
                 try:
                     l, t, r, b = win32gui.GetWindowRect(self.device._handle)
                 except Exception as e:
                     print "device may be distroyed.", str(e)
                     self.detach()
-                    win32gui.ShowWindow(hwnd, False)
+                    # win32gui.SetWindowPos(hwnd, win32con.HWND_BOTTOM, 0, 0, 1, 1, 0)
                 else:
-                    
                     win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, l, t, r-l, b-t, 0)
-                    # win32gui.SetWindowPos(self.device._handle, hwnd, l, t, r-l, b-t, 0)
+            else:
+                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 100, 100, 100, 100, 0)
 
         def on_close(hwnd, msg, wp, lp):
             print "on_close"
             win32gui.DestroyWindow(hwnd)
             win32gui.PostQuitMessage(0)
-
-        def on_mouse(hwnd, msg, wp, lp):
-            print "on_mouse", wp, lp
-            return True
-
-        def on_keyboard(hwnd, msg, wp, lp):
-            print "on_keyboard", wp, lp
-            return True
 
         wndproc = {
             win32con.WM_PAINT: on_paint,
@@ -125,7 +119,7 @@ class WindowsRecorder(Recorder):
 
         class_atom = win32gui.RegisterClass(wc)
         hwnd = win32gui.CreateWindowEx(
-            win32con.WS_EX_LAYERED,# | win32con.WS_EX_TRANSPARENT ,  # dwExStyle,
+            win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT ,  # dwExStyle,
             class_atom, '',             # lpClassName, lpWindowName,
             win32con.WS_VISIBLE | win32con.WS_CLIPCHILDREN | win32con.WS_CLIPSIBLINGS | win32con.WS_POPUP,   # dwStyle, no frame
             100, 100, 100, 100,         # x, y, nWidth, nHeight
@@ -134,42 +128,126 @@ class WindowsRecorder(Recorder):
         )  
 
         ## make transparent
-        win32gui.SetLayeredWindowAttributes(hwnd, 0, 50, win32con.LWA_ALPHA | win32con.LWA_COLORKEY)
+        win32gui.SetLayeredWindowAttributes(hwnd, 0, 80, win32con.LWA_ALPHA | win32con.LWA_COLORKEY)
 
         return class_atom, hwnd
 
     def attach(self, device):
         print "attach to device", device
         self.device = device
-        if self.addon.hwnd:
-            win32gui.ShowWindow(self.addon.hwnd, True)
+
+        ## try to filter evets using all child-window's handles
+        ## But the opertations on menus are tricky
+        ## so just go the easy way for now.
+
+        def callback(hwnd, extra):
+            extra.add(hwnd)
+            return True
+
+        self.watched_hwnds.add(self.device._handle)
+        win32gui.EnumChildWindows(self.device._handle, callback, self.watched_hwnds)
+        print "find %s child window" % len(self.watched_hwnds) # 67 for calc
+
+        if self.with_addon:
+            atom, hwnd = self.init_addon()
+            self.addon = WindowsRecorder._addon_class(atom, hwnd)
+            win32gui.SetParent(hwnd, self.device._handle)
+
+        # hmenu = win32gui.GetMenu(self.device._handle)
+        # print "hmenu:", hmenu
+        # self.watched_hwnds.add(hmenu)
+        # print "find %s child window" % len(self.watched_hwnds) # 67 for calc
+        self.hook_inputs()
 
     def detach(self):
         print "detach from device", self.device
-        self.device = None
         if self.addon.hwnd:
-            win32gui.ShowWindow(self.addon.hwnd, False)
+            win32gui.DestroyWindow(self.addon.hwnd)
+            win32gui.UnregisterClass(self.addon.atom, None)
+            self.addon = WindowsRecorder._addon_class(None, None)
+
+        self.device = None
+        self.watched_hwnds = set()
+        self.unhook_inputs()
 
     def hook_inputs(self):
+        if self.hm is not None:
+            return
 
         def on_mouse(event):
-            print event.MessageName, event.WindowName, event.Position, event.Wheel
+            if self.device is None:
+                return True
+            ok = event.Window in self.watched_hwnds
+            print ok, event.MessageName, event.Window, event.WindowName, event.Position, event.Wheel
             return True
 
         def on_keyboard(event):
-            print event.Key, repr(event.Ascii)
+            if self.device is None:
+                return True
+            ok = event.Window in self.watched_hwnds
+            print ok, event.Window, event.WindowName, event.Message, Event.Time
+            print "\t", repr(event.Ascii), event.KeyId, event.ScanCode, event.flags
+            print "\t", event.Key, event.Extended, event.Injected, event.Alt, event.Transition
             return True
 
         hm = HookManager()
-        hm.MouseLeftDown = on_mouse
-        hm.KeyDown = on_keyboard
+        hm.MouseAll = on_mouse
+        hm.KeyAll = on_keyboard
         hm.HookMouse()
         hm.HookKeyboard()
+        self.hm = hm
+
+    def unhook_inputs(self):
+        if self.hm is not None:
+            self.hm.UnhookMouse()
+            self.hm.UnhookKeyboard()
+        self.hm = None
 
     def run(self):
         win32gui.PumpMessages()
-        if self.addon_class_atom:
-            win32gui.UnregisterClass(self.addon_class_atom, None)
+
+    def pause(self):
+        pass
+
+
+"""
+static PyObject *PyPumpWaitingMessages(PyObject *self, PyObject *args)
+{
+    MSG msg;
+    long result = 0;
+    // Read all of the messages in this next loop, 
+    // removing each message as we read it.
+    Py_BEGIN_ALLOW_THREADS
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        // If it's a quit message, we're out of here.
+        if (msg.message == WM_QUIT) {
+            result = 1;
+            break;
+        }
+        // Otherwise, dispatch the message.
+        DispatchMessage(&msg); 
+    } // End of PeekMessage while loop
+    Py_END_ALLOW_THREADS
+    return PyInt_FromLong(result);
+}
+
+// @pymethod |pythoncom|PumpMessages|Pumps all messages for the current thread until a WM_QUIT message.
+static PyObject *pythoncom_PumpMessages(PyObject *self, PyObject *args)
+{
+    MSG msg;
+    int rc;
+    Py_BEGIN_ALLOW_THREADS
+    while ((rc=GetMessage(&msg, 0, 0, 0))==1) {
+        TranslateMessage(&msg); // needed?
+        DispatchMessage(&msg);
+    }
+    Py_END_ALLOW_THREADS
+    if (rc==-1)
+        return PyWin_SetAPIError("GetMessage");
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+"""
 
 def main():
     exe_file = "C:\\Windows\\System32\\calc.exe"
@@ -179,7 +257,7 @@ def main():
 
     win = Window(exe_file=exe_file)
 
-    rec = WindowsRecorder(addon=True)
+    rec = WindowsRecorder(with_addon=True)
     rec.attach(win)
     rec.run()
 

@@ -13,8 +13,23 @@ import atx
 d = atx.connect(platform='dummy')
 
 def setup_function(f):
-    d.resolution = (720, 1280)
+    d.resolution = (1280, 720)
 
+def test_setget_resolution():
+    assert d.resolution == (720, 1280)
+
+    d.resolution = None # None is also OK to set
+    assert d.resolution is None
+
+    d.resolution = (200, 400)
+    assert d.resolution == (200, 400)
+
+    with pytest.raises(TypeError):
+        d.resolution = [1,3]
+    with pytest.raises(TypeError):
+        d.resolution = 720
+    assert d.resolution == (200, 400)
+    
 def teardown_function(f):
     print 'teardown'
     
