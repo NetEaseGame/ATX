@@ -8,7 +8,6 @@ from __future__ import absolute_import
 import os
 import time
 import struct
-import win32ui
 import win32con
 import win32api
 import win32gui
@@ -130,9 +129,9 @@ class Window(object):
         left, top, right, bottom = self.position
         width, height = right - left, bottom - top
         hwindc = win32gui.GetWindowDC(self._handle)
-        windc = win32ui.CreateDCFromHandle(hwindc)
+        windc = win32gui.CreateDCFromHandle(hwindc)
         memdc = windc.CreateCompatibleDC()
-        bmp = win32ui.CreateBitmap()
+        bmp = win32gui.CreateBitmap()
         bmp.CreateCompatibleBitmap(windc, width, height)
         memdc.SelectObject(bmp)
 

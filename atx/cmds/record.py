@@ -21,9 +21,7 @@ class BaseRecorder(object):
     StepClass = namedtuple('Step', ('idx', 'type', 'value'))
 
     def __init__(self, device=None):
-        print "hello from BaseRecorder"
         self.steps = []
-
         self.device = None
         if device is not None:
             self.attach(device)
@@ -39,6 +37,9 @@ class BaseRecorder(object):
     def on_click(self, postion):
         """点击时自动截取一小段"""
         step = Recorder.StepClass()
+
+    def on_drag(self, start, end):
+        pass
 
     def on_text(self, text):
         """输入文字整个作为一个case"""
@@ -56,17 +57,19 @@ class BaseRecorder(object):
         print "running"
 
     def stop(self):
-        self.detach()
         print "stopped"
 
 class WindowsRecorder(BaseRecorder):
 
-    _addon_class = namedtuple('addon', ('atom', 'hwnd'))
+    KBFLAG_CTRL = 0x01
+    KBFLAG_ALT = 0x02
+    KBFLAG_SHIFT = 0x04
+    KBFLAG_CAPS = 0x08
 
     def __init__(self, device=None):
-        print "hello from WindowsRecorder"
         self.hm = None
         self.watched_hwnds = set()
+        self.kbflag = 0
         super(WindowsRecorder, self).__init__(device)
 
     def attach(self, device):
@@ -75,37 +78,34 @@ class WindowsRecorder(BaseRecorder):
             if device is not self.device:
                 self.detach()
 
-        print 111
+        handle = device._win._handle
         def callback(hwnd, extra):
             extra.add(hwnd)
             return True
-        handle = device._win._handle
         self.watched_hwnds.add(handle)
         win32gui.EnumChildWindows(handle, callback, self.watched_hwnds)
-        print 222, len(self.watched_hwnds)
 
         def on_mouse(event):
-            if device is None:
+            if self.device is None:
                 return True
-            if event.Window in self.watched_hwnds:
-                print "Hello", event.Message, event.Position
+            if event.Window not in self.watched_hwnds:
+                return True
+            print "on_mouse", event.MessageName, event.Position
             return True
 
         def on_keyboard(event):
-            if device is None:
+            if self.device is None:
                 return True
-            if event.Window in self.watched_hwnds:
-                print "\t", repr(event.Ascii), event.KeyId, event.ScanCode, event.flags
-                print "\t", event.Key, event.Extended, event.Injected, event.Alt, event.Transition
+            if event.Window not in self.watched_hwnds:
+                return True
+            print "on_keyboard", event.MessageName, event.Key, repr(event.Ascii), event.KeyID, event.ScanCode, 
+            print event.flags, event.Extended, event.Injected, event.Alt, event.Transition
             return True
 
-        print 333
         hm = pyHook.HookManager()
         hm.MouseAllButtons = on_mouse
         hm.KeyAll = on_keyboard
-        print 444
         hm.HookMouse()
-        print 555
         hm.HookKeyboard()
         self.hm = hm
 
@@ -123,6 +123,12 @@ class WindowsRecorder(BaseRecorder):
             self.hm.UnhookKeyboard()
         self.hm = None
 
+class AndroidRecorder(BaseRecorder):
+    def attach(self):
+        pass
+
+    def detach(self):
+        pass
 
 class SystemTray(object):
     def __init__(self, parent, name, commands=None, icon_path=None):
@@ -179,9 +185,9 @@ class SystemTray(object):
     def on_destroy(self, hwnd, msg, wp, lp):
         win32gui.Shell_NotifyIcon(win32gui.NIM_DELETE, (self.hwnd, 0))
         win32gui.PostMessage(self.parent, win32con.WM_CLOSE, 0, 0)
+        return True
 
     def on_command(self, hwnd, msg, wp, lp):
-        print "on_command"
         cid = win32api.LOWORD(wp)
         if not self.commands.get(cid):
             print "Unknown command -", cid
@@ -191,6 +197,7 @@ class SystemTray(object):
             func()
         except Exception as e:
             print str(e)
+        return True
 
     def on_tray_notify(self, hwnd, msg, wp, lp):
         if lp == win32con.WM_LBUTTONUP:
@@ -212,17 +219,11 @@ class SystemTray(object):
 
 class RecorderGUI(object):
     def __init__(self, device=None):
-        self.device = device
+        self._device = device
         self._recorder = None
         self._root = root = tk.Tk()
 
-        def _destroy():
-            print "root destroy"
-            root.destroy()
-            self.stop_record()
-            self.device = None
-
-        root.protocol("WM_DELETE_WINDOW", _destroy)
+        root.protocol("WM_DELETE_WINDOW", self.destroy)
 
         def calllater():
             icon_path = os.path.join(__dir__, 'static', 'recorder.ico')
@@ -233,39 +234,49 @@ class RecorderGUI(object):
             tray = SystemTray(root.winfo_id(), "recorder", commands, icon_path)
             tray.balloon('hello')
 
-        root.after(300, calllater)
+        root.after(2000, calllater)
 
-        ## no window for now.
+        # no window for now.
         root.withdraw()
+
+        # need to handle device event
+
+    def destroy(self):
+        print "root destroy"
+        if self.check_recorder():
+            self._recorder.detach()
+        self._root.destroy()
 
     def mainloop(self):
         self._root.mainloop()
 
     def start_record(self):
-        if self.recorder is None:
+        if not self.check_recorder():
             return
-        self.recorder.run()
+        self._recorder.run()
 
     def stop_record(self):
-        if self.recorder is None:
+        if not self.check_recorder():
             return
-        self.recorder.stop()
+        self._recorder.stop()
 
-    @property
-    def recorder(self):
-        if self.device is None:
+    def check_recorder(self):
+        if self._device is None:
             print "No device choosen."
             self._recorder = None
-            return
+            return False
 
         if self._recorder is None:
-            print "init recorder", type(self.device)
-            if isinstance(self.device, WindowsDevice):
-                self._recorder = WindowsRecorder(self.device)
-            elif isinstance(self.device, AndroidDevice):
-                pass
-
-        return self._recorder
+            print "init recorder", type(self._device)
+            if isinstance(self._device, WindowsDevice):
+                record_class = WindowsRecorder
+            elif isinstance(self._device, AndroidDevice):
+                record_class = AndroidRecorder
+            else:
+                print "Unknown device type", type(self._device)
+                return False
+            self._recorder = record_class(self._device)
+        return True
 
 if __name__ == '__main__':
     w = RecorderGUI()
