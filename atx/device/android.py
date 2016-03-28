@@ -32,7 +32,10 @@ from atx.device.device_mixin import DeviceMixin
 
 
 DISPLAY_RE = re.compile(
-    '.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
+    r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
+
+PROP_PATTERN = re.compile(
+    r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
 
 UINode = collections.namedtuple('UINode', [
     'xml',
@@ -269,6 +272,23 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             return self.adb_cmd(['shell'] + list(command))
         else:
             return self.adb_cmd(['shell'] + [command])
+
+    def get_properties(self):
+        '''
+        Android Properties, extracted from `adb shell getprop`
+
+        Returns:
+            dict of props, for
+            example:
+
+                {'ro.bluetooth.dun': 'true'}
+        '''
+        props = {}
+        for line in self.adb_shell(['getprop']).splitlines():
+            m = PROP_PATTERN.match(line)
+            if m:
+                props[m.group('key')] = m.group('value')
+        return props
 
     def start_app(self, package_name):
         '''
