@@ -1,10 +1,28 @@
 /* Javascript */
+var M = {};
+
 $(function(){
   var blocklyDiv = document.getElementById('blocklyDiv');
   var workspace = Blockly.inject(blocklyDiv,
     {toolbox: document.getElementById('toolbox')});
-  
-  var M = {};
+  Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
+  Blockly.Python.addReservedWords('highlight_block');
+  M.workspace = workspace;
+  M.workspace.traceOn(true); // enable step run
+
+  var RUN_BUTTON_TEXT = {
+    'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
+    'running': '<span class="glyphicon glyphicon-stop"></span> 运行中</a>',
+  }
+
+  function changeRunningStatus(status){
+    var $play = $('a[href=#play]');
+    if (status === 'ready'){
+      $play.notify('运行结束', {className: 'success', position: 'top'});
+    }
+    $play.html(RUN_BUTTON_TEXT[status]);
+  }
+
   (function(){
     var ws = new WebSocket('ws://'+location.host+'/ws')
     M.ws = ws;
@@ -15,11 +33,26 @@ $(function(){
     ws.onmessage = function(evt){
       try {
         var data = JSON.parse(evt.data)
-        if (data.type == 'image_list') {
+        console.log(evt.data);
+        switch(data.type){
+        case 'image_list':
           M.images = data.data;
-          $('#btn-imgrefresh').notify('已刷新', {className: 'success', position: 'right'});
+          $('#btn-imgrefresh').notify(
+            '已刷新',
+            {className: 'success', position: 'right'}
+          );
+          break;
+        case 'run':
+          changeRunningStatus(data.status);
+          break;
+        case 'highlight':
+          console.log(data.id)
+          var id = data.id;
+          workspace.highlightBlock(id)
+          break;
+        default:
+          console.log("No match")
         }
-        console.log(M)
       }
       catch(err){
         console.log(err, evt.data)
@@ -112,10 +145,11 @@ $(function(){
 
   $('a[href=#play]').click(function(event){
     event.preventDefault();
-    alert("还没写 TODO")
+    M.ws.send('run');
   })
 
   $('#btn-imgrefresh').click(function(event){
+    event.preventDefault();
     M.ws.send('refresh');
   })
 

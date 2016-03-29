@@ -4,6 +4,7 @@ import os
 import logging
 import webbrowser
 import socket
+import time
 
 import tornado.ioloop
 import tornado.web
@@ -32,7 +33,7 @@ def read_file(filename, default=''):
 
 def write_file(filename, content):
     with open(filename, 'w') as f:
-        f.write(content)
+        f.write(content.encode('utf-8'))
 
 def get_valid_port():
     for port in range(10010, 10100):
@@ -62,11 +63,20 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         print("WebSocket connected")
 
+    def _highlight_block(self, id):
+        self.write_message({'type': 'highlight', 'id': id})
+        time.sleep(1.0)
+
+    def run_blockly(self):
+        content = ''
+        with open('blockly.py') as f:
+            content = f.read()
+        exec content in {'highlight_block': self._highlight_block}
+        
     @run_on_executor
     def background_task(self, i):
         self.write_message({'type': 'run', 'status': 'running'})
-        import time
-        time.sleep(3)
+        self.run_blockly()
         return i
 
     @tornado.gen.coroutine
@@ -79,7 +89,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
             self.write_message({'type': 'image_list', 'data': list(imgs)})
         elif message == 'run':
             res = yield self.background_task(4)
-            self.write_message({'res': res})
+            self.write_message({'type': 'run', 'status': 'ready', 'result': res})
         else:
             self.write_message(u"You said: " + message)
 
