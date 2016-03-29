@@ -8,6 +8,8 @@ import socket
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
+from tornado.concurrent import run_on_executor
+from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for python2
 
 from atx import logutils
 from atx import base
@@ -55,19 +57,29 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 class EchoWebSocket(tornado.websocket.WebSocketHandler):
+    executor = ThreadPoolExecutor(max_workers=1)
+
     def open(self):
         print("WebSocket connected")
-        # imgs = base.list_images(path=IMAGE_PATH)
-        # imgs = [dict(
-        #     path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
-        # self.write_message({'images': list(imgs)})
 
+    @run_on_executor
+    def background_task(self, i):
+        self.write_message({'type': 'run', 'status': 'running'})
+        import time
+        time.sleep(3)
+        return i
+
+    @tornado.gen.coroutine
     def on_message(self, message):
+        print(message)
         if message == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
             imgs = [dict(
                 path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
-            self.write_message({'images': list(imgs)})
+            self.write_message({'type': 'image_list', 'data': list(imgs)})
+        elif message == 'run':
+            res = yield self.background_task(4)
+            self.write_message({'res': res})
         else:
             self.write_message(u"You said: " + message)
 

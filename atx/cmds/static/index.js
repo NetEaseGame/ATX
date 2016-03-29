@@ -5,24 +5,38 @@ $(function(){
     {toolbox: document.getElementById('toolbox')});
   
   var M = {};
-  var ws = new WebSocket('ws://'+location.host+'/ws')
+  (function(){
+    var ws = new WebSocket('ws://'+location.host+'/ws')
+    M.ws = ws;
 
-  ws.onopen = function(){
-    ws.send("refresh")
-  };
-  ws.onmessage = function(evt){
-    try {
-      var data = JSON.parse(evt.data)
-      M.images = data.images;
-      console.log(M)
-    }
-    catch(err){
-      console.log(err, evt.data)
-    }
-  };
-  ws.onerror = function(err){
-    console.error(err)
-  };
+    ws.onopen = function(){
+      ws.send("refresh")
+    };
+    ws.onmessage = function(evt){
+      try {
+        var data = JSON.parse(evt.data)
+        if (data.type == 'image_list') {
+          M.images = data.data;
+          $('#btn-imgrefresh').notify('已刷新', {className: 'success', position: 'right'});
+        }
+        console.log(M)
+      }
+      catch(err){
+        console.log(err, evt.data)
+      }
+    };
+    ws.onerror = function(err){
+      $.notify(err);
+      console.error(err)
+    };
+    ws.onclose = function(){
+      console.log("Closed");
+      $.notify(
+        '与后台通信连接断开 !!!', 
+        {position: 'top center', className: 'error'})
+    };
+
+  })()
 
   function generateCode(workspace) {
     var xml = Blockly.Xml.workspaceToDom(workspace);
@@ -45,12 +59,12 @@ $(function(){
       success: function(e){
         console.log(e);
         // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
-        $.notify('保存成功',
-          {className: 'success', autoHideDelay: 700});
+        $('a[href=#save]').notify('保存成功',
+          {className: 'success', position: 'left', autoHideDelay: 700});
       },
       error: function(e){
         console.log(e);
-        $this.notify(e.responseText, 
+        $this.notify(e.responseText || '保存失败，请检查服务器连接是否正常', 
           {className: 'warn', elementPosition: 'left', autoHideDelay: 5000});
       },
       complete: function(){
@@ -102,8 +116,7 @@ $(function(){
   })
 
   $('#btn-imgrefresh').click(function(event){
-    ws.send('refresh');
-    $(this).notify('已刷新', 'success');
+    M.ws.send('refresh');
   })
 
 
