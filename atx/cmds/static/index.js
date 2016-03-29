@@ -1,8 +1,75 @@
 /* Javascript */
+var M = {};
+
 $(function(){
   var blocklyDiv = document.getElementById('blocklyDiv');
   var workspace = Blockly.inject(blocklyDiv,
     {toolbox: document.getElementById('toolbox')});
+  Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
+  Blockly.Python.addReservedWords('highlight_block');
+  M.workspace = workspace;
+  M.workspace.traceOn(true); // enable step run
+
+  var RUN_BUTTON_TEXT = {
+    'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
+    'running': '<span class="glyphicon glyphicon-stop"></span> 运行中</a>',
+  }
+
+  function changeRunningStatus(status){
+    var $play = $('a[href=#play]');
+    if (status === 'ready'){
+      $play.notify('运行结束', {className: 'success', position: 'top'});
+    }
+    $play.html(RUN_BUTTON_TEXT[status]);
+  }
+
+  (function(){
+    var ws = new WebSocket('ws://'+location.host+'/ws')
+    M.ws = ws;
+
+    ws.onopen = function(){
+      ws.send("refresh")
+    };
+    ws.onmessage = function(evt){
+      try {
+        var data = JSON.parse(evt.data)
+        console.log(evt.data);
+        switch(data.type){
+        case 'image_list':
+          M.images = data.data;
+          $('#btn-imgrefresh').notify(
+            '已刷新',
+            {className: 'success', position: 'right'}
+          );
+          break;
+        case 'run':
+          changeRunningStatus(data.status);
+          break;
+        case 'highlight':
+          console.log(data.id)
+          var id = data.id;
+          workspace.highlightBlock(id)
+          break;
+        default:
+          console.log("No match")
+        }
+      }
+      catch(err){
+        console.log(err, evt.data)
+      }
+    };
+    ws.onerror = function(err){
+      $.notify(err);
+      console.error(err)
+    };
+    ws.onclose = function(){
+      console.log("Closed");
+      $.notify(
+        '与后台通信连接断开 !!!', 
+        {position: 'top center', className: 'error'})
+    };
+
+  })()
 
   function generateCode(workspace) {
     var xml = Blockly.Xml.workspaceToDom(workspace);
@@ -25,12 +92,12 @@ $(function(){
       success: function(e){
         console.log(e);
         // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
-        $.notify('保存成功',
-          {className: 'success', autoHideDelay: 700});
+        $('a[href=#save]').notify('保存成功',
+          {className: 'success', position: 'left', autoHideDelay: 700});
       },
       error: function(e){
         console.log(e);
-        $this.notify(e.responseText, 
+        $this.notify(e.responseText || '保存失败，请检查服务器连接是否正常', 
           {className: 'warn', elementPosition: 'left', autoHideDelay: 5000});
       },
       complete: function(){
@@ -78,9 +145,13 @@ $(function(){
 
   $('a[href=#play]').click(function(event){
     event.preventDefault();
-    alert("还没写 TODO")
+    M.ws.send('run');
   })
 
+  $('#btn-imgrefresh').click(function(event){
+    event.preventDefault();
+    M.ws.send('refresh');
+  })
 
 
   $('.fancybox').fancybox()

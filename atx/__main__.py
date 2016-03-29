@@ -8,7 +8,7 @@ import argparse
 import functools
 import json
 
-from atx.cmds import tkgui, minicap, tcpproxy, webide
+from atx.cmds import tkgui, minicap, tcpproxy, webide, run
 import atx.androaxml as apkparse
 
 def _gui(args):
@@ -30,9 +30,14 @@ def _webide(args):
 def _apkparse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
-        'package-name': pkg_name,
-        'main-activity': activity,
+        'package_name': pkg_name,
+        'main_activity': activity,
     }, indent=4)
+
+
+def _run(args):
+    run.main(args.filename)
+
 
 def main():
     ap = argparse.ArgumentParser(
@@ -63,6 +68,10 @@ def main():
     parser_webide = add_parser('apkparse')
     parser_webide.add_argument('filename', help='Apk filename')
     parser_webide.set_defaults(func=_apkparse)
+
+    parser_webide = add_parser('run')
+    parser_webide.add_argument('filename', help='Python script filename')
+    parser_webide.set_defaults(func=_run)
 
     args = ap.parse_args()
     args.func(args)

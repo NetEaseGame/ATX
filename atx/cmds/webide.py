@@ -4,9 +4,14 @@ import os
 import logging
 import webbrowser
 import socket
+import time
 
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
+from tornado.concurrent import run_on_executor
+from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for python2
+
 from atx import logutils
 from atx import base
 
@@ -17,7 +22,18 @@ log = logutils.getLogger("webide")
 log.setLevel(logging.DEBUG)
 
 
+IMAGE_PATH = ['.', 'imgs', 'images']
 workdir = '.'
+
+def read_file(filename, default=''):
+    if not os.path.isfile(filename):
+        return default
+    with open(filename, 'rb') as f:
+        return f.read()
+
+def write_file(filename, content):
+    with open(filename, 'w') as f:
+        f.write(content.encode('utf-8'))
 
 def get_valid_port():
     for port in range(10010, 10100):
@@ -29,7 +45,6 @@ def get_valid_port():
 
     raise SystemError("Can not find a unused port, amazing!")
 
-IMAGE_PATH = ['.', 'imgs', 'images']
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -42,16 +57,47 @@ class MainHandler(tornado.web.RequestHandler):
         self.write("Good")
 
 
-def read_file(filename, default=''):
-    if not os.path.isfile(filename):
-        return default
-    with open(filename, 'rb') as f:
-        return f.read()
+class EchoWebSocket(tornado.websocket.WebSocketHandler):
+    executor = ThreadPoolExecutor(max_workers=1)
 
+    def open(self):
+        print("WebSocket connected")
 
-def write_file(filename, content):
-    with open(filename, 'w') as f:
-        f.write(content)
+    def _highlight_block(self, id):
+        self.write_message({'type': 'highlight', 'id': id})
+        time.sleep(1.0)
+
+    def run_blockly(self):
+        content = ''
+        with open('blockly.py') as f:
+            content = f.read()
+        exec content in {'highlight_block': self._highlight_block}
+        
+    @run_on_executor
+    def background_task(self, i):
+        self.write_message({'type': 'run', 'status': 'running'})
+        self.run_blockly()
+        return i
+
+    @tornado.gen.coroutine
+    def on_message(self, message):
+        print(message)
+        if message == 'refresh':
+            imgs = base.list_images(path=IMAGE_PATH)
+            imgs = [dict(
+                path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
+            self.write_message({'type': 'image_list', 'data': list(imgs)})
+        elif message == 'run':
+            res = yield self.background_task(4)
+            self.write_message({'type': 'run', 'status': 'ready', 'result': res})
+        else:
+            self.write_message(u"You said: " + message)
+
+    def on_close(self):
+        print("WebSocket closed")
+    
+    def check_origin(self, origin):
+        return True
 
 
 class WorkspaceHandler(tornado.web.RequestHandler):
@@ -81,6 +127,7 @@ def make_app(settings={}):
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
+        (r'/ws', EchoWebSocket),
     ], **settings)
     return application
 

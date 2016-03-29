@@ -16,9 +16,9 @@ from atx.device.android import AndroidDevice
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-class BaseRecorder(object):
+Step = namedtuple('Step', ('type', 'value'))
 
-    StepClass = namedtuple('Step', ('idx', 'type', 'value'))
+class BaseRecorder(object):
 
     def __init__(self, device=None):
         self.steps = []
@@ -34,16 +34,24 @@ class BaseRecorder(object):
         """解绑设备"""
         raise NotImplementedError()
 
+    def run(self):
+        """start to record"""
+        raise NotImplementedError()
+
+    def stop(self):
+        """stop record"""
+        raise NotImplementedError()
+
     def on_click(self, postion):
         """点击时自动截取一小段"""
-        step = Recorder.StepClass()
+        self.steps.append(Step('click', postion))
 
     def on_drag(self, start, end):
-        pass
+        self.steps.append(Step('drag', (start, end)))
 
     def on_text(self, text):
         """输入文字整个作为一个case"""
-        pass
+        self.steps.append(Step('text', text))
 
     def wait_respond(self, response):
         """点击后，记录响应稳定后图片的特征，此函数应该由on_click或on_text来调用"""
@@ -53,12 +61,6 @@ class BaseRecorder(object):
         """把steps输出成py文件"""
         pass
 
-    def run(self):
-        print "running"
-
-    def stop(self):
-        print "stopped"
-
 class WindowsRecorder(BaseRecorder):
 
     KBFLAG_CTRL = 0x01
@@ -67,10 +69,12 @@ class WindowsRecorder(BaseRecorder):
     KBFLAG_CAPS = 0x08
 
     def __init__(self, device=None):
-        self.hm = None
         self.watched_hwnds = set()
-        self.kbflag = 0
         super(WindowsRecorder, self).__init__(device)
+        self.kbflag = 0
+        self.hm = pyHook.HookManager()
+        self.hm.MouseAllButtons = self.on_mouse
+        self.hm.KeyAll = self.on_keyboard
 
     def attach(self, device):
         if self.device is not None:
@@ -78,50 +82,47 @@ class WindowsRecorder(BaseRecorder):
             if device is not self.device:
                 self.detach()
 
-        handle = device._win._handle
+        handle = device.hwnd
         def callback(hwnd, extra):
             extra.add(hwnd)
             return True
         self.watched_hwnds.add(handle)
         win32gui.EnumChildWindows(handle, callback, self.watched_hwnds)
 
-        def on_mouse(event):
-            if self.device is None:
-                return True
-            if event.Window not in self.watched_hwnds:
-                return True
-            print "on_mouse", event.MessageName, event.Position
-            return True
-
-        def on_keyboard(event):
-            if self.device is None:
-                return True
-            if event.Window not in self.watched_hwnds:
-                return True
-            print "on_keyboard", event.MessageName, event.Key, repr(event.Ascii), event.KeyID, event.ScanCode, 
-            print event.flags, event.Extended, event.Injected, event.Alt, event.Transition
-            return True
-
-        hm = pyHook.HookManager()
-        hm.MouseAllButtons = on_mouse
-        hm.KeyAll = on_keyboard
-        hm.HookMouse()
-        hm.HookKeyboard()
-        self.hm = hm
-
-        print "attach to device", device
         self.device = device
+        print "attach to device", device
 
     def detach(self):
         print "detach from device", self.device
-
         self.device = None
         self.watched_hwnds = set()
 
-        if self.hm is not None:
-            self.hm.UnhookMouse()
-            self.hm.UnhookKeyboard()
-        self.hm = None
+    def run(self):
+        self.hm.HookMouse()
+        self.hm.HookKeyboard()
+
+    def stop(self):
+        self.hm.UnhookMouse()
+        self.hm.UnhookKeyboard()
+
+    def on_mouse(self, event):
+        if self.device is None:
+            return True
+        if event.Window not in self.watched_hwnds:
+            return True
+        print "on_mouse", event.MessageName, event.Position
+        num = int(time.time() * 1000)
+        self.device.screenshot("img-%s.png" % num )
+        return True
+
+    def on_keyboard(self, event):
+        if self.device is None:
+            return True
+        if event.Window not in self.watched_hwnds:
+            return True
+        print "on_keyboard", event.MessageName, event.Key, repr(event.Ascii), event.KeyID, event.ScanCode, 
+        print event.flags, event.Extended, event.Injected, event.Alt, event.Transition
+        return True
 
 class AndroidRecorder(BaseRecorder):
     def attach(self):
@@ -243,9 +244,10 @@ class RecorderGUI(object):
 
     def destroy(self):
         print "root destroy"
-        if self.check_recorder():
-            self._recorder.detach()
+        if self._recorder is not None:
+            self._recorder.stop()
         self._root.destroy()
+        win32api.PostQuitMessage(0)
 
     def mainloop(self):
         self._root.mainloop()
