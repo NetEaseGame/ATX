@@ -3,55 +3,50 @@
 import os
 import time
 
-from atx.device.windows import Window, WindowsDevice
+from atx.device.windows import Window, FrozenWindow, WindowsDevice
 
-##print dir(self._memdc)
-#'AbortDoc', 'Arc', 'AttachObject', 'BeginPath', 
-#'BitBlt', 'Chord', 'CreateCompatibleDC', 'CreatePrinterDC', 
-#'DPtoLP', 'DeleteDC', 'Draw3dRect', 'DrawFocusRect', 
-#'DrawFrameControl', 'DrawIcon', 'DrawText', 'Ellipse', 
-#'EndDoc', 'EndPage', 'EndPath', 'ExtTextOut', 'FillPath', 
-#'FillRect', 'FillSolidRect', 'FrameRect', 'GetAttachedObject', 
-#'GetBrushOrg', 'GetClipBox', 'GetCurrentPosition', 'GetDeviceCaps', 
-#'GetHandleAttrib', 'GetHandleOutput', 'GetMapMode', 'GetNearestColor', 
-#'GetPixel', 'GetSafeHdc', 'GetTextExtent', 'GetTextExtentPoint', 
-#'GetTextFace', 'GetTextMetrics', 'GetViewportExt', 'GetViewportOrg', 
-#'GetWindowExt', 'GetWindowOrg', 'IntersectClipRect', 'IsPrinting', 
-#'LPtoDP', 'LineTo', 'MoveTo', 'OffsetViewportOrg', 'OffsetWindowOrg', 
-#'PatBlt', 'Pie', 'PolyBezier', 'Polygon', 'Polyline', 'RealizePalette', 
-#'RectVisible', 'Rectangle', 'RestoreDC', 'SaveDC', 'ScaleViewportExt', 
-#'ScaleWindowExt', 'SelectClipRgn', 'SelectObject', 'SelectPalette', 
-#'SetBkColor', 'SetBkMode', 'SetBrushOrg', 'SetGraphicsMode', 'SetMapMode', 
-#'SetPixel', 'SetPolyFillMode', 'SetROP2', 'SetTextAlign', 'SetTextColor', 
-#'SetViewportExt', 'SetViewportOrg', 'SetWindowExt', 'SetWindowOrg', 
-#'SetWorldTransform', 'StartDoc', 'StartPage', 'StretchBlt', 
-#'StrokeAndFillPath', 'StrokePath', 'TextOut'
 
-##print dir(bmp)
-#'AttachObject', 'CreateCompatibleBitmap', 'GetAttachedObject', 
-#'GetBitmapBits', 'GetHandle', 'GetInfo', 'GetSize', 'LoadBitmap', 
-#'LoadBitmapFile', 'LoadPPMFile', 'Paint', 'SaveBitmapFile'
+# def _input_left_mouse(self, x, y):
+#     left, top, right, bottom = self.position
+#     width, height = right - left, bottom - top
+#     if x < 0 or x > width or y < 0 or y > height:
+#         return
+
+#     win32gui.SetForegroundWindow(self._handle)
+#     pos = win32gui.GetCursorPos()
+#     win32api.SetCursorPos((left+x, top+y))
+#     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+#     win32api.Sleep(100) #ms
+#     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+#     win32api.Sleep(100) #ms
+#     win32api.SetCursorPos(pos)
+
+# def drag(self):
+#     pass
+
+# def _input_keyboard(self, text):
+#     pass
+
 
 def test():
     try:
         name = u"Windows 任务管理器"
-        win = Window(name.encode("gbk"))
-        win._screenshot('taskman.bmp')
-        win.pilimage.save('taskman.png')
+        win = FrozenWindow(name.encode("gbk"), exclude_border=True)
+        win.screen.save('taskman1.png')
+        time.sleep(1)
+        win.screen.save('taskman2.png')
     except Exception as e:
         print str(e)
 
     try:
         filepath = "C:\\Windows\\System32\\calc.exe"
         win = Window(exe_file=filepath)
-        win._screenshot('calc.bmp')
-        win.pilimage.save('calc.png')
+        win.screen.save('calc.png')
     except Exception as e:
         print str(e)
 
-    win = Window()
-    win.pilimage.save('screen.png')
-
+    dev = WindowsDevice()
+    dev.screenshot('screen.png')
 
 if __name__ == '__main__':
-    test()    
+    test() 
