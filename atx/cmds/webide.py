@@ -7,6 +7,8 @@ import socket
 
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
+
 from atx import logutils
 from atx import base
 
@@ -17,7 +19,18 @@ log = logutils.getLogger("webide")
 log.setLevel(logging.DEBUG)
 
 
+IMAGE_PATH = ['.', 'imgs', 'images']
 workdir = '.'
+
+def read_file(filename, default=''):
+    if not os.path.isfile(filename):
+        return default
+    with open(filename, 'rb') as f:
+        return f.read()
+
+def write_file(filename, content):
+    with open(filename, 'w') as f:
+        f.write(content)
 
 def get_valid_port():
     for port in range(10010, 10100):
@@ -29,7 +42,6 @@ def get_valid_port():
 
     raise SystemError("Can not find a unused port, amazing!")
 
-IMAGE_PATH = ['.', 'imgs', 'images']
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -42,16 +54,28 @@ class MainHandler(tornado.web.RequestHandler):
         self.write("Good")
 
 
-def read_file(filename, default=''):
-    if not os.path.isfile(filename):
-        return default
-    with open(filename, 'rb') as f:
-        return f.read()
+class EchoWebSocket(tornado.websocket.WebSocketHandler):
+    def open(self):
+        print("WebSocket connected")
+        # imgs = base.list_images(path=IMAGE_PATH)
+        # imgs = [dict(
+        #     path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
+        # self.write_message({'images': list(imgs)})
 
+    def on_message(self, message):
+        if message == 'refresh':
+            imgs = base.list_images(path=IMAGE_PATH)
+            imgs = [dict(
+                path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
+            self.write_message({'images': list(imgs)})
+        else:
+            self.write_message(u"You said: " + message)
 
-def write_file(filename, content):
-    with open(filename, 'w') as f:
-        f.write(content)
+    def on_close(self):
+        print("WebSocket closed")
+    
+    def check_origin(self, origin):
+        return True
 
 
 class WorkspaceHandler(tornado.web.RequestHandler):
@@ -81,6 +105,7 @@ def make_app(settings={}):
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
+        (r'/ws', EchoWebSocket),
     ], **settings)
     return application
 

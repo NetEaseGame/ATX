@@ -36,7 +36,9 @@
     <div class="container-fluid">
       <div class="col-md-12">
         <div class="col-md-3">
-          <h1>图片列表</h1>
+          <h3>图片列表
+            <button id="btn-imgrefresh" type="button" class="btn btn-default btn-sm">Refresh</button>
+          </h3>
           <ul class="list-group">
             {% if len(images) > 0 %}
               {% for basename, image_path in images %}

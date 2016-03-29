@@ -3,6 +3,26 @@ $(function(){
   var blocklyDiv = document.getElementById('blocklyDiv');
   var workspace = Blockly.inject(blocklyDiv,
     {toolbox: document.getElementById('toolbox')});
+  
+  var M = {};
+  var ws = new WebSocket('ws://'+location.host+'/ws')
+
+  ws.onopen = function(){
+    ws.send("refresh")
+  };
+  ws.onmessage = function(evt){
+    try {
+      var data = JSON.parse(evt.data)
+      M.images = data.images;
+      console.log(M)
+    }
+    catch(err){
+      console.log(err, evt.data)
+    }
+  };
+  ws.onerror = function(err){
+    console.error(err)
+  };
 
   function generateCode(workspace) {
     var xml = Blockly.Xml.workspaceToDom(workspace);
@@ -81,6 +101,10 @@ $(function(){
     alert("还没写 TODO")
   })
 
+  $('#btn-imgrefresh').click(function(event){
+    ws.send('refresh');
+    $(this).notify('已刷新', 'success');
+  })
 
 
   $('.fancybox').fancybox()
