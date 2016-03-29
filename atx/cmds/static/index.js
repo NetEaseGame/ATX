@@ -8,7 +8,6 @@ $(function(){
   Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
   Blockly.Python.addReservedWords('highlight_block');
   M.workspace = workspace;
-  M.workspace.traceOn(true); // enable step run
 
   var RUN_BUTTON_TEXT = {
     'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
@@ -73,9 +72,16 @@ $(function(){
 
   function generateCode(workspace) {
     var xml = Blockly.Xml.workspaceToDom(workspace);
+    Blockly.Python.STATEMENT_PREFIX = '';
+    var pythonText = Blockly.Python.workspaceToCode(workspace);
+
+    Blockly.Python.STATEMENT_PREFIX = 'highlight_block(%1);\n';
+    var pythonDebugText = Blockly.Python.workspaceToCode(workspace);
+
     return {
       xmlText: Blockly.Xml.domToPrettyText(xml),
-      pythonText: Blockly.Python.workspaceToCode(workspace)
+      pythonText: pythonText,
+      pythonDebugText: pythonDebugText,
     }
   }
 
@@ -88,7 +94,7 @@ $(function(){
     $.ajax({
       url: '/workspace',
       method: 'POST',
-      data: {'xml_text': g.xmlText, 'python_text': g.pythonText},
+      data: {'xml_text': g.xmlText, 'python_text': g.pythonDebugText},
       success: function(e){
         console.log(e);
         // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
@@ -108,7 +114,8 @@ $(function(){
 
   function updateGenerate(workspace) {
     var g = generateCode(workspace);
-    $('#pythonCode').text(g.pythonText);
+    console.log(g.pythonText);
+    $('.code-python').text(g.pythonText);
   }
 
   function updateFunction(event) {
@@ -145,6 +152,7 @@ $(function(){
 
   $('a[href=#play]').click(function(event){
     event.preventDefault();
+    M.workspace.traceOn(true); // enable step run
     M.ws.send('run');
   })
 
