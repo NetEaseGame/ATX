@@ -1,10 +1,12 @@
 #!/bin/bash
 #
 
-set -eu
+# Skip all tests in travis
+if test -n "${TRAVIS}"
+then
+	exit 0
+fi
+
+
 cd $(dirname $0)
-
-exit 0
-# make it pass in travis
-
 py.test -v test_dummy.py

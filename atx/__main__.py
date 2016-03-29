@@ -30,8 +30,8 @@ def _webide(args):
 def _apkparse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
-        'package-name': pkg_name,
-        'main-activity': activity,
+        'package_name': pkg_name,
+        'main_activity': activity,
     }, indent=4)
 
 def main():

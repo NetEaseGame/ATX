@@ -282,7 +282,7 @@ class DeviceMixin(object):
         self._resolution = None
         self._bounds = None
         self._event_handlers = []
-        self._search_path = ['.']
+        self.image_path = ['.']
 
     @property
     def resolution(self):
@@ -301,7 +301,7 @@ class DeviceMixin(object):
         if isinstance(image, Pattern):
             return image
         elif isinstance(image, basestring):
-            image_path = base.search_image(image, self._search_path)
+            image_path = base.search_image(image, self.image_path)
             if image_path is None:
                 raise IOError('image file not found: {}'.format(image))
             return Pattern(image_path)

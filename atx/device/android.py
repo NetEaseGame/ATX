@@ -273,7 +273,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         else:
             return self.adb_cmd(['shell'] + [command])
 
-    def get_properties(self):
+    @property
+    def properties(self):
         '''
         Android Properties, extracted from `adb shell getprop`
 
