@@ -1,22 +1,29 @@
 #-*- encoding: utf-8 -*-
 
+## why no memory return back..
+import gc
+gc.set_debug(gc.DEBUG_STATS)
+
 import os
 import sys
 import time
+import bisect
+import tempfile
+import threading
+import Tkinter as tk
+
 import pyHook
 import win32api
-import win32gui
 import win32con
+import win32gui
 import win32process
-import Tkinter as tk
+
 from collections import namedtuple
 
 from atx.device.windows import WindowsDevice
 from atx.device.android import AndroidDevice
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-
-Step = namedtuple('Step', ('type', 'value'))
 
 class BaseRecorder(object):
 
@@ -26,40 +33,90 @@ class BaseRecorder(object):
         if device is not None:
             self.attach(device)
 
+        self.running = False
+        self.capture_interval = 0.2
+        self.capture_maxnum = 20 # watch out your memory!
+        self.lock = threading.RLock()
+        self.capture_cache = []
+        self.capture_tmpdir = os.path.join(__dir__, 'screenshots')
+        if not os.path.exists(self.capture_tmpdir):
+            os.makedirs(self.capture_tmpdir)
+
+        t = threading.Thread(target=self.async_capture)
+        t.setDaemon(True)
+        t.start()
+
     def attach(self, device):
-        """绑定设备,监视用户输入，需要把监视点击和键盘的分开，键盘输入作为一个整体"""
+        """Attach to device, if current device is not None, should
+        detach from it first. """
         raise NotImplementedError()
 
     def detach(self):
-        """解绑设备"""
+        """Detach from current device."""
         raise NotImplementedError()
 
     def run(self):
-        """start to record"""
+        """Start watching inputs & device screen."""
         raise NotImplementedError()
 
     def stop(self):
-        """stop record"""
+        """Stop record."""
         raise NotImplementedError()
 
     def on_click(self, postion):
-        """点击时自动截取一小段"""
-        self.steps.append(Step('click', postion))
+        """Handle touch input event."""
+        t = time.time()
+        self.lock.acquire()
+        try:
+            # trace back a few moments, find a untouched image
+            # we're sure all item[0] won't be same
+            idx = bisect.bisect(self.capture_cache, (t, None))
+            if idx == 0:
+                return
+            # just use last one for now. 
+            item = self.capture_cache[idx-1]
+        finally:
+            self.lock.release()
+
+        t0, img = item
+        filepath = os.path.join(self.capture_tmpdir, "%d.jpg" % int(t0*1000))
+        img.save(filepath)
 
     def on_drag(self, start, end):
-        self.steps.append(Step('drag', (start, end)))
+        """Handle drag input event."""
 
     def on_text(self, text):
-        """输入文字整个作为一个case"""
-        self.steps.append(Step('text', text))
+        """Handle text input event."""
 
-    def wait_respond(self, response):
-        """点击后，记录响应稳定后图片的特征，此函数应该由on_click或on_text来调用"""
+    def dump(self, filepath=None):
+        """Generate python scripts."""
         pass
 
-    def dump(self):
-        """把steps输出成py文件"""
-        pass
+    def async_capture(self):
+        """Keep capturing device screen. Should run in background
+        as a thread."""
+        while True:
+            self.lock.acquire()
+            try:
+                t = time.time()
+                interval = self.capture_interval
+                if self.capture_cache:
+                    t0 = self.capture_cache[-1][0]
+                    interval = min(interval, t-t0)
+                time.sleep(interval)
+                if not self.running or self.device is None:
+                    continue
+                print "capturing...", t
+                img = self.device.screenshot()
+                self.capture_cache.append((t, img))
+                n = len(self.capture_cache)
+                if n > self.capture_maxnum:
+                    self.capture_cache = self.capture_cache[-n:]
+                count = gc.get_count()
+                print "need cleaning", count
+
+            finally:
+                self.lock.release()
 
 class WindowsRecorder(BaseRecorder):
 
@@ -73,8 +130,10 @@ class WindowsRecorder(BaseRecorder):
         super(WindowsRecorder, self).__init__(device)
         self.kbflag = 0
         self.hm = pyHook.HookManager()
-        self.hm.MouseAllButtons = self.on_mouse
-        self.hm.KeyAll = self.on_keyboard
+        self.hm.MouseAllButtons = self._hook_on_mouse
+        self.hm.KeyAll = self._hook_on_keyboard
+
+        self.thread = None
 
     def attach(self, device):
         if self.device is not None:
@@ -100,22 +159,31 @@ class WindowsRecorder(BaseRecorder):
     def run(self):
         self.hm.HookMouse()
         self.hm.HookKeyboard()
+        with self.lock:
+            self.running = True
 
     def stop(self):
+        with self.lock:
+            self.running = False
         self.hm.UnhookMouse()
         self.hm.UnhookKeyboard()
 
-    def on_mouse(self, event):
+        print "collected", gc.collect()
+        print "garbage", len(gc.garbage)
+
+    def _hook_on_mouse(self, event):
         if self.device is None:
             return True
         if event.Window not in self.watched_hwnds:
             return True
         print "on_mouse", event.MessageName, event.Position
-        num = int(time.time() * 1000)
-        self.device.screenshot("img-%s.png" % num )
+
+        # pos = self.device.normal_position(event.Position)
+        pos = None
+        self.on_click(pos)
         return True
 
-    def on_keyboard(self, event):
+    def _hook_on_keyboard(self, event):
         if self.device is None:
             return True
         if event.Window not in self.watched_hwnds:
