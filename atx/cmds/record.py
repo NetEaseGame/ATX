@@ -1,9 +1,5 @@
 #-*- encoding: utf-8 -*-
 
-## why no memory return back..
-import gc
-gc.set_debug(gc.DEBUG_STATS)
-
 import os
 import sys
 import time
@@ -24,6 +20,29 @@ from atx.device.android import AndroidDevice
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
+class Step(object):
+
+    Touch = 1
+    Swipe = 2
+    Text = 3
+
+    def __init__(self, ctime, action, args, img_before, img_after):
+        self.ctime = ctime
+        self.action = action
+        self.args = args
+        self.img_before = img_before
+        self.img_after = img_after
+
+        self.condition = None
+        self.expectation = None
+
+    def find_condition(self):
+        pass
+
+    def find_expectation(self, other):
+        pass
+
+
 class BaseRecorder(object):
 
     def __init__(self, device=None):
@@ -32,10 +51,13 @@ class BaseRecorder(object):
         if device is not None:
             self.attach(device)
 
+        self.steps_lock = threading.Lock()
+        self.step_index = 0
+
         self.running = False
         self.capture_interval = 0.2
         self.capture_maxnum = 20 # watch out your memory!
-        self.lock = threading.RLock()
+        self.capture_lock = threading.RLock()
         self.capture_cache = []
         self.capture_tmpdir = os.path.join(__dir__, 'screenshots', time.strftime("%Y%m%d"))
         if not os.path.exists(self.capture_tmpdir):
@@ -62,6 +84,11 @@ class BaseRecorder(object):
         """Stop record."""
         raise NotImplementedError()
 
+    def next_index(self):
+        with self.steps_lock:
+            self.step_index += 1
+            return self.step_index
+
     def on_touch(self, position):
         """Handle touch input event."""
         t = threading.Thread(target=self.__async_handle_touch, args=(position, ))
@@ -69,24 +96,41 @@ class BaseRecorder(object):
         t.start()
 
     def __async_handle_touch(self, position):
-        print "click at", position
         t = time.time()
-        self.lock.acquire()
+        # add a little delay, so we can check the screen after the touch
+        time.sleep(self.capture_interval*2)
+        self.capture_lock.acquire()
         try:
             # trace back a few moments, find a untouched image
             # we're sure all item[0] won't be same
             idx = bisect.bisect(self.capture_cache, (t, None))
-            if idx == 0:
+            if idx == 0 or idx == len(self.capture_cache):
+                print "no captured screens yet", idx
                 return
-            # just use last one for now. 
-            item = self.capture_cache[idx-1]
+            # just use two for now. 
+            before, after = self.capture_cache[idx-1], self.capture_cache[idx]
         finally:
-            self.lock.release()
+            self.capture_lock.release()
 
-        t0, img = item
-        filepath = os.path.join(self.capture_tmpdir, "%d.png" % int(t0*1000))
-        img.save(filepath)
-        img.close()
+        t0, img0 = before
+        t1, img1 = after
+
+        # test
+        idx = self.next_index()
+        print idx, "click at", position
+        filepath = os.path.join(self.capture_tmpdir, "%d-1.png" % idx)
+        img0.save(filepath)
+        img0.close()
+        filepath = os.path.join(self.capture_tmpdir, "%d-2.png" % idx)
+        img1.save(filepath)
+        img1.close()
+
+        # generate steps
+        self.steps_lock.acquire()
+        try:
+            pass
+        finally:
+            self.steps_lock.release()
 
     def on_drag(self, start, end):
         """Handle drag input event."""
@@ -102,19 +146,13 @@ class BaseRecorder(object):
         """Keep capturing device screen. Should run in background
         as a thread."""
         while True:
-            self.lock.acquire()
+            self.capture_lock.acquire()
             try:
-                t = time.time()
-                interval = self.capture_interval
-                if self.capture_cache:
-                    t0 = self.capture_cache[-1][0]
-                    interval = min(interval, t-t0)
-                time.sleep(interval)
+                time.sleep(self.capture_interval)
                 if not self.running or self.device is None:
                     continue
-                print "capturing...", t
                 img = self.device.screenshot()
-                self.capture_cache.append((t, img))
+                self.capture_cache.append((time.time(), img))
 
                 # TODO: change capture_cache to a loop list
                 while len(self.capture_cache) > self.capture_maxnum:
@@ -122,7 +160,7 @@ class BaseRecorder(object):
                     img.close()
 
             finally:
-                self.lock.release()
+                self.capture_lock.release()
 
 class WindowsRecorder(BaseRecorder):
 
@@ -138,8 +176,6 @@ class WindowsRecorder(BaseRecorder):
         self.hm = pyHook.HookManager()
         self.hm.MouseAllButtons = self._hook_on_mouse
         self.hm.KeyAll = self._hook_on_keyboard
-
-        self.thread = None
 
     def attach(self, device):
         if self.device is not None:
@@ -165,29 +201,27 @@ class WindowsRecorder(BaseRecorder):
     def run(self):
         self.hm.HookMouse()
         self.hm.HookKeyboard()
-        with self.lock:
+        with self.capture_lock:
             self.running = True
 
     def stop(self):
-        with self.lock:
+        with self.capture_lock:
             self.running = False
         self.hm.UnhookMouse()
         self.hm.UnhookKeyboard()
-
-        print "collected", gc.collect()
-        print "garbage", len(gc.garbage)
 
     def _hook_on_mouse(self, event):
         if self.device is None:
             return True
         if event.Window not in self.watched_hwnds:
-            return True
+            return True        
         if event.Message == HookConstants.WM_LBUTTONUP:
             x, y = self.device.norm_position(event.Position)
             # ignore the touches outside the rect if the window has a frame.
             if x < 0 or y < 0:
                 return True
             self.on_touch((x, y))
+
         return True
 
     def _hook_on_keyboard(self, event):
