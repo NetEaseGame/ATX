@@ -11,13 +11,12 @@ import bisect
 import tempfile
 import threading
 import Tkinter as tk
-
-import pyHook
 import win32api
 import win32con
 import win32gui
 import win32process
-
+import pyHook
+from pyHook import HookConstants
 from collections import namedtuple
 
 from atx.device.windows import WindowsDevice
@@ -38,7 +37,7 @@ class BaseRecorder(object):
         self.capture_maxnum = 20 # watch out your memory!
         self.lock = threading.RLock()
         self.capture_cache = []
-        self.capture_tmpdir = os.path.join(__dir__, 'screenshots')
+        self.capture_tmpdir = os.path.join(__dir__, 'screenshots', time.strftime("%Y%m%d"))
         if not os.path.exists(self.capture_tmpdir):
             os.makedirs(self.capture_tmpdir)
 
@@ -63,8 +62,14 @@ class BaseRecorder(object):
         """Stop record."""
         raise NotImplementedError()
 
-    def on_click(self, postion):
+    def on_touch(self, position):
         """Handle touch input event."""
+        t = threading.Thread(target=self.__async_handle_touch, args=(position, ))
+        t.setDaemon(True)
+        t.start()
+
+    def __async_handle_touch(self, position):
+        print "click at", position
         t = time.time()
         self.lock.acquire()
         try:
@@ -79,8 +84,9 @@ class BaseRecorder(object):
             self.lock.release()
 
         t0, img = item
-        filepath = os.path.join(self.capture_tmpdir, "%d.jpg" % int(t0*1000))
+        filepath = os.path.join(self.capture_tmpdir, "%d.png" % int(t0*1000))
         img.save(filepath)
+        img.close()
 
     def on_drag(self, start, end):
         """Handle drag input event."""
@@ -109,11 +115,11 @@ class BaseRecorder(object):
                 print "capturing...", t
                 img = self.device.screenshot()
                 self.capture_cache.append((t, img))
-                n = len(self.capture_cache)
-                if n > self.capture_maxnum:
-                    self.capture_cache = self.capture_cache[-n:]
-                count = gc.get_count()
-                print "need cleaning", count
+
+                # TODO: change capture_cache to a loop list
+                while len(self.capture_cache) > self.capture_maxnum:
+                    _, img = self.capture_cache.pop(0)
+                    img.close()
 
             finally:
                 self.lock.release()
@@ -176,11 +182,12 @@ class WindowsRecorder(BaseRecorder):
             return True
         if event.Window not in self.watched_hwnds:
             return True
-        print "on_mouse", event.MessageName, event.Position
-
-        # pos = self.device.normal_position(event.Position)
-        pos = None
-        self.on_click(pos)
+        if event.Message == HookConstants.WM_LBUTTONUP:
+            x, y = self.device.norm_position(event.Position)
+            # ignore the touches outside the rect if the window has a frame.
+            if x < 0 or y < 0:
+                return True
+            self.on_touch((x, y))
         return True
 
     def _hook_on_keyboard(self, event):

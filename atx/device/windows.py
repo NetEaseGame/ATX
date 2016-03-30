@@ -76,6 +76,9 @@ class Window(object):
         screen_position: (offsetx, offsety, width, height) of the screen, offsets are 
             relative to the window's Rect got by win32gui.GetWindowRect
 
+    Methods:
+        norm_position((x,y)) --> (x0, y0) 
+            normalize coordinates relative to window's rect.
     """
 
     def __init__(self, window_name=None, exe_file=None, exclude_border=True):
@@ -122,6 +125,7 @@ class Window(object):
 
     @property
     def rect(self):
+        hwnd = self.hwnd
         if not self.exclude_border:
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
         else:
@@ -144,6 +148,11 @@ class Window(object):
             width, height = right-left, bottom-top
             x, y = 0, 0
         return Position(x, y, width, height)
+
+    def norm_position(self, pos):
+        left, top, _, _ = self.rect
+        _left, _top = pos
+        return (_left-left, _top-top)
 
     @property
     def screen(self):
