@@ -11,6 +11,7 @@ import win32api
 import win32con
 import win32gui
 import win32process
+import pywintypes
 import pyHook
 from pyHook import HookConstants
 from collections import namedtuple
@@ -55,8 +56,8 @@ class BaseRecorder(object):
         self.step_index = 0
 
         self.running = False
-        self.capture_interval = 0.2
-        self.capture_maxnum = 20 # watch out your memory!
+        self.capture_interval = 0.1
+        self.capture_maxnum = 100 # watch out your memory!
         self.capture_lock = threading.RLock()
         self.capture_cache = []
         self.capture_tmpdir = os.path.join(__dir__, 'screenshots', time.strftime("%Y%m%d"))
@@ -188,7 +189,12 @@ class WindowsRecorder(BaseRecorder):
             extra.add(hwnd)
             return True
         self.watched_hwnds.add(handle)
-        win32gui.EnumChildWindows(handle, callback, self.watched_hwnds)
+        try:
+            # EnumChildWindows may crash for windows have no any child.
+            # refs: https://mail.python.org/pipermail/python-win32/2005-March/003042.html
+            win32gui.EnumChildWindows(handle, callback, self.watched_hwnds)
+        except pywintypes.error as e:
+            pass
 
         self.device = device
         print "attach to device", device

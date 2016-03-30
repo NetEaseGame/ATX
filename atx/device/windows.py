@@ -59,7 +59,7 @@ def find_process_id(exe_file):
             return int(pid)
 
 Rect = namedtuple('Rect', ('left', 'top', 'right', 'bottom'))
-Position = namedtuple('Position', ('left', 'top', 'width', 'height'))
+Size = namedtuple('Size', ('width', 'height'))
 
 class Window(object):
     """A interface of windows' window display zone.
@@ -73,8 +73,7 @@ class Window(object):
     Attributes:
         screen: a PIL Image object of current display zone.
         rect: (left, top, right, bottom) of the display zone.
-        screen_position: (offsetx, offsety, width, height) of the screen, offsets are 
-            relative to the window's Rect got by win32gui.GetWindowRect
+        size: (width, height) of the display zone.
 
     Methods:
         norm_position((x,y)) --> (x0, y0) 
@@ -135,33 +134,30 @@ class Window(object):
         return Rect(left, top, right, bottom)
 
     @property
-    def screen_position(self):
-        hwnd = self.hwnd
-        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-        if self.exclude_border:
-            _left, _top, _right, _bottom = win32gui.GetClientRect(hwnd)
-            _left, _top = win32gui.ClientToScreen(hwnd, (_left, _top))
-            _right, _bottom = win32gui.ClientToScreen(hwnd, (_right, _bottom))
-            width, height = _right-_left, _bottom-_top
-            x, y = _left-left, _top-top
-        else:
-            width, height = right-left, bottom-top
-            x, y = 0, 0
-        return Position(x, y, width, height)
+    def size(self):
+        left, top, right, bottom = self.rect
+        return Size(right-left, bottom-top)
 
     def norm_position(self, pos):
-        left, top, _, _ = self.rect
+        left, top, right, bottom = self.rect
         _left, _top = pos
-        return (_left-left, _top-top)
+        x, y = _left-left, _top-top
+        if _left > right:
+            x = -1
+        if _top > bottom:
+            y = -1
+        return (x, y)
 
     @property
     def screen(self):
         """PIL Image of current window screen.
         reference: https://msdn.microsoft.com/en-us/library/dd183402(v=vs.85).aspx"""
-        hwnd = self.hwnd
+        # opengl windows cannot get from it's hwnd, so we use the screen
+        hwnd = win32gui.GetDesktopWindow()
 
-        # get screen size and offset
-        x, y, width, height = self.screen_position
+        # get window size and offset
+        left, top, right, bottom = self.rect
+        width, height = right-left, bottom-top
 
         # the device context of the window 
         hdcwin = win32gui.GetWindowDC(hwnd)
@@ -172,8 +168,11 @@ class Window(object):
         # select bitmap for temporary dc
         win32gui.SelectObject(hdcmem, hbmp)
         # copy bits to temporary dc
+        # win32gui.UpdateWindow(hdesktop)
+        # win32gui.InvalidateRect(hdesktop, None, True)
+        # win32gui.RedrawWindow(hdesktop, None, None, win32con.RDW_ERASE | win32con.RDW_INVALIDATE | win32con.RDW_ALLCHILDREN)
         win32gui.BitBlt(hdcmem, 0, 0, width, height, 
-                        hdcwin, x, y, win32con.SRCCOPY)
+                        hdcwin, left, top, win32con.SRCCOPY)
         # check the bitmap object infomation
         bmp = win32gui.GetObject(hbmp)
 
@@ -205,7 +204,7 @@ class Window(object):
         # cleanup
         win32gui.DeleteObject(hbmp)
         win32gui.DeleteObject(hdcmem)
-        win32gui.ReleaseDC(self.hwnd, hdcwin)
+        win32gui.ReleaseDC(hwnd, hdcwin)
 
         return img
 
@@ -220,38 +219,33 @@ class FrozenWindow(Window):
 
     def __init__(self, *args, **kwargs):
         Window.__init__(self, *args, **kwargs)
-        self.__init_rect_position()
+        self.__init_rect_size()
         self.__init_screen_handles()
 
-    def __init_rect_position(self):
+    def __init_rect_size(self):
         hwnd = self.hwnd
         left, top, right, bottom = win32gui.GetWindowRect(hwnd)
         if self.exclude_border:
             _left, _top, _right, _bottom = win32gui.GetClientRect(hwnd)
-            _left, _top = win32gui.ClientToScreen(hwnd, (_left, _top))
-            _right, _bottom = win32gui.ClientToScreen(hwnd, (_right, _bottom))
-            width, height = _right-_left, _bottom-_top
-            x, y = _left-left, _top-top
-            self._rect = Rect(_left, _top, _right, _bottom)
-            self._screen_position = Position(x, y, width, height)
-        else:
-            width, height = right-left, bottom-top
-            x, y = 0, 0
-            self._rect = Rect(left, top, right, bottom)
-            self._screen_position = Position(x, y, width, height)
+            left, top = win32gui.ClientToScreen(hwnd, (_left, _top))
+            right, bottom = win32gui.ClientToScreen(hwnd, (_right, _bottom))
+        self._rect = Rect(left, top, right, bottom)
+        self._size = Size(right-left, bottom-top)
 
     @property 
     def rect(self):
         return self._rect
 
-    @property 
-    def screen_position(self):
-        return self._screen_position
+    @property
+    def size(self):
+        return self._size
 
     def __init_screen_handles(self):
-        hwnd = self.hwnd
+        # opengl windows cannot get from it's hwnd, so we use the screen
+        hwnd = win32gui.GetDesktopWindow()
         # get screen size and offset
-        x, y, width, height = self.screen_position
+        left, top, right, bottom = self.rect
+        width, height = right-left, bottom-top
         # the device context of the window 
         hdcwin = win32gui.GetWindowDC(hwnd)
         # make a temporary dc
@@ -289,11 +283,12 @@ class FrozenWindow(Window):
     def screen(self):
         """PIL Image of current window screen.
         reference: https://msdn.microsoft.com/en-us/library/dd183402(v=vs.85).aspx"""
-        hwnd = self.hwnd
-        x, y, width, height = self.screen_position
+        hwnd = win32gui.GetDesktopWindow()
+        left, top, right, bottom = self.rect
+        width, height = right-left, bottom-top
         # copy bits to temporary dc
         win32gui.BitBlt(self._hdcmem, 0, 0, width, height, 
-                        self._hdcwin, x, y, win32con.SRCCOPY)
+                        self._hdcwin, left, top, win32con.SRCCOPY)
         # read bits into buffer
         windll.gdi32.GetDIBits(self._hdcmem, self._hbmp.handle, 0, height, self._buf, ctypes.byref(self._bi), win32con.DIB_RGB_COLORS)
         # make a PIL Image
@@ -303,14 +298,15 @@ class FrozenWindow(Window):
 
     def __del__(self):
         # cleanup
+        hwnd = win32gui.GetDesktopWindow()
         win32gui.DeleteObject(self._hbmp)
         win32gui.DeleteObject(self._hdcmem)
-        win32gui.ReleaseDC(self.hwnd, self._hdcwin)
+        win32gui.ReleaseDC(hwnd, self._hdcwin)
 
-class WindowsDevice(Window, DeviceMixin):
+class WindowsDevice(FrozenWindow, DeviceMixin):
     def __init__(self, **kwargs):
         DeviceMixin.__init__(self)
-        Window.__init__(self, **kwargs)
+        FrozenWindow.__init__(self, **kwargs)
 
     def screenshot(self, filename=None):
         """Take screen snapshot
@@ -351,5 +347,5 @@ class WindowsDevice(Window, DeviceMixin):
     @property
     def display(self):
         """Display size in pixels."""
-        _, _, w, h = self.screen_position
+        w, h = self.size
         return Display(w, h)
