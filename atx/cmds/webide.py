@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import sys
 import logging
 import webbrowser
 import socket
@@ -45,6 +46,31 @@ def get_valid_port():
 
     raise SystemError("Can not find a unused port, amazing!")
 
+class AtxLogHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        print('RR:', log_entry)
+
+def _init():
+    hdlr = AtxLogHandler()
+    hdlr.setLevel(logging.DEBUG)
+    fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
+    hdlr.setFormatter(logging.Formatter(fmt))
+    log = logging.getLogger('atx')
+    log.addHandler(hdlr)
+    log.setLevel(logging.DEBUG)
+
+_init()
+
+class FakeStdout(object):
+    def __init__(self, fn=sys.stdout.write):
+        self._fn = fn
+
+    def write(self, s):
+        self._fn(s)
+
+    def flush(self):
+        self._fn('flush\n')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -67,11 +93,23 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         self.write_message({'type': 'highlight', 'id': id})
         time.sleep(1.0)
 
+    def write_console(self, s):
+        self.write_message({'type': 'console', 'output': s})
+
     def run_blockly(self):
         content = ''
-        with open('blockly.py') as f:
+        filename = 'blockly.py'
+        with open(filename, 'rb') as f:
             content = f.read()
-        exec content in {'highlight_block': self._highlight_block}
+        fake_sysout = FakeStdout(self.write_console)
+
+        __sysout = sys.stdout
+        sys.stdout = fake_sysout
+        exec content in {
+            'highlight_block': self._highlight_block,
+            '__name__': '__main__',
+            '__file__': filename}
+        sys.stdout = __sysout
         
     @run_on_executor
     def background_task(self, i):
@@ -82,6 +120,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     @tornado.gen.coroutine
     def on_message(self, message):
         print(message)
+        self.write_message({'type': 'console', 'output': '# echo hello\n'})
         if message == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
             imgs = [dict(
@@ -118,7 +157,7 @@ class WorkspaceHandler(tornado.web.RequestHandler):
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
-        super(StaticFileHandler, self).get(path, include_body)
+        return super(StaticFileHandler, self).get(path, include_body)
 
 
 def make_app(settings={}):

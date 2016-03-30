@@ -12,3 +12,7 @@ html, body{
 	width: 100%;
 	text-align: center;
 }
+pre.console {
+	height: 10em;
+	overflow: auto;
+}

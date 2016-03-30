@@ -22,12 +22,15 @@ $(function(){
     $play.html(RUN_BUTTON_TEXT[status]);
   }
 
-  (function(){
+  function connectWebsocket(){
     var ws = new WebSocket('ws://'+location.host+'/ws')
     M.ws = ws;
 
     ws.onopen = function(){
       ws.send("refresh")
+      $.notify(
+        '与后台通信连接成功!!!', 
+        {position: 'top center', className: 'success'})
     };
     ws.onmessage = function(evt){
       try {
@@ -49,6 +52,12 @@ $(function(){
           var id = data.id;
           workspace.highlightBlock(id)
           break;
+        case 'console':
+          // var text = $('pre.console').text();
+          // var newText = text + data.output;
+          var $console = $('pre.console');
+          $console.text($console.text() + data.output);
+          $console.scrollTop($console.height())
         default:
           console.log("No match")
         }
@@ -64,11 +73,14 @@ $(function(){
     ws.onclose = function(){
       console.log("Closed");
       $.notify(
-        '与后台通信连接断开 !!!', 
+        '与后台通信连接断开, 2s钟后重新连接 !!!', 
         {position: 'top center', className: 'error'})
+      setTimeout(function(){
+        connectWebsocket()
+      }, 2000)
     };
-
-  })()
+  }
+  connectWebsocket()
 
   function generateCode(workspace) {
     var xml = Blockly.Xml.workspaceToDom(workspace);
@@ -85,7 +97,7 @@ $(function(){
     }
   }
 
-  function saveWorkspace() {
+  function saveWorkspace(callback) {
     var $this = $('a[href=#save]');
     var originHtml = $this.html();
     $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存中')
@@ -108,6 +120,9 @@ $(function(){
       },
       complete: function(){
         $this.html(originHtml)
+        if (callback){
+          callback()
+        }
       }
     })
   }
@@ -153,12 +168,18 @@ $(function(){
   $('a[href=#play]').click(function(event){
     event.preventDefault();
     M.workspace.traceOn(true); // enable step run
-    M.ws.send('run');
+    saveWorkspace(function(){
+      M.ws.send('run');
+    });
   })
 
   $('#btn-imgrefresh').click(function(event){
     event.preventDefault();
     M.ws.send('refresh');
+  })
+
+  $('#btn-clearconsole').click(function(){
+    $('pre.console').text('');
   })
 
 
