@@ -1,4 +1,4 @@
-# AirtestX (中文版)
+# AuTo eXpress (atx) (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/AirtestX.svg?branch=master)](https://travis-ci.org/codeskyblue/AirtestX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
@@ -16,7 +16,7 @@
 
 ## 历史起源
 改版自一个老项目 <https://github.com/netease/airtest>
-airtest已经有人用，但是这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字 AirtestX
+airtest已经有人用，但是这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好，感谢<https://github.com/pactera>给起的名字
 
 另外airtest中的很多代码不符合python编码规范, 冗余的功能夹杂在里面，很不好维护。
 为了能够重现该软件昔日的光芒，是时候擦亮代码，重出江湖了。
