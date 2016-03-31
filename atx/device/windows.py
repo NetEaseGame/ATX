@@ -341,7 +341,13 @@ class FrozenWindow(Window):
 class WindowsDevice(DeviceMixin):
     def __init__(self, winclass=FrozenWindow, **kwargs):
         DeviceMixin.__init__(self)
-        self.win = winclass(**kwargs)
+        self._win = winclass(**kwargs)
+
+    def __getattr__(self, attr):
+        try:
+            return object.__getattribute__(self, attr)
+        except:
+            return getattr(self._win, attr)
 
     def screenshot(self, filename=None):
         """Take screen snapshot
@@ -356,8 +362,8 @@ class WindowsDevice(DeviceMixin):
             TypeError, IOError
         """
         if filename:
-            self.win._screenshot(filename)
-        return self.win.screen
+            self._screenshot(filename)
+        return self.screen
 
     def screenshot_cv2(self, filename=None):
         """Take screen snapshot
@@ -372,8 +378,8 @@ class WindowsDevice(DeviceMixin):
             IOError
         """
         if filename:
-            self.win._screenshot_cv2(filename)
-        return self.win.screen_cv2
+            self._screenshot_cv2(filename)
+        return self.screen_cv2
 
     def click(self, x, y):
         """Simulate click within window screen.
@@ -398,5 +404,5 @@ class WindowsDevice(DeviceMixin):
     @property
     def display(self):
         """Display size in pixels."""
-        w, h = self.win.size
+        w, h = self.size
         return Display(w, h)

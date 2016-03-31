@@ -1,6 +1,7 @@
 #-*- encoding: utf-8 -*-
 
 import os
+import cv2
 import sys
 import time
 import bisect
@@ -18,6 +19,7 @@ from collections import namedtuple
 
 from atx.device.windows import WindowsDevice
 from atx.device.android import AndroidDevice
+from atx.imutils import diff_rect
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
@@ -43,6 +45,23 @@ class Step(object):
     def find_expectation(self, other):
         pass
 
+class ComparableMixin:
+  def __eq__(self, other):
+    return not self<other and not other<self
+  def __ne__(self, other):
+    return self<other or other<self
+  def __gt__(self, other):
+    return other<self
+  def __ge__(self, other):
+    return not self<other
+  def __le__(self, other):
+    return not other<self
+
+__CaptureRecord = namedtuple('__CaptureRecord', ('ctime', 'image'))
+class CaptureRecord(__CaptureRecord, ComparableMixin):
+    def __lt__(self, other):
+        print 'lt'
+        return self.ctime < other.ctime
 
 class BaseRecorder(object):
 
@@ -52,15 +71,16 @@ class BaseRecorder(object):
         if device is not None:
             self.attach(device)
 
+        self.running = False
+        
         self.steps_lock = threading.Lock()
         self.step_index = 0
-
-        self.running = False
-        self.capture_interval = 0.1
-        self.capture_maxnum = 100 # watch out your memory!
-        self.capture_lock = threading.RLock()
+        self.look_ahead_num = 3 # diff with later screens to find target object 
+        self.capture_interval = 0.05
+        self.capture_maxnum = 50 # watch out your memory!
+        self.capture_lock = threading.Lock()
         self.capture_cache = []
-        self.capture_tmpdir = os.path.join(__dir__, 'screenshots', time.strftime("%Y%m%d"))
+        self.capture_tmpdir = os.path.join(os.getcwd(), 'screenshots', time.strftime("%Y%m%d"))
         if not os.path.exists(self.capture_tmpdir):
             os.makedirs(self.capture_tmpdir)
 
@@ -99,7 +119,7 @@ class BaseRecorder(object):
     def __async_handle_touch(self, position):
         t = time.time()
         # add a little delay, so we can check the screen after the touch
-        time.sleep(self.capture_interval*2)
+        time.sleep(self.capture_interval*(self.look_ahead_num+1))
         self.capture_lock.acquire()
         try:
             # trace back a few moments, find a untouched image
@@ -109,27 +129,38 @@ class BaseRecorder(object):
                 print "no captured screens yet", idx
                 return
             # just use two for now. 
-            before, after = self.capture_cache[idx-1], self.capture_cache[idx]
+            before, after = self.capture_cache[idx-1], self.capture_cache[idx:idx+self.look_ahead_num]
         finally:
             self.capture_lock.release()
 
-        t0, img0 = before
-        t1, img1 = after
-
-        # test
         idx = self.next_index()
-        print idx, "click at", position
-        filepath = os.path.join(self.capture_tmpdir, "%d-1.png" % idx)
-        img0.save(filepath)
-        img0.close()
-        filepath = os.path.join(self.capture_tmpdir, "%d-2.png" % idx)
-        img1.save(filepath)
-        img1.close()
+        t0, img0 = before
+        for t1, img1 in after:
+            rect = diff_rect(img0, img1, position)
+            if rect is not None:
+                print idx, "click at", position, 'found rect', rect
+                break
+        if rect is None:
+            x, y = position
+            h, w = img0.shape[:2]
+            r = 20
+            rect = (max(x-r,0), max(y-r,0), min(x+r,w), min(y+r,h))
+            print idx, "click at", position, 'use default rect', rect
+
+        x0, y0, x1, y1 = rect
+        subimg = img0[y0:y1, x0:x1, :]
+        filepath = os.path.join(self.capture_tmpdir, "%d-0.png" % idx)
+        cv2.imwrite(filepath, subimg)
+        # filepath = os.path.join(self.capture_tmpdir, "%d-1.png" % idx)
+        # cv2.imwrite(filepath, img0)
+        # filepath = os.path.join(self.capture_tmpdir, "%d-2.png" % idx)
+        # cv2.imwrite(filepath, img1)
 
         # generate steps
         self.steps_lock.acquire()
         try:
-            pass
+            x, y = position
+            self.steps.append('%s,touch,%s,%s'%(idx,x,y))
         finally:
             self.steps_lock.release()
 
@@ -141,7 +172,10 @@ class BaseRecorder(object):
 
     def dump(self, filepath=None):
         """Generate python scripts."""
-        pass
+        filepath = os.path.join(self.capture_tmpdir, 'steps.txt')
+        with open(filepath, 'w') as f:
+            with self.steps_lock:
+                f.write('\n'.join(self.steps))
 
     def async_capture(self):
         """Keep capturing device screen. Should run in background
@@ -152,13 +186,12 @@ class BaseRecorder(object):
                 time.sleep(self.capture_interval)
                 if not self.running or self.device is None:
                     continue
-                img = self.device.screenshot()
-                self.capture_cache.append((time.time(), img))
+                img = self.device.screenshot_cv2()
+                self.capture_cache.append(CaptureRecord(time.time(), img))
 
                 # TODO: change capture_cache to a loop list
                 while len(self.capture_cache) > self.capture_maxnum:
                     _, img = self.capture_cache.pop(0)
-                    img.close()
 
             finally:
                 self.capture_lock.release()
@@ -215,6 +248,9 @@ class WindowsRecorder(BaseRecorder):
             self.running = False
         self.hm.UnhookMouse()
         self.hm.UnhookKeyboard()
+
+        # for test, dump steps when stop
+        self.dump()
 
     def _hook_on_mouse(self, event):
         if self.device is None:
