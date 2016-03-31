@@ -14,6 +14,7 @@ import win32gui
 import win32process
 import pywintypes
 import pyHook
+from math import ceil
 from pyHook import HookConstants
 from collections import namedtuple
 
@@ -23,45 +24,28 @@ from atx.imutils import diff_rect
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-class Step(object):
-
-    Touch = 1
-    Swipe = 2
-    Text = 3
-
-    def __init__(self, ctime, action, args, img_before, img_after):
-        self.ctime = ctime
-        self.action = action
-        self.args = args
-        self.img_before = img_before
-        self.img_after = img_after
-
-        self.condition = None
-        self.expectation = None
-
-    def find_condition(self):
-        pass
-
-    def find_expectation(self, other):
-        pass
-
-class ComparableMixin:
-  def __eq__(self, other):
-    return not self<other and not other<self
-  def __ne__(self, other):
-    return self<other or other<self
-  def __gt__(self, other):
-    return other<self
-  def __ge__(self, other):
-    return not self<other
-  def __le__(self, other):
-    return not other<self
-
 __CaptureRecord = namedtuple('__CaptureRecord', ('ctime', 'image'))
-class CaptureRecord(__CaptureRecord, ComparableMixin):
+class CaptureRecord(__CaptureRecord):
+    def __eq__(self, other):
+        return self[0] == other[0]
+    def __ne__(self, other):
+        return not self == other
+    def __gt__(self, other):
+        return self[0] > other[0]
+    def __ge__(self, other):
+        return not self<other
     def __lt__(self, other):
-        print 'lt'
-        return self.ctime < other.ctime
+        return self[0] < other[0]
+    def __le__(self, other):
+        return not other<self
+
+__Step = namedtuple('Step', ('index', 'ctime', 'image', 'action', 'args'))
+class Step(__Step):
+    def to_script(self, timeout, indent=4):
+        res = []
+        res.append('with d.watch("%s-target.png", %s) as w:' % (self.index, ceil(timeout)))
+        res.append('%sw.on("%s-action.png", %s).click()' % (' '*indent, self.index, self.args))
+        return '\n'.join(res)
 
 class BaseRecorder(object):
 
@@ -75,6 +59,9 @@ class BaseRecorder(object):
         
         self.steps_lock = threading.Lock()
         self.step_index = 0
+        self.last_step = None
+        self.default_radius = 20
+
         self.look_ahead_num = 3 # diff with later screens to find target object 
         self.capture_interval = 0.05
         self.capture_maxnum = 50 # watch out your memory!
@@ -141,28 +128,55 @@ class BaseRecorder(object):
                 print idx, "click at", position, 'found rect', rect
                 break
         if rect is None:
-            x, y = position
-            h, w = img0.shape[:2]
-            r = 20
-            rect = (max(x-r,0), max(y-r,0), min(x+r,w), min(y+r,h))
+            rect = self.__get_default_rect(img0.shape[:2], position)
             print idx, "click at", position, 'use default rect', rect
 
         x0, y0, x1, y1 = rect
         subimg = img0[y0:y1, x0:x1, :]
-        filepath = os.path.join(self.capture_tmpdir, "%d-0.png" % idx)
+        filepath = os.path.join(self.capture_tmpdir, "%d-action.png" % idx)
         cv2.imwrite(filepath, subimg)
         # filepath = os.path.join(self.capture_tmpdir, "%d-1.png" % idx)
         # cv2.imwrite(filepath, img0)
         # filepath = os.path.join(self.capture_tmpdir, "%d-2.png" % idx)
         # cv2.imwrite(filepath, img1)
 
-        # generate steps
-        self.steps_lock.acquire()
-        try:
-            x, y = position
-            self.steps.append('%s,touch,%s,%s'%(idx,x,y))
-        finally:
-            self.steps_lock.release()
+        step = Step(idx, t, img0, 'touch', position)
+        self.__pack_last_step(step)
+
+
+    def __pack_last_step(self, step):
+        # find target for last step and pack it.
+        if not self.last_step:
+            self.last_step = step
+            return
+
+        last_step = self.last_step
+        rect = diff_rect(last_step.image, step.image)
+        if rect is None:
+            h, w = step.image.shape[:2]
+            if step.action == 'touch':
+                position = step.args
+            else:
+                position = w/2, h/2
+            rect = self.__get_default_rect(step.image, position)
+
+        x0, y0, x1, y1 = rect
+        subimg = step.image[y0:y1, x0:x1, :]
+        filepath = os.path.join(self.capture_tmpdir, "%d-target.png" % step.index)
+        cv2.imwrite(filepath, subimg)
+
+        timeout = step.ctime - last_step.ctime
+        script = last_step.to_script(timeout)
+        # save last step
+        with self.steps_lock:
+            self.steps.append(script)
+        self.last_step = step
+
+    def __get_default_rect(self, size, position):
+        h, w = size
+        x, y = position
+        r = self.default_radius
+        return (max(x-r,0), max(y-r,0), min(x+r,w), min(y+r,h))
 
     def on_drag(self, start, end):
         """Handle drag input event."""
@@ -172,7 +186,7 @@ class BaseRecorder(object):
 
     def dump(self, filepath=None):
         """Generate python scripts."""
-        filepath = os.path.join(self.capture_tmpdir, 'steps.txt')
+        filepath = os.path.join(self.capture_tmpdir, 'steps.py')
         with open(filepath, 'w') as f:
             with self.steps_lock:
                 f.write('\n'.join(self.steps))
@@ -256,7 +270,7 @@ class WindowsRecorder(BaseRecorder):
         if self.device is None:
             return True
         if event.Window not in self.watched_hwnds:
-            return True        
+            return True
         if event.Message == HookConstants.WM_LBUTTONUP:
             x, y = self.device.norm_position(event.Position)
             # ignore the touches outside the rect if the window has a frame.
