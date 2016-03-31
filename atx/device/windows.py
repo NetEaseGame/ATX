@@ -6,15 +6,17 @@ Windows application as a device
 from __future__ import absolute_import
 
 import os
+import cv2
+import ctypes
+import numpy as np
 import time
-import struct
 import win32con
 import win32api
 import win32gui
 import win32process
-import ctypes
-from  ctypes import wintypes, windll 
+
 from PIL import Image
+from ctypes import wintypes, windll
 from collections import namedtuple
 
 from atx.device import Bounds, Display
@@ -150,7 +152,7 @@ class Window(object):
 
     @property
     def screen(self):
-        """PIL Image of current window screen.
+        """PIL Image of current window screen. (the window must be on the top)
         reference: https://msdn.microsoft.com/en-us/library/dd183402(v=vs.85).aspx"""
         # opengl windows cannot get from it's hwnd, so we use the screen
         hwnd = win32gui.GetDesktopWindow()
@@ -168,9 +170,6 @@ class Window(object):
         # select bitmap for temporary dc
         win32gui.SelectObject(hdcmem, hbmp)
         # copy bits to temporary dc
-        # win32gui.UpdateWindow(hdesktop)
-        # win32gui.InvalidateRect(hdesktop, None, True)
-        # win32gui.RedrawWindow(hdesktop, None, None, win32con.RDW_ERASE | win32con.RDW_INVALIDATE | win32con.RDW_ALLCHILDREN)
         win32gui.BitBlt(hdcmem, 0, 0, width, height, 
                         hdcwin, left, top, win32con.SRCCOPY)
         # check the bitmap object infomation
@@ -213,6 +212,25 @@ class Window(object):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
         self.screen.save(filepath)
+
+    @property
+    def screen_cv2(self):
+        """cv2 Image of current window screen"""
+        pil_image = self.screen.convert('RGB')
+        cv2_image = np.array(pil_image)
+        pil_image.close()
+        # Convert RGB to BGR 
+        cv2_image = cv2_image[:, :, ::-1]
+        return cv2_image
+
+    def _screenshot_cv2(self, filepath):
+        dirpath = os.path.dirname(os.path.abspath(filepath))
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+        cv2.imwrite(filepath, self.screen_cv2)
+
+    def set_foreground(self):
+        win32gui.SetForegroundWindow(self.hwnd)
 
 class FrozenWindow(Window):
     """Non-resizable Window, use lots of cached properties"""
@@ -296,6 +314,23 @@ class FrozenWindow(Window):
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
         return img
 
+    @property
+    def screen_cv2(self):
+        """cv2 Image of current window screen"""
+        hwnd = win32gui.GetDesktopWindow()
+        left, top, right, bottom = self.rect
+        width, height = right-left, bottom-top
+        # copy bits to temporary dc
+        win32gui.BitBlt(self._hdcmem, 0, 0, width, height, 
+                        self._hdcwin, left, top, win32con.SRCCOPY)
+        # read bits into buffer
+        windll.gdi32.GetDIBits(self._hdcmem, self._hbmp.handle, 0, height, self._buf, ctypes.byref(self._bi), win32con.DIB_RGB_COLORS)
+        # make a cv2 Image
+        arr = np.fromstring(self._buf, dtype=np.uint8)
+        img = arr.reshape(height, width, 4)
+        img = img[::-1,:, 0:3]
+        return img
+
     def __del__(self):
         # cleanup
         hwnd = win32gui.GetDesktopWindow()
@@ -303,10 +338,10 @@ class FrozenWindow(Window):
         win32gui.DeleteObject(self._hdcmem)
         win32gui.ReleaseDC(hwnd, self._hdcwin)
 
-class WindowsDevice(FrozenWindow, DeviceMixin):
-    def __init__(self, **kwargs):
+class WindowsDevice(DeviceMixin):
+    def __init__(self, winclass=FrozenWindow, **kwargs):
         DeviceMixin.__init__(self)
-        FrozenWindow.__init__(self, **kwargs)
+        self.win = winclass(**kwargs)
 
     def screenshot(self, filename=None):
         """Take screen snapshot
@@ -321,8 +356,24 @@ class WindowsDevice(FrozenWindow, DeviceMixin):
             TypeError, IOError
         """
         if filename:
-            self._screenshot(filename)
-        return self.screen
+            self.win._screenshot(filename)
+        return self.win.screen
+
+    def screenshot_cv2(self, filename=None):
+        """Take screen snapshot
+
+        Args:
+            filename: filename where save to, optional
+
+        Returns:
+            numpy.ndarray object as return by cv2.imread
+
+        Raises:
+            IOError
+        """
+        if filename:
+            self.win._screenshot_cv2(filename)
+        return self.win.screen_cv2
 
     def click(self, x, y):
         """Simulate click within window screen.
@@ -347,5 +398,5 @@ class WindowsDevice(FrozenWindow, DeviceMixin):
     @property
     def display(self):
         """Display size in pixels."""
-        w, h = self.size
+        w, h = self.win.size
         return Display(w, h)

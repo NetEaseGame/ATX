@@ -32,16 +32,22 @@ def test():
     try:
         name = u"Windows 任务管理器"
         win = FrozenWindow(name.encode("gbk"), exclude_border=True)
-        win.screen.save('taskman1.png')
-        time.sleep(1)
-        win.screen.save('taskman2.png')
+        win.set_foreground()
+        time.sleep(0.1)
+        win._screenshot('taskman-pil.png')
+        time.sleep(0.5)
+        win._screenshot_cv2('taskman-cv2.png')
     except Exception as e:
         print str(e)
 
     try:
         filepath = "C:\\Windows\\System32\\calc.exe"
         win = Window(exe_file=filepath)
-        win.screen.save('calc.png')
+        win.set_foreground()
+        time.sleep(0.1)
+        win._screenshot('calc-pil.png')
+        time.sleep(0.5)
+        win._screenshot_cv2('calc-cv2.png')
     except Exception as e:
         print str(e)
 
