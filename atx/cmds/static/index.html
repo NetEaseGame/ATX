@@ -77,19 +77,21 @@
           </ul>
 
           <div class="tab-content">
-            <div id="blocklyDiv" role="tabpanel" class="tab-pane active" 
-              style="position: relative; height: 500px">
+            <div id="blocklyDiv" role="tabpanel" class="tab-pane active">
             </div>
             <div id="pythonDiv" role="tabpanel" class="tab-pane">
-              <pre class='code-python'></pre>
+              <pre style="margin-left: 120px" class='code-python'></pre>
             </div>
           </div>
         </div>
         <div class="col-md-4">
           <div>
             <h4>Screen</h4>
-            <div>
-              <img src="/static/favicon.ico" class="phone-screen"/>
+            <div id="screen-wrapper" style="border: 1px solid red">
+              <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <canvas id="canvas" width="40" height="10">
+                Browser not support canvas
+              </canvas>
             </div>
             <!-- <pre class='code-python'></pre> -->
           </div>

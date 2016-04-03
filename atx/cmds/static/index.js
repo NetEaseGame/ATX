@@ -182,19 +182,45 @@ $(function(){
     $('pre.console').text('');
   })
 
-
   $('.fancybox').fancybox()
 
   function getPageHeight(){
     return document.documentElement.clientHeight;
   }
 
+  function resizeCanvas(canvas){
+    var width = $('#screen-wrapper').width();
+    canvas.setAttribute('width', width);  
+  }
+
+  function canvasLoadImage(canvas, url, callback){
+    var context = canvas.getContext('2d')
+    var imageObj = new Image();
+    imageObj.onload = function(){
+      var height = parseInt(canvas.width/imageObj.width*imageObj.height, 10);
+      canvas.setAttribute('height', height);
+      context.drawImage(imageObj, 0, 0);
+      var $wrapper = $(canvas).parent('div')
+      $wrapper.height(height);
+    }
+    imageObj.src = url;
+  }
+
+  
   function onResize(){
     var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
     $('#blocklyDiv').height(blocklyDivHeight-5);
+
+    var canvas = document.getElementById('canvas');
+    resizeCanvas(canvas);
+    // better to change another url
+    canvasLoadImage(canvas, 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg')
   }
+
   window.addEventListener('resize', onResize, false);
   onResize();
+
+  // var canvas = document.getElementById('canvas');
 })
 
 // var workspace = Blockly.inject('blocklyDiv',
