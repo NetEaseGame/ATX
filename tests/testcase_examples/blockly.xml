@@ -1,0 +1,69 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block type="atx_connect" id="TvY_L#-,~Nt*X/uZtSn0" x="137" y="52">
+    <field name="PLATFORM">android</field>
+    <next>
+      <block type="atx_screenshot" id="+ZS8^xW7w#.3P;?ubp_]">
+        <value name="FILENAME">
+          <block type="text" id="pgrQWJd(pmc|QF`(_Sz/">
+            <field name="TEXT">screen.png</field>
+          </block>
+        </value>
+        <next>
+          <block type="controls_if" id="N[nG=/%c:1;g,J#CI]6!">
+            <value name="IF0">
+              <block type="logic_compare" id="-71do^4[aVSy]v~4Ozae">
+                <field name="OP">EQ</field>
+                <value name="A">
+                  <block type="math_number" id="X_#qXtSe0i)5LlV::61d">
+                    <field name="NUM">0</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="math_number" id="Zd*]p2}U@o#4*E8tN}(C">
+                    <field name="NUM">0</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="text_print" id="H5fjA}ec{FR5b3PZ%e:2">
+                <value name="TEXT">
+                  <block type="text" id="]k({jYk/BlG%.bIHN#/7">
+                    <field name="TEXT">你好</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="controls_repeat_ext" id="%`JADr-PFxzc+lEh6CB-">
+                    <value name="TIMES">
+                      <block type="math_number" id="GGI/|1|!F%nHbrSm#c=D">
+                        <field name="NUM">1</field>
+                      </block>
+                    </value>
+                    <statement name="DO">
+                      <block type="text_print" id="^[.zS%y!}{^,G[{s*(D}">
+                        <value name="TEXT">
+                          <block type="text" id="!N2el6Gn(3hYQ)C/tf63">
+                            <field name="TEXT">Hello world</field>
+                          </block>
+                        </value>
+                      </block>
+                    </statement>
+                  </block>
+                </next>
+              </block>
+            </statement>
+            <next>
+              <block type="text_print" id="3e!z_*,)cH#fMGw,neU^">
+                <value name="TEXT">
+                  <block type="text" id="Gb|B[l5Z`MNyoHkzsMjZ">
+                    <field name="TEXT">Hello world</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>
