@@ -188,7 +188,7 @@ $(function(){
     sendWebsocket({command: 'refresh'})
   })
 
-  $('#btn-clearconsole').click(function(){
+  $('.btn-clearconsole').click(function(){
     $('pre.console').text('');
   })
 
@@ -242,7 +242,11 @@ $(function(){
 
   function onResize(){
     var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
+    if (!$('#console-left').is(':hidden')){
+      blocklyDivHeight -= $("#console-left").height();
+    }
     $('#blocklyDiv').height(blocklyDivHeight-5);
+    // Blockly.fireUiEvent(window, 'resize');
 
     var canvas = document.getElementById('canvas');
     resizeCanvas(canvas);
@@ -261,6 +265,10 @@ $(function(){
     // console.log(message);
   }, false);
 
+  // $("#console-left").hide(function(){
+    // console.log("HE")
+    // onResize(); //Blockly.fireUiEvent(window, 'resize');
+  // });
 })
 
 // var workspace = Blockly.inject('blocklyDiv',
