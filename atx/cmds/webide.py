@@ -6,6 +6,7 @@ import logging
 import webbrowser
 import socket
 import time
+import json
 
 import tornado.ioloop
 import tornado.web
@@ -96,38 +97,40 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def write_console(self, s):
         self.write_message({'type': 'console', 'output': s})
 
-    def run_blockly(self):
+    def run_blockly(self, code):
         content = ''
-        filename = 'blockly.py'
-        with open(filename, 'rb') as f:
-            content = f.read()
+        filename = '__tmp.py'
+        # with open(filename, 'rb') as f:
+            # content = f.read()
         fake_sysout = FakeStdout(self.write_console)
 
         __sysout = sys.stdout
         sys.stdout = fake_sysout
-        exec content in {
+        exec code in {
             'highlight_block': self._highlight_block,
             '__name__': '__main__',
             '__file__': filename}
         sys.stdout = __sysout
         
     @run_on_executor
-    def background_task(self, i):
+    def background_task(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
-        self.run_blockly()
-        return i
+        self.run_blockly(code)
+        return True
 
     @tornado.gen.coroutine
-    def on_message(self, message):
-        print(message)
+    def on_message(self, message_text):
+        message = json.loads(message_text)
+        command = message.get('command')
         self.write_message({'type': 'console', 'output': '# echo hello\n'})
-        if message == 'refresh':
+        if command == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
             imgs = [dict(
                 path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
             self.write_message({'type': 'image_list', 'data': list(imgs)})
-        elif message == 'run':
-            res = yield self.background_task(4)
+        elif command == 'run':
+            # print(message.get('code'))
+            res = yield self.background_task(message.get('code'))
             self.write_message({'type': 'run', 'status': 'ready', 'result': res})
         else:
             self.write_message(u"You said: " + message)

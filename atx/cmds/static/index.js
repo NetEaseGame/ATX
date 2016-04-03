@@ -48,7 +48,6 @@ $(function(){
           changeRunningStatus(data.status);
           break;
         case 'highlight':
-          console.log(data.id)
           var id = data.id;
           workspace.highlightBlock(id)
           break;
@@ -59,7 +58,7 @@ $(function(){
           $console.text($console.text() + data.output);
           $console.scrollTop($console.height())
         default:
-          console.log("No match")
+          console.log("No match data type: ", data.type)
         }
       }
       catch(err){
@@ -67,8 +66,8 @@ $(function(){
       }
     };
     ws.onerror = function(err){
-      $.notify(err);
-      console.error(err)
+      // $.notify(err);
+      // console.error(err)
     };
     ws.onclose = function(){
       console.log("Closed");
@@ -100,15 +99,15 @@ $(function(){
   function saveWorkspace(callback) {
     var $this = $('a[href=#save]');
     var originHtml = $this.html();
-    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存中')
+    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存')
     
     var g = generateCode(workspace);
     $.ajax({
       url: '/workspace',
       method: 'POST',
-      data: {'xml_text': g.xmlText, 'python_text': g.pythonDebugText},
+      data: {'xml_text': g.xmlText, 'python_text': g.pythonText},
       success: function(e){
-        console.log(e);
+        // console.log(e);
         // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
         $('a[href=#save]').notify('保存成功',
           {className: 'success', position: 'left', autoHideDelay: 700});
@@ -121,7 +120,7 @@ $(function(){
       complete: function(){
         $this.html(originHtml)
         if (callback){
-          callback()
+          callback(g)
         }
       }
     })
@@ -159,6 +158,11 @@ $(function(){
 
   restoreWorkspace();
 
+  function sendWebsocket(message){
+    var data = JSON.stringify(message);
+    M.ws.send(data);
+  }
+
   $('a[href=#save]').click(function(event){
     event.preventDefault();
     saveWorkspace()
@@ -167,14 +171,14 @@ $(function(){
   $('a[href=#play]').click(function(event){
     event.preventDefault();
     M.workspace.traceOn(true); // enable step run
-    saveWorkspace(function(){
-      M.ws.send('run');
+    saveWorkspace(function(g){
+      sendWebsocket({command: 'run', code: g.pythonDebugText})
     });
   })
 
   $('#btn-imgrefresh').click(function(event){
     event.preventDefault();
-    M.ws.send('refresh');
+    sendWebsocket({command: 'refresh'})
   })
 
   $('#btn-clearconsole').click(function(){
@@ -204,7 +208,8 @@ $(function(){
     var context = canvas.getContext('2d')
     var imageObj = new Image();
     imageObj.onload = function(){
-      var height = parseInt(canvas.width/imageObj.width*imageObj.height, 10);
+      M.screenRatio = canvas.width/imageObj.width; // global
+      var height = parseInt(M.screenRatio*imageObj.height, 10);
       canvas.setAttribute('height', height);
       context.drawImage(imageObj, 0, 0);
       var $wrapper = $(canvas).parent('div')
@@ -213,7 +218,21 @@ $(function(){
     imageObj.src = url;
   }
 
-  
+  function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor((evt.clientX - rect.left) / M.screenRatio),
+      y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
+    };
+  }
+  function writeMessage(canvas, message) {
+    var context = canvas.getContext('2d');
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+    context.font = '18pt Calibri';
+    context.fillStyle = 'black';
+    context.fillText(message, 10, 25);
+  }
+
   function onResize(){
     var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
     $('#blocklyDiv').height(blocklyDivHeight-5);
@@ -226,8 +245,15 @@ $(function(){
   window.addEventListener('resize', onResize, false);
   onResize();
 
-  // var canvas = document.getElementById('canvas');
-  // better to change another url
+  var canvas = document.getElementById('canvas');
+  canvas.addEventListener('mousemove', function(evt) {
+    var mousePos = getMousePos(canvas, evt);
+    var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y;
+    // writeMessage(canvas, message);
+    $('.status-bar>span').text(message);
+    // console.log(message);
+  }, false);
+
 })
 
 // var workspace = Blockly.inject('blocklyDiv',
