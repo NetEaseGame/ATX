@@ -129,7 +129,6 @@ $(function(){
 
   function updateGenerate(workspace) {
     var g = generateCode(workspace);
-    console.log(g.pythonText);
     $('.code-python').text(g.pythonText);
   }
 
@@ -182,6 +181,13 @@ $(function(){
     $('pre.console').text('');
   })
 
+  $('li[role=presentation]').click(function(){
+    var text = $.trim($(this).text());
+    M.workspace.setVisible(text === 'Blockly');
+    Blockly.fireUiEvent(window, 'resize');
+  })
+
+
   $('.fancybox').fancybox()
 
   function getPageHeight(){
@@ -190,10 +196,11 @@ $(function(){
 
   function resizeCanvas(canvas){
     var width = $('#screen-wrapper').width();
-    canvas.setAttribute('width', width);  
+    canvas.setAttribute('width', width);
+    loadCanvasImage(canvas, M.screenURL);
   }
 
-  function canvasLoadImage(canvas, url, callback){
+  function loadCanvasImage(canvas, url, callback){
     var context = canvas.getContext('2d')
     var imageObj = new Image();
     imageObj.onload = function(){
@@ -213,14 +220,14 @@ $(function(){
 
     var canvas = document.getElementById('canvas');
     resizeCanvas(canvas);
-    // better to change another url
-    canvasLoadImage(canvas, 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg')
   }
 
+  M.screenURL = 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
   window.addEventListener('resize', onResize, false);
   onResize();
 
   // var canvas = document.getElementById('canvas');
+  // better to change another url
 })
 
 // var workspace = Blockly.inject('blocklyDiv',
