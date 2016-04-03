@@ -11,15 +11,17 @@ $(function(){
 
   var RUN_BUTTON_TEXT = {
     'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
-    'running': '<span class="glyphicon glyphicon-stop"></span> 运行中</a>',
+    'running': '<span class="glyphicon glyphicon-stop"></span> 停止</a>',
   }
 
-  function changeRunningStatus(status){
+  function changeRunningStatus(status, message){
     var $play = $('a[href=#play]');
-    if (status === 'ready'){
-      $play.notify('运行结束', {className: 'success', position: 'top'});
+    if (message) {
+      $play.notify(message, {className: 'success', position: 'top'});
     }
-    $play.html(RUN_BUTTON_TEXT[status]);
+    if (status){
+      $play.html(RUN_BUTTON_TEXT[status]);
+    }
   }
 
   function connectWebsocket(){
@@ -27,7 +29,7 @@ $(function(){
     M.ws = ws;
 
     ws.onopen = function(){
-      ws.send("refresh")
+      // ws.send(JSON.stringify({command: "refresh"}))
       $.notify(
         '与后台通信连接成功!!!', 
         {position: 'top center', className: 'success'})
@@ -45,7 +47,10 @@ $(function(){
           );
           break;
         case 'run':
-          changeRunningStatus(data.status);
+          changeRunningStatus(data.status, data.notify);
+          break;
+        case 'traceback':
+          alert(data.output);
           break;
         case 'highlight':
           var id = data.id;
@@ -171,9 +176,11 @@ $(function(){
   $('a[href=#play]').click(function(event){
     event.preventDefault();
     M.workspace.traceOn(true); // enable step run
-    saveWorkspace(function(g){
-      sendWebsocket({command: 'run', code: g.pythonDebugText})
-    });
+    var g = generateCode(workspace);
+    sendWebsocket({command: 'run', code: g.pythonDebugText})
+    // saveWorkspace(function(g){
+      // sendWebsocket({command: 'run', code: g.pythonDebugText})
+    // });
   })
 
   $('#btn-imgrefresh').click(function(event){
@@ -209,9 +216,9 @@ $(function(){
     var imageObj = new Image();
     imageObj.onload = function(){
       M.screenRatio = canvas.width/imageObj.width; // global
-      var height = parseInt(M.screenRatio*imageObj.height, 10);
+      var height = Math.floor(M.screenRatio*imageObj.height);
       canvas.setAttribute('height', height);
-      context.drawImage(imageObj, 0, 0);
+      context.drawImage(imageObj, 0, 0, canvas.width, canvas.height);
       var $wrapper = $(canvas).parent('div')
       $wrapper.height(height);
     }

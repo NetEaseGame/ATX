@@ -89,10 +89,14 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
     def open(self):
         print("WebSocket connected")
+        self._run = False
 
     def _highlight_block(self, id):
         self.write_message({'type': 'highlight', 'id': id})
-        time.sleep(1.0)
+        if not self._run:
+            raise RuntimeError("stopped")
+        else:
+            time.sleep(1.0)
 
     def write_console(self, s):
         self.write_message({'type': 'console', 'output': s})
@@ -100,17 +104,25 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def run_blockly(self, code):
         content = ''
         filename = '__tmp.py'
-        # with open(filename, 'rb') as f:
-            # content = f.read()
         fake_sysout = FakeStdout(self.write_console)
 
         __sysout = sys.stdout
         sys.stdout = fake_sysout
-        exec code in {
-            'highlight_block': self._highlight_block,
-            '__name__': '__main__',
-            '__file__': filename}
-        sys.stdout = __sysout
+        try:
+            exec code in {
+                'highlight_block': self._highlight_block,
+                '__name__': '__main__',
+                '__file__': filename}
+        except RuntimeError as e:
+            if str(e) != 'stopped':
+                raise
+            print 'Program stopped'
+        except Exception as e:
+            self.write_message({'type': 'traceback', 'output': str(e)})
+        finally:
+            self._run = False
+            self.write_message({'type': 'run', 'status': 'ready'})
+            sys.stdout = __sysout
         
     @run_on_executor
     def background_task(self, code):
@@ -120,7 +132,13 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
     @tornado.gen.coroutine
     def on_message(self, message_text):
-        message = json.loads(message_text)
+        # print 'MT:', message_text
+        message = None
+        try:
+            message = json.loads(message_text)
+        except:
+            print 'Invalid message from browser:', message_text
+            return
         command = message.get('command')
         self.write_message({'type': 'console', 'output': '# echo hello\n'})
         if command == 'refresh':
@@ -129,9 +147,13 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
                 path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
             self.write_message({'type': 'image_list', 'data': list(imgs)})
         elif command == 'run':
-            # print(message.get('code'))
+            if self._run:
+                self._run = False
+                self.write_message({'type': 'run', 'notify': '停止中'})
+                return
+            self._run = True
             res = yield self.background_task(message.get('code'))
-            self.write_message({'type': 'run', 'status': 'ready', 'result': res})
+            self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
         else:
             self.write_message(u"You said: " + message)
 
