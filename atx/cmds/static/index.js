@@ -29,7 +29,7 @@ $(function(){
     M.ws = ws;
 
     ws.onopen = function(){
-      // ws.send(JSON.stringify({command: "refresh"}))
+      ws.send(JSON.stringify({command: "refresh"}))
       $.notify(
         '与后台通信连接成功!!!', 
         {position: 'top center', className: 'success'})
@@ -198,6 +198,30 @@ $(function(){
     Blockly.fireUiEvent(window, 'resize');
   })
 
+  $('#btn-savescreen').click(function(){
+    var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
+    if (!filename){
+      return;
+    }
+    filename = filename + '.png';
+    $.ajax({
+      url: '/images',
+      method: 'POST',
+      data: {
+        raw_image: M.canvas.toDataURL(), // FIXME(ssx): use server image is just ok
+        filename: filename,
+      },
+      success: function(res){
+        console.log(res)
+        $.notify('图片保存成功', 'success')
+      },
+      error: function(err){
+        console.log(err)
+        $.notify('图片保存失败，打开调试窗口查看具体问题')
+      },
+    })
+  })
+
 
   $('.fancybox').fancybox()
 
@@ -214,6 +238,7 @@ $(function(){
   function loadCanvasImage(canvas, url, callback){
     var context = canvas.getContext('2d')
     var imageObj = new Image();
+    imageObj.crossOrigin="anonymous";
     imageObj.onload = function(){
       M.screenRatio = canvas.width/imageObj.width; // global
       var height = Math.floor(M.screenRatio*imageObj.height);
@@ -232,6 +257,7 @@ $(function(){
       y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
     };
   }
+
   function writeMessage(canvas, message) {
     var context = canvas.getContext('2d');
     // context.clearRect(0, 0, canvas.width, canvas.height);
@@ -248,11 +274,13 @@ $(function(){
     $('#blocklyDiv').height(blocklyDivHeight-5);
     // Blockly.fireUiEvent(window, 'resize');
 
-    var canvas = document.getElementById('canvas');
-    resizeCanvas(canvas);
+    // var canvas = document.getElementById('canvas');
+    resizeCanvas(M.canvas);
   }
 
+  M.canvas = document.getElementById('canvas');
   M.screenURL = 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
+  M.screenURL = '/favicon.ico'; //http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
   window.addEventListener('resize', onResize, false);
   onResize();
 

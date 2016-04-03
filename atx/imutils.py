@@ -9,6 +9,7 @@ import re
 import os
 import sys
 import cv2
+import base64
 
 import numpy as np
 from PIL import Image
@@ -26,9 +27,24 @@ elif sys.version_info.major == 3:
 __sys_open = open
 
 
+def _open_data_url(data, flag=cv2.IMREAD_COLOR):
+    pos = data.find('base64,')
+    if pos == -1:
+        raise IOError("data url is invalid, head %s" % data[:20])
+
+    pos += len('base64,')
+    raw_data = base64.decodestring(data[pos:])
+    image = np.asarray(bytearray(raw_data), dtype="uint8")
+    image = cv2.imdecode(image, flag)
+    return image
+
+
 def open(image):
+    # data:image/png;base64,
     if isinstance(image, basestring):
         name = image
+        if name.startswith('data:image/'):
+            return _open_data_url(name)
         if re.match(r'^https?://', name):
             return url_to_image(name)
         if os.path.isfile(name):

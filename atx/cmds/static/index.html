@@ -92,7 +92,9 @@
         </div>
         <div class="col-md-4">
           <div>
-            <h4>Screen</h4>
+            <h4>Screen
+              <button type="button" id="btn-savescreen" class="btn btn-default btn-xs">保存</button>
+            </h4>
             <div id="screen-wrapper" style="border: 1px solid red">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
               <canvas id="canvas" width="40" height="10">
@@ -116,6 +118,18 @@
     <xml id="toolbox" style="display: none">
       <category name="ATX" colour="160">
         <block type="atx_connect"></block>
+        <block type="atx_click">
+          <value name="X">
+            <block type="math_number">
+              <field name="NUM">0</field>
+            </block>
+          </value>
+          <value name="Y">
+            <block type="math_number">
+              <field name="NUM">0</field>
+            </block>
+          </value>
+        </block>
         <block type="atx_screenshot">
           <value name="FILENAME">
             <block type="text">

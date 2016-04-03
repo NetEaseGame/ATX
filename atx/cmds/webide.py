@@ -8,6 +8,7 @@ import socket
 import time
 import json
 
+import cv2
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
@@ -16,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for 
 
 from atx import logutils
 from atx import base
+from atx import imutils
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -179,6 +181,15 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         write_file('blockly.py', python_text)
 
 
+class ImageHandler(tornado.web.RequestHandler):
+    def post(self):
+        raw_image = self.get_argument('raw_image')
+        filename = self.get_argument('filename')
+        image = imutils.open(raw_image)
+        cv2.imwrite(filename, image)
+        self.write({'status': 'ok'})
+
+
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
@@ -190,6 +201,7 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
+        (r"/images", ImageHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
         (r'/ws', EchoWebSocket),
     ], **settings)
@@ -208,6 +220,11 @@ def main(**kws):
 
     global workdir
     workdir = kws.get('workdir', '.')
+    
+    # TODO
+    filename = 'blockly.py'
+    IMAGE_PATH.append('images/blockly')
+
 
     open_browser = kws.get('open_browser', True)
     if open_browser:
