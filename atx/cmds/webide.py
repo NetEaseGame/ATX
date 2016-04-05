@@ -6,7 +6,9 @@ import logging
 import webbrowser
 import socket
 import time
+import json
 
+import cv2
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
@@ -15,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for 
 
 from atx import logutils
 from atx import base
+from atx import imutils
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -88,47 +91,71 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
     def open(self):
         print("WebSocket connected")
+        self._run = False
 
     def _highlight_block(self, id):
         self.write_message({'type': 'highlight', 'id': id})
-        time.sleep(1.0)
+        if not self._run:
+            raise RuntimeError("stopped")
+        else:
+            time.sleep(1.0)
 
     def write_console(self, s):
         self.write_message({'type': 'console', 'output': s})
 
-    def run_blockly(self):
+    def run_blockly(self, code):
         content = ''
-        filename = 'blockly.py'
-        with open(filename, 'rb') as f:
-            content = f.read()
+        filename = '__tmp.py'
         fake_sysout = FakeStdout(self.write_console)
 
         __sysout = sys.stdout
         sys.stdout = fake_sysout
-        exec content in {
-            'highlight_block': self._highlight_block,
-            '__name__': '__main__',
-            '__file__': filename}
-        sys.stdout = __sysout
+        try:
+            exec code in {
+                'highlight_block': self._highlight_block,
+                '__name__': '__main__',
+                '__file__': filename}
+        except RuntimeError as e:
+            if str(e) != 'stopped':
+                raise
+            print 'Program stopped'
+        except Exception as e:
+            self.write_message({'type': 'traceback', 'output': str(e)})
+        finally:
+            self._run = False
+            self.write_message({'type': 'run', 'status': 'ready'})
+            sys.stdout = __sysout
         
     @run_on_executor
-    def background_task(self, i):
+    def background_task(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
-        self.run_blockly()
-        return i
+        self.run_blockly(code)
+        return True
 
     @tornado.gen.coroutine
-    def on_message(self, message):
-        print(message)
+    def on_message(self, message_text):
+        # print 'MT:', message_text
+        message = None
+        try:
+            message = json.loads(message_text)
+        except:
+            print 'Invalid message from browser:', message_text
+            return
+        command = message.get('command')
         self.write_message({'type': 'console', 'output': '# echo hello\n'})
-        if message == 'refresh':
+        if command == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
             imgs = [dict(
                 path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
             self.write_message({'type': 'image_list', 'data': list(imgs)})
-        elif message == 'run':
-            res = yield self.background_task(4)
-            self.write_message({'type': 'run', 'status': 'ready', 'result': res})
+        elif command == 'run':
+            if self._run:
+                self._run = False
+                self.write_message({'type': 'run', 'notify': '停止中'})
+                return
+            self._run = True
+            res = yield self.background_task(message.get('code'))
+            self.write_message({'type': 'run', 'status': 'ready', 'notify': '运行结束', 'result': res})
         else:
             self.write_message(u"You said: " + message)
 
@@ -154,6 +181,15 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         write_file('blockly.py', python_text)
 
 
+class ImageHandler(tornado.web.RequestHandler):
+    def post(self):
+        raw_image = self.get_argument('raw_image')
+        filename = self.get_argument('filename')
+        image = imutils.open(raw_image)
+        cv2.imwrite(filename, image)
+        self.write({'status': 'ok'})
+
+
 class StaticFileHandler(tornado.web.StaticFileHandler):
     def get(self, path=None, include_body=True):
         path = path.encode(base.SYSTEM_ENCODING) # fix for windows
@@ -165,6 +201,7 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
+        (r"/images", ImageHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
         (r'/ws', EchoWebSocket),
     ], **settings)
@@ -183,6 +220,11 @@ def main(**kws):
 
     global workdir
     workdir = kws.get('workdir', '.')
+    
+    # TODO
+    filename = 'blockly.py'
+    IMAGE_PATH.append('images/blockly')
+
 
     open_browser = kws.get('open_browser', True)
     if open_browser:

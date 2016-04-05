@@ -11,15 +11,17 @@ $(function(){
 
   var RUN_BUTTON_TEXT = {
     'ready': '<span class="glyphicon glyphicon-play"></span> 运行</a>',
-    'running': '<span class="glyphicon glyphicon-stop"></span> 运行中</a>',
+    'running': '<span class="glyphicon glyphicon-stop"></span> 停止</a>',
   }
 
-  function changeRunningStatus(status){
+  function changeRunningStatus(status, message){
     var $play = $('a[href=#play]');
-    if (status === 'ready'){
-      $play.notify('运行结束', {className: 'success', position: 'top'});
+    if (message) {
+      $play.notify(message, {className: 'success', position: 'top'});
     }
-    $play.html(RUN_BUTTON_TEXT[status]);
+    if (status){
+      $play.html(RUN_BUTTON_TEXT[status]);
+    }
   }
 
   function connectWebsocket(){
@@ -27,7 +29,7 @@ $(function(){
     M.ws = ws;
 
     ws.onopen = function(){
-      ws.send("refresh")
+      ws.send(JSON.stringify({command: "refresh"}))
       $.notify(
         '与后台通信连接成功!!!', 
         {position: 'top center', className: 'success'})
@@ -45,10 +47,12 @@ $(function(){
           );
           break;
         case 'run':
-          changeRunningStatus(data.status);
+          changeRunningStatus(data.status, data.notify);
+          break;
+        case 'traceback':
+          alert(data.output);
           break;
         case 'highlight':
-          console.log(data.id)
           var id = data.id;
           workspace.highlightBlock(id)
           break;
@@ -59,7 +63,7 @@ $(function(){
           $console.text($console.text() + data.output);
           $console.scrollTop($console.height())
         default:
-          console.log("No match")
+          console.log("No match data type: ", data.type)
         }
       }
       catch(err){
@@ -67,8 +71,8 @@ $(function(){
       }
     };
     ws.onerror = function(err){
-      $.notify(err);
-      console.error(err)
+      // $.notify(err);
+      // console.error(err)
     };
     ws.onclose = function(){
       console.log("Closed");
@@ -100,15 +104,15 @@ $(function(){
   function saveWorkspace(callback) {
     var $this = $('a[href=#save]');
     var originHtml = $this.html();
-    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存中')
+    $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 保存')
     
     var g = generateCode(workspace);
     $.ajax({
       url: '/workspace',
       method: 'POST',
-      data: {'xml_text': g.xmlText, 'python_text': g.pythonDebugText},
+      data: {'xml_text': g.xmlText, 'python_text': g.pythonText},
       success: function(e){
-        console.log(e);
+        // console.log(e);
         // $this.html('<span class="glyphicon glyphicon-floppy-open"></span> 已保存')
         $('a[href=#save]').notify('保存成功',
           {className: 'success', position: 'left', autoHideDelay: 700});
@@ -121,7 +125,7 @@ $(function(){
       complete: function(){
         $this.html(originHtml)
         if (callback){
-          callback()
+          callback(g)
         }
       }
     })
@@ -129,7 +133,6 @@ $(function(){
 
   function updateGenerate(workspace) {
     var g = generateCode(workspace);
-    console.log(g.pythonText);
     $('.code-python').text(g.pythonText);
   }
 
@@ -160,6 +163,11 @@ $(function(){
 
   restoreWorkspace();
 
+  function sendWebsocket(message){
+    var data = JSON.stringify(message);
+    M.ws.send(data);
+  }
+
   $('a[href=#save]').click(function(event){
     event.preventDefault();
     saveWorkspace()
@@ -168,18 +176,50 @@ $(function(){
   $('a[href=#play]').click(function(event){
     event.preventDefault();
     M.workspace.traceOn(true); // enable step run
-    saveWorkspace(function(){
-      M.ws.send('run');
-    });
+    var g = generateCode(workspace);
+    sendWebsocket({command: 'run', code: g.pythonDebugText})
+    // saveWorkspace(function(g){
+      // sendWebsocket({command: 'run', code: g.pythonDebugText})
+    // });
   })
 
   $('#btn-imgrefresh').click(function(event){
     event.preventDefault();
-    M.ws.send('refresh');
+    sendWebsocket({command: 'refresh'})
   })
 
-  $('#btn-clearconsole').click(function(){
+  $('.btn-clearconsole').click(function(){
     $('pre.console').text('');
+  })
+
+  $('li[role=presentation]').click(function(){
+    var text = $.trim($(this).text());
+    M.workspace.setVisible(text === 'Blockly');
+    Blockly.fireUiEvent(window, 'resize');
+  })
+
+  $('#btn-savescreen').click(function(){
+    var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
+    if (!filename){
+      return;
+    }
+    filename = filename + '.png';
+    $.ajax({
+      url: '/images',
+      method: 'POST',
+      data: {
+        raw_image: M.canvas.toDataURL(), // FIXME(ssx): use server image is just ok
+        filename: filename,
+      },
+      success: function(res){
+        console.log(res)
+        $.notify('图片保存成功', 'success')
+      },
+      error: function(err){
+        console.log(err)
+        $.notify('图片保存失败，打开调试窗口查看具体问题')
+      },
+    })
   })
 
 
@@ -189,12 +229,74 @@ $(function(){
     return document.documentElement.clientHeight;
   }
 
+  function resizeCanvas(canvas){
+    var width = $('#screen-wrapper').width();
+    canvas.setAttribute('width', width);
+    loadCanvasImage(canvas, M.screenURL);
+  }
+
+  function loadCanvasImage(canvas, url, callback){
+    var context = canvas.getContext('2d')
+    var imageObj = new Image();
+    imageObj.crossOrigin="anonymous";
+    imageObj.onload = function(){
+      M.screenRatio = canvas.width/imageObj.width; // global
+      var height = Math.floor(M.screenRatio*imageObj.height);
+      canvas.setAttribute('height', height);
+      context.drawImage(imageObj, 0, 0, canvas.width, canvas.height);
+      var $wrapper = $(canvas).parent('div')
+      $wrapper.height(height);
+    }
+    imageObj.src = url;
+  }
+
+  function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor((evt.clientX - rect.left) / M.screenRatio),
+      y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
+    };
+  }
+
+  function writeMessage(canvas, message) {
+    var context = canvas.getContext('2d');
+    // context.clearRect(0, 0, canvas.width, canvas.height);
+    context.font = '18pt Calibri';
+    context.fillStyle = 'black';
+    context.fillText(message, 10, 25);
+  }
+
   function onResize(){
     var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
+    if (!$('#console-left').is(':hidden')){
+      blocklyDivHeight -= $("#console-left").height();
+    }
     $('#blocklyDiv').height(blocklyDivHeight-5);
+    // Blockly.fireUiEvent(window, 'resize');
+
+    // var canvas = document.getElementById('canvas');
+    resizeCanvas(M.canvas);
   }
+
+  M.canvas = document.getElementById('canvas');
+  M.screenURL = 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
+  M.screenURL = '/favicon.ico'; //http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
   window.addEventListener('resize', onResize, false);
   onResize();
+
+  var canvas = document.getElementById('canvas');
+  canvas.addEventListener('mousemove', function(evt) {
+    var mousePos = getMousePos(canvas, evt);
+    var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y;
+    // writeMessage(canvas, message);
+    $('.status-bar>span').text(message);
+    // console.log(message);
+  }, false);
+
+  // $("#console-left").hide(function(){
+    // console.log("HE")
+    // onResize(); //Blockly.fireUiEvent(window, 'resize');
+  // });
 })
 
 // var workspace = Blockly.inject('blocklyDiv',

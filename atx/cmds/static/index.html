@@ -22,7 +22,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">AirtestX IDE</a>
+          <a class="navbar-brand" href="/">ATX IDE</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -62,13 +62,13 @@
             <li role="presentation">
               <a href="#pythonDiv" aria-controls="pythonDiv" role="tab" data-toggle="tab">Python</a>
             </li>
-            <li role="presentation" class="pull-right">
+            <li class="pull-right">
               <a href="#play">
                 <span class="glyphicon glyphicon-play"></span>
                 运行
               </a>
             </li>
-            <li role="presentation" class="pull-right">
+            <li class="pull-right">
               <a href="#save">
                 <span class="glyphicon glyphicon-floppy-saved"></span>
                 保存
@@ -77,35 +77,59 @@
           </ul>
 
           <div class="tab-content">
-            <div id="blocklyDiv" role="tabpanel" class="tab-pane active" 
-              style="position: relative; height: 500px">
+            <div id="blocklyDiv" role="tabpanel" class="tab-pane active">
             </div>
             <div id="pythonDiv" role="tabpanel" class="tab-pane">
               <pre class='code-python'></pre>
             </div>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div>
-            <h4>Screen</h4>
-            <div>
-              <img src="/static/favicon.ico" class="phone-screen"/>
-            </div>
-            <!-- <pre class='code-python'></pre> -->
-          </div>
-          <div>
+          <div id="console-left" style='display: none;'>
             <h4>Console
-              <button type="button" id='btn-clearconsole' class="btn btn-default btn-xs">Clear</button>
+              <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
+        </div>
+        <div class="col-md-4">
+          <div>
+            <h4>Screen
+              <button type="button" id="btn-savescreen" class="btn btn-default btn-xs">保存</button>
+            </h4>
+            <div id="screen-wrapper" style="border: 1px solid red">
+              <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <canvas id="canvas" width="40" height="10">
+                Browser not support canvas
+              </canvas>
+            </div>
+            <div class='status-bar'>Status: <span></span></div>
+            <!-- <pre class='code-python'></pre> -->
+          </div>
+          <div id="console-right">
+            <h4>Console
+              <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
+            </h4>
+            <pre class='console'></pre>
+          </div>
+          
         </div>
       </div>
     </div>
 
     <xml id="toolbox" style="display: none">
-      <category name="AirtestX" colour="160">
+      <category name="ATX" colour="160">
         <block type="atx_connect"></block>
+        <block type="atx_click">
+          <value name="X">
+            <block type="math_number">
+              <field name="NUM">0</field>
+            </block>
+          </value>
+          <value name="Y">
+            <block type="math_number">
+              <field name="NUM">0</field>
+            </block>
+          </value>
+        </block>
         <block type="atx_screenshot">
           <value name="FILENAME">
             <block type="text">
@@ -113,6 +137,16 @@
             </block>
           </value>
         </block>
+      </category>
+      <category name="逻辑" colour="200">
+        <block type="controls_if"></block>
+        <block type="logic_compare"></block>
+        <block type="controls_repeat_ext"></block>
+      </category>
+      <category name="变量" colour="200">
+        <block type="math_number"></block>
+        <block type="math_arithmetic"></block>
+        <block type="text"></block>
       </category>
       <category name="常用" colour="200">
         <block type="text_print">
@@ -122,12 +156,6 @@
             </shadow>
           </value>
         </block>
-        <block type="logic_compare"></block>
-        <block type="text"></block>
-        <block type="math_number"></block>
-        <block type="controls_if"></block>
-        <block type="controls_repeat_ext"></block>
-        <block type="math_arithmetic"></block>
       </category>
     </xml>
 
@@ -138,10 +166,10 @@
     <script src="//cdn.rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="//rawgit.com/codeskyblue/blockly/release/blockly_compressed.js"></script>
-    <script src="//rawgit.com/codeskyblue/blockly/release/blocks_compressed.js"></script>
-    <script src="//rawgit.com/codeskyblue/blockly/release/msg/js/en.js"></script>
-    <script src="//rawgit.com/codeskyblue/blockly/release/python_compressed.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/release/blockly_compressed.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/release/blocks_compressed.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/release/msg/js/en.js"></script>
+    <script src="//cdn.rawgit.com/codeskyblue/blockly/release/python_compressed.js"></script>
 
     <script src="{{static_url('index.js')}}"></script>
     
