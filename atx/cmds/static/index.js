@@ -198,7 +198,7 @@ $(function(){
     Blockly.fireUiEvent(window, 'resize');
   })
 
-  $('#btn-savescreen').click(function(){
+  $('#btn-save-screen').click(function(){
     var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
     if (!filename){
       return;
@@ -222,6 +222,20 @@ $(function(){
     })
   })
 
+  $('#btn-refresh-screen').click(function(){
+    M.screenURL = '/images?v=t' + new Date().getTime();
+    var $this = $(this);
+    $this.notify('Refreshing', {className: 'info', position: 'top'})
+    $this.prop('disabled', true);
+
+    loadCanvasImage(M.canvas, M.screenURL, function(err){
+      if (err){
+        $this.notify(err, 'error')
+      }
+      $this.prop('disabled', false);
+    })
+  })
+
 
   $('.fancybox').fancybox()
 
@@ -238,6 +252,7 @@ $(function(){
   function loadCanvasImage(canvas, url, callback){
     var context = canvas.getContext('2d')
     var imageObj = new Image();
+    url = url || M.screenURL;
     imageObj.crossOrigin="anonymous";
     imageObj.onload = function(){
       M.screenRatio = canvas.width/imageObj.width; // global
@@ -246,6 +261,14 @@ $(function(){
       context.drawImage(imageObj, 0, 0, canvas.width, canvas.height);
       var $wrapper = $(canvas).parent('div')
       $wrapper.height(height);
+      if (callback) {
+        callback()
+      }
+    }
+    imageObj.onerror = function(){
+      if (callback){
+        callback("Refresh failed.")
+      }
     }
     imageObj.src = url;
   }
@@ -260,7 +283,6 @@ $(function(){
 
   function writeMessage(canvas, message) {
     var context = canvas.getContext('2d');
-    // context.clearRect(0, 0, canvas.width, canvas.height);
     context.font = '18pt Calibri';
     context.fillStyle = 'black';
     context.fillText(message, 10, 25);
@@ -268,9 +290,11 @@ $(function(){
 
   function onResize(){
     var blocklyDivHeight = getPageHeight() - $("#blocklyDiv").offset().top;
+    console.log($("#console-left").height())
     if (!$('#console-left').is(':hidden')){
-      blocklyDivHeight -= $("#console-left").height();
+      blocklyDivHeight -= $("#console-left").height() + 20;
     }
+    console.log("blockly height:", blocklyDivHeight)
     $('#blocklyDiv').height(blocklyDivHeight-5);
     // Blockly.fireUiEvent(window, 'resize');
 
@@ -280,7 +304,7 @@ $(function(){
 
   M.canvas = document.getElementById('canvas');
   M.screenURL = 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
-  M.screenURL = '/favicon.ico'; //http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
+  M.screenURL = '/images?v=t0';
   window.addEventListener('resize', onResize, false);
   onResize();
 

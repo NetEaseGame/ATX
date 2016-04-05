@@ -24,7 +24,7 @@ def _tcpproxy(args):
 
 
 def _webide(args):
-    webide.main(open_browser=(not args.no_browser), port=args.web_port)
+    webide.main(open_browser=(not args.no_browser), port=args.web_port, adb_host=args.host, adb_port=args.port)
 
 
 def _apkparse(args):
