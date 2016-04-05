@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
 
 import inspect
 import logging
@@ -51,7 +52,7 @@ class Logger(object):
             name=self._name,
             filename=os.path.basename(filename),
             lineno=line_number,
-            message=message.encode('utf-8'),
+            message=message,
         )
         props['levelname'] = Logger.__alias.get(levelname, levelname)
         output = '{asctime} {levelname:<5s} [{name}:{lineno:>4}] {message}'.format(**props)

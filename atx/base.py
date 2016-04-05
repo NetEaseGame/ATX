@@ -81,6 +81,7 @@ VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
 def auto_decode(s, encoding='utf-8'):
     return s if isinstance(s, unicode) else unicode(s, encoding)
 
+
 def list_images(path=['.']):
     """ Return list of image files """
     for image_dir in set(path):
