@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import collections
 
 from atx import imutils
+from atx import strutils
 
 
 FindPoint = collections.namedtuple('FindPoint', ['pos', 'confidence', 'method', 'matched'])
@@ -56,7 +57,7 @@ class Pattern(object):
             self._name = image
 
     def __str__(self):
-        return 'Pattern(name: {}, offset: {})'.format(self._name, self.offset)
+        return 'Pattern(name: {}, offset: {})'.format(strutils.encode(self._name), self.offset)
     
     @property
     def image(self):

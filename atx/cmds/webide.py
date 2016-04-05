@@ -21,8 +21,7 @@ from atx import imutils
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
-
-log = logutils.getLogger("webide")
+log = logutils.getLogger("webide", level=logging.DEBUG)
 log.setLevel(logging.DEBUG)
 
 
@@ -54,16 +53,16 @@ class AtxLogHandler(logging.Handler):
         log_entry = self.format(record)
         print('RR:', log_entry)
 
-def _init():
-    hdlr = AtxLogHandler()
-    hdlr.setLevel(logging.DEBUG)
-    fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
-    hdlr.setFormatter(logging.Formatter(fmt))
-    log = logging.getLogger('atx')
-    log.addHandler(hdlr)
-    log.setLevel(logging.DEBUG)
+# def _init():
+#     hdlr = AtxLogHandler()
+#     hdlr.setLevel(logging.DEBUG)
+#     fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
+#     hdlr.setFormatter(logging.Formatter(fmt))
+#     log = logging.getLogger('atx')
+#     log.addHandler(hdlr)
+#     log.setLevel(logging.DEBUG)
 
-_init()
+# _init()
 
 class FakeStdout(object):
     def __init__(self, fn=sys.stdout.write):
@@ -90,7 +89,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     executor = ThreadPoolExecutor(max_workers=1)
 
     def open(self):
-        print("WebSocket connected")
+        log.info("WebSocket connected")
         self._run = False
 
     def _highlight_block(self, id):
@@ -134,7 +133,6 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
     @tornado.gen.coroutine
     def on_message(self, message_text):
-        # print 'MT:', message_text
         message = None
         try:
             message = json.loads(message_text)
@@ -143,6 +141,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
             return
         command = message.get('command')
         self.write_message({'type': 'console', 'output': '# echo hello\n'})
+
         if command == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
             imgs = [dict(
@@ -160,7 +159,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
             self.write_message(u"You said: " + message)
 
     def on_close(self):
-        print("WebSocket closed")
+        log.info("WebSocket closed")
     
     def check_origin(self, origin):
         return True
@@ -174,7 +173,7 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         self.write(ret)
 
     def post(self):
-        log.debug("Save workspace")
+        log.info("Save workspace")
         xml_text = self.get_argument('xml_text')
         python_text = self.get_argument('python_text')
         write_file('blockly.xml', xml_text)
@@ -232,6 +231,7 @@ def main(**kws):
         webbrowser.open(url, new=2) # 2: open new tab if possible
 
     application.listen(port)
+    log.info("Server started.")
     log.info("Listening port on 127.0.0.1:{}".format(port))
     tornado.ioloop.IOLoop.instance().start()
 

@@ -34,11 +34,8 @@ from atx import adb
 from atx.device import Pattern, Bounds, FindPoint
 
 
-log = logutils.getLogger('atx')
-log.setLevel(logging.INFO)
-
-
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+log = logutils.getLogger(__name__)
 
 _Condition = collections.namedtuple('WatchCondition', ['pattern', 'exists'])
 
@@ -256,7 +253,7 @@ class Watcher(object):
             if callable(evt.action):
                 evt.action(Watcher.Event(evt.selector, pos))
             elif evt.action == Watcher.ACTION_CLICK:
-                log.info('trigger watch click: %s', pos)
+                log.info('Watch match %s, click: %s', evt.selector, pos)
                 self._dev.click(*pos)
             elif evt.action == Watcher.ACTION_QUIT:
                 self._run = False
