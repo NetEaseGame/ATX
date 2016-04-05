@@ -4,14 +4,13 @@
 import logging
 
 
-def getLogger(name):
+def getLogger(name, init=True, level=logging.INFO):
     logger = logging.getLogger(name)
-    if len(logger.handlers) == 0:
-        ch = logging.StreamHandler()
-        fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
-        formatter = logging.Formatter(fmt)
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+    ch = logging.StreamHandler()
+    fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
+    ch.setFormatter(logging.Formatter(fmt))
+    ch.setLevel(level)
+    logger.handlers = [ch]
     return logger
 
 
