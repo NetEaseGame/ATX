@@ -232,6 +232,22 @@ class Window(object):
     def set_foreground(self):
         win32gui.SetForegroundWindow(self.hwnd)
 
+    def _input_left_mouse(self, x, y):
+        left, top, right, bottom = self.rect
+        width, height = right - left, bottom - top
+        if x < 0 or x > width or y < 0 or y > height:
+            return
+
+        win32gui.SetForegroundWindow(self.hwnd)
+        pos = win32gui.GetCursorPos()
+        win32api.SetCursorPos((left+x, top+y))
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+        win32api.Sleep(100) #ms
+        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+        win32api.Sleep(100) #ms
+        # win32api.SetCursorPos(pos)
+
+
 class FrozenWindow(Window):
     """Non-resizable Window, use lots of cached properties"""
 
@@ -390,6 +406,8 @@ class WindowsDevice(DeviceMixin):
         Returns:
             None
         """
+        print 'click at', x, y
+        self._input_left_mouse(x, y)
 
     def text(self, text):
         """Simulate text input to window.

@@ -184,6 +184,7 @@ class Watcher(object):
             self._stored_selector = self._dev(text=text)
         elif pattern is not None:
             selector = self._dev.pattern_open(pattern)
+            print 1111111, selector
             if selector is None:
                 raise IOError("Not found pattern: {}".format(pattern))
             self._stored_selector = selector
@@ -340,6 +341,16 @@ class DeviceMixin(object):
         if not ret.matched:
             return None
         return ret
+
+    def wait(self, pattern, timeout=10.0):
+        """Wait till pattern is found or time is out (default: 10s)."""
+        t = time.time() + timeout
+        while time.time() < t:
+            ret = self.exists(pattern)
+            if ret:
+                return ret
+            time.sleep(0.2)
+        raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
     def touch(self, x, y):
         """ Alias for click """

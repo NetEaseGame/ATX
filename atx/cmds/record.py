@@ -43,8 +43,10 @@ __Step = namedtuple('Step', ('index', 'ctime', 'image', 'action', 'args'))
 class Step(__Step):
     def to_script(self, timeout, indent=4):
         res = []
-        res.append('with d.watch("%s-target.png", %s) as w:' % (self.index, ceil(timeout)))
-        res.append('%sw.on("%s-action.png", %s).click()' % (' '*indent, self.index, self.args))
+        # res.append('if d.exists("%s-target.png", %s):' % (self.index, ceil(timeout)))
+        # res.append('%sw.on("%s-action.png", %s).click()' % (' '*indent, self.index, self.args))
+        res.append('')
+
         return '\n'.join(res)
 
 class BaseRecorder(object):
