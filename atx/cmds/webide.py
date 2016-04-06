@@ -7,6 +7,7 @@ import webbrowser
 import socket
 import time
 import json
+import traceback
 
 import cv2
 import tornado.ioloop
@@ -15,6 +16,7 @@ import tornado.websocket
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for python2
 
+import atx
 from atx import logutils
 from atx import base
 from atx import imutils
@@ -27,6 +29,9 @@ log.setLevel(logging.DEBUG)
 
 IMAGE_PATH = ['.', 'imgs', 'images']
 workdir = '.'
+device = None
+atx_settings = {}
+
 
 def read_file(filename, default=''):
     if not os.path.isfile(filename):
@@ -103,14 +108,16 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         self.write_message({'type': 'console', 'output': s})
 
     def run_blockly(self, code):
-        content = ''
+        # content = ''
         filename = '__tmp.py'
         fake_sysout = FakeStdout(self.write_console)
 
         __sysout = sys.stdout
         sys.stdout = fake_sysout
+        self.write_message({'type': 'console', 'output': '# start running\n'})
         try:
-            exec code in {
+            # python code always UTF-8
+            exec code.encode('utf-8') in {
                 'highlight_block': self._highlight_block,
                 '__name__': '__main__',
                 '__file__': filename}
@@ -119,7 +126,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
                 raise
             print 'Program stopped'
         except Exception as e:
-            self.write_message({'type': 'traceback', 'output': str(e)})
+            self.write_message({'type': 'traceback', 'output': traceback.format_exc()})
         finally:
             self._run = False
             self.write_message({'type': 'run', 'status': 'ready'})
@@ -140,7 +147,6 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
             print 'Invalid message from browser:', message_text
             return
         command = message.get('command')
-        self.write_message({'type': 'console', 'output': '# echo hello\n'})
 
         if command == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
@@ -181,6 +187,19 @@ class WorkspaceHandler(tornado.web.RequestHandler):
 
 
 class ImageHandler(tornado.web.RequestHandler):
+    def get(self):
+        d = atx.connect(**atx_settings)
+        d.screenshot('_screen.png')
+
+        self.set_header('Content-Type', 'image/png')
+        with open('_screen.png', 'rb') as f:
+            while 1:
+                data = f.read(16000)
+                if not data:
+                    break
+                self.write(data)
+        self.finish()
+
     def post(self):
         raw_image = self.get_argument('raw_image')
         filename = self.get_argument('filename')
@@ -200,7 +219,7 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
-        (r"/images", ImageHandler),
+        (r"/images/?", ImageHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
         (r'/ws', EchoWebSocket),
     ], **settings)
@@ -217,13 +236,15 @@ def main(**kws):
     if not port:
         port = get_valid_port()
 
+    global device
     global workdir
     workdir = kws.get('workdir', '.')
-    
+    atx_settings['host'] = kws.get('adb_host')
+    atx_settings['port'] = kws.get('adb_port')
+    # device = atx.connect(host=kws.get('host'), port=kws.get('port'))
     # TODO
-    filename = 'blockly.py'
+    # filename = 'blockly.py'
     IMAGE_PATH.append('images/blockly')
-
 
     open_browser = kws.get('open_browser', True)
     if open_browser:
@@ -234,6 +255,7 @@ def main(**kws):
     log.info("Server started.")
     log.info("Listening port on 127.0.0.1:{}".format(port))
     tornado.ioloop.IOLoop.instance().start()
+
 
 if __name__ == "__main__":
     main()
