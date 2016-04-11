@@ -1,23 +1,11 @@
 #-*- encoding: utf-8 -*-
 
-# first, attach a transparent window W infront of 
-# the watched one. W will watch all mouse & keyboard
-# events for the window
-
-# second, on each input event, we check the differences
-# between the window screens before and after the event. 
-
-# the differences indicates a shape which is the one
-# user touched. We can translate the event into a
-# testcase.
-
-# the event response time is crucial and may be varing
-# between games & even ui-parts in one game. 
-
 import os
+import sys
 import time
 
 from atx.device.windows import WindowsDevice, find_process_id
+from atx.device.android import AndroidDevice
 from atx.cmds.record import RecorderGUI
 
 def get_calc_win():
@@ -27,19 +15,30 @@ def get_calc_win():
         time.sleep(3)
 
     win = WindowsDevice(exe_file=exe_file)
+    print "window handle", hex(win.hwnd)
     return win
 
 def get_game_win():
     window_name = "MyLuaGame"
     win = WindowsDevice(window_name=window_name)
+    print "window handle", hex(win.hwnd)
     return win
 
-def main():
-    win = get_game_win()
-    print "window handle", hex(win.hwnd)
-    print "window size %dx%d" % win.size
+def get_android_dev():
+    dev = AndroidDevice()
+    print 'android devcie', dev._serial
+    return dev
 
-    r = RecorderGUI(win)
+if len(sys.argv) > 1 and sys.argv[1] == 'win':
+    get_device = get_calc_win
+else:
+    get_device = get_android_dev
+
+def main():
+    dev = get_device()
+    print "display size %dx%d" % dev.display
+
+    r = RecorderGUI(dev)
     r.mainloop()
 
 if __name__ == '__main__':

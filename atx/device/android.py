@@ -28,7 +28,7 @@ from atx import base
 from atx import imutils
 from atx import adb
 from atx.device import Bounds
-from atx.device.device_mixin import DeviceMixin
+from atx.device.device_mixin import DeviceMixin, hook_wrap
 
 
 DISPLAY_RE = re.compile(
@@ -198,6 +198,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         return self._uiauto.click(x, y)
 
+    @hook_wrap(consts.EVENT_SCREENSHOT)
     def screenshot(self, filename=None):
         """
         Take screen snapshot

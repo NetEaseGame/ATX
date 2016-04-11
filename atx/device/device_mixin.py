@@ -14,8 +14,10 @@ import subprocess
 import time
 import tempfile
 import warnings
+import functools
 import logging
 import uuid
+import inspect
 import xml.dom.minidom
 
 import cv2
@@ -34,11 +36,8 @@ from atx import adb
 from atx.device import Pattern, Bounds, FindPoint
 
 
-log = logutils.getLogger('atx')
-log.setLevel(logging.INFO)
-
-
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+log = logutils.getLogger(__name__)
 
 _Condition = collections.namedtuple('WatchCondition', ['pattern', 'exists'])
 
@@ -184,6 +183,7 @@ class Watcher(object):
             self._stored_selector = self._dev(text=text)
         elif pattern is not None:
             selector = self._dev.pattern_open(pattern)
+            print 1111111, selector
             if selector is None:
                 raise IOError("Not found pattern: {}".format(pattern))
             self._stored_selector = selector
@@ -255,7 +255,7 @@ class Watcher(object):
             if callable(evt.action):
                 evt.action(Watcher.Event(evt.selector, pos))
             elif evt.action == Watcher.ACTION_CLICK:
-                log.info('trigger watch click: %s', pos)
+                log.info('Watch match %s, click: %s', evt.selector, pos)
                 self._dev.click(*pos)
             elif evt.action == Watcher.ACTION_QUIT:
                 self._run = False
@@ -275,13 +275,29 @@ class Watcher(object):
         sys.stdout.write('\n')
 
 
+HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs'])
+
+def hook_wrap(event_type):
+    def wrap(fn):
+        @functools.wraps(fn)
+        def _inner(*args, **kwargs):
+            func_args = inspect.getcallargs(fn, *args, **kwargs)
+            self = func_args.get('self')
+            if self and hasattr(self, '_listeners'):
+                for (f, event_flag) in self._listeners:
+                    if event_flag & event_type:
+                        f(HookEvent(event_flag, args[1:], kwargs)) # remove self from args
+            return fn(*args, **kwargs)
+        return _inner
+    return wrap
+
 class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.image_match_threshold = 0.8
         self._resolution = None
         self._bounds = None
-        self._event_handlers = []
+        self._listeners = []
         self.image_path = ['.']
 
     @property
@@ -340,6 +356,16 @@ class DeviceMixin(object):
         if not ret.matched:
             return None
         return ret
+
+    def wait(self, pattern, timeout=10.0):
+        """Wait till pattern is found or time is out (default: 10s)."""
+        t = time.time() + timeout
+        while time.time() < t:
+            ret = self.exists(pattern)
+            if ret:
+                return ret
+            time.sleep(0.2)
+        raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
     def touch(self, x, y):
         """ Alias for click """
@@ -466,10 +492,10 @@ class DeviceMixin(object):
         Returns:
             None
         """
-        self._event_handlers.append((fn, event_flags))
+        self._listeners.append((fn, event_flags))
 
     def _trigger_event(self, event_flag, event):
-        for (fn, flag) in self._event_handlers:
+        for (fn, flag) in self._listeners:
             if flag & event_flag:
                 fn(event)
 

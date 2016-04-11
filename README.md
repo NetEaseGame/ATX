@@ -1,4 +1,4 @@
-# AuTo eXpress (atx) (中文版)
+# AutomatorX (atx) (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/AirtestX.svg?branch=master)](https://travis-ci.org/codeskyblue/AirtestX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
@@ -8,7 +8,7 @@
 该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
 
-ATX is short for _AuTo eXpress_
+ATX is short for _AutomatorX_
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
 2. 可是很好的支持安卓手机的测试，包括安卓模拟器
@@ -60,7 +60,7 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 	brew install python pillow opencv
 	```
 
-2. 安装airtest
+2. 安装ATX
 
 	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
 
@@ -258,6 +258,18 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 		w.on('outside.png').do(foo)
 	```	
 
+* events函数调用事件
+
+	```py
+	def my_listener(event):
+		print 'out:', event
+
+	d.add_listener(my_listener, atx.EVENT_SCREENSHOT)
+	d.screenshot()
+
+	# expect output:
+	# out: HookEvent(flag=8, args=(), kwargs={})
+	```
 
 ## 配置项
 一般来说用默认的就好了，大部分都不需要改
@@ -406,6 +418,18 @@ click(20， 30）
 	minicap是[openstf](https://github.com/openstf)开源项目中的一个子项目，用于手机快速的截图. 连接手机到电脑上之后，简单的安装方法 `python -matx minicap` 
 	_注意：请不要在模拟器上尝试_
 
+5. 关于与第三方平台集成的方案
+
+	对于cloudtest, 添加下面的代码到靠上部的位置
+
+	```
+	from atx.ext import cloudtest
+
+	cloudtest.record_operation(d, logdir='cloudtest', filename='record.log')
+	# .... other operation
+	```
+
+	执行完代码后，把 `cloudtest` 这个目录发送到平台就好了。
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)

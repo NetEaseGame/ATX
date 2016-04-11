@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" />
     <title>Atx Web IDE</title>
 
     <!-- Bootstrap -->
@@ -54,7 +55,7 @@
             {% end %}
           </ul>
         </div> -->
-        <div class="col-md-8">
+        <div class="col-md-9">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
               <a href="#blocklyDiv" aria-controls="blocklyDiv" role="tab" data-toggle="tab">Blockly</a>
@@ -83,17 +84,18 @@
               <pre class='code-python'></pre>
             </div>
           </div>
-          <div id="console-left" style='display: none;'>
+          <div id="console-left" style='display: ;'>
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div>
             <h4>Screen
-              <button type="button" id="btn-savescreen" class="btn btn-default btn-xs">保存</button>
+              <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存</button>
+              <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
             </h4>
             <div id="screen-wrapper" style="border: 1px solid red">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
@@ -104,7 +106,7 @@
             <div class='status-bar'>Status: <span></span></div>
             <!-- <pre class='code-python'></pre> -->
           </div>
-          <div id="console-right">
+          <div id="console-right" style='display: none;'>
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
             </h4>

@@ -10,22 +10,6 @@ from atx import logutils
 
 log = logutils.getLogger(__name__) #base.getLogger('patch')
 
-def thread_safe(f):
-    '''
-    add thread lock for function
-
-    @thread_safe
-    def sayhi(name):
-        print 'Hi', name
-    '''
-    lock = threading.Lock()
-    
-    def wrapper(*args, **kwargs):
-        lock.acquire()
-        ret = f(*args, **kwargs)
-        lock.release()
-        return ret
-    return wrapper
 
 def run_once(f):
     ''' 
