@@ -10,9 +10,46 @@ import subprocess
 import threading
 import Queue
 
+__all__ = ['AndroidInputHookManager', 'HookManager', 'HookConstants']
+
 SLOT_NUM = 5
 _X, _Y, _VR, _VA, _MJ, _PR, FIELD_NUM = range(7)
 INF = 9999
+
+class HookConstants:
+    TOUCH_DOWN = 0x01
+    TOUCH_UP   = 0x02
+    TOUCH_MOVE = 0x03
+
+    ANY_KEY = 0x00
+    KEY_HOME_DOWN = 0x01
+    KEY_HOME_UP   = 0x02
+    KEY_BACK_DOWN = 0x03
+    KEY_BACK_UP   = 0x04
+    KEY_MENU_DOWN = 0x05
+    KEY_MENU_UP   = 0x06
+    KEY_POWER_DOWN      = 0x07
+    KEY_POWER_UP        = 0x08
+    KEY_VOLUMEDOWN_DOWN = 0x09
+    KEY_VOLUMEDOWN_UP   = 0x0a
+    KEY_VOLUMEUP_DOWN   = 0x0b
+    KEY_VOLUMEUP_UP     = 0x0c
+
+    # gestures, single finger
+    GST_TAP = 0x01
+    GST_DOUBLE_TAP = 0x02
+    GST_LONG_PRESS = 0x03
+    GST_SWIPE = 0x04
+    GST_DRAG = 0x05
+    GST_PINCH = 0x06
+
+    # used for uiautomator press
+    KEY_HOME = 'home'
+    KEY_MENU = 'menu'
+    KEY_BACK = 'back'
+    KEY_POWER      = 'power'
+    KEY_VOLUMEDOWN = 'volume_down'
+    KEY_VOLUMEUP   = 'volume_up'
 
 class InputParser(object):
     _pat = re.compile('\[\s*(?P<time>[0-9.]+)\] (?P<device>/dev/.*): +(?P<type>\w+) +(?P<code>\w+) +(?P<value>\w+)')
@@ -48,18 +85,18 @@ class InputParser(object):
             if _code in ('SYN_REPORT', 'SYN_MT_REPORT'):
                 self._process_touch_batch()
             elif _code == 'SYN_DROPPED':
-                pass
+                self._touch_batch = []
             else:
-                pass
+                print 'unknown syn code', _code
         elif _type == 'EV_KEY':
-            pass
+            self.emit_key_event((_time, _code, _value))
         elif _type == 'EV_ABS':
             self._touch_batch.append((_time, _device, _type, _code, _value))
         else:
-            pass
+            print 'unknown input event type', _type
 
     def emit_key_event(self, event):
-        self.queue.put('key event %s' % event)
+        self.queue.put('key event %s' % (event,))
 
     def emit_touch_events(self, events):
         self.queue.put('multi touch events %s' % events)
@@ -148,28 +185,6 @@ def radang(x, y):
         a += 360
     return r, a
 
-def gesture_recognize(queue):
-    wait_begin_time = None
-    wait_seconds = 0
-    while True:
-        try:
-            time.sleep(0.001)
-            evt = queue.get_nowait()
-            print 222, repr(evt)
-        except Queue.Empty:
-            now = time.time()
-            if wait_begin_time is None:
-                wait_begin_time = now
-            elif now - wait_begin_time > 1:
-                wait_seconds += 1
-                print 'waited %d second' % wait_seconds
-                wait_begin_time = now
-            continue
-        except Exception as e:
-            print 111, e, type(e)
-        wait_begin_time = None
-        wait_seconds = 0
-
 class GestureRecognizer(object):
     def __init__(self, queue):
         self.queue = queue
@@ -223,7 +238,7 @@ class AndroidInputHookManager(object):
         self._queue = Queue.Queue()
         self._listener = None
         self._parser = InputParser(self._queue)
-        self._consumer = GestureRecognizer(self._queue)
+        self._processor = GestureRecognizer(self._queue)
 
     def set_serial(self, serial):
         self._serial = serial
@@ -239,7 +254,7 @@ class AndroidInputHookManager(object):
             cmd.extend(['-s', self._serial])
         cmd.extend(['shell', 'getevent', '-lt'])
         self._listener = p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self._consumer.start()
+        self._processor.start()
 
         def listen():
             while True:
@@ -248,7 +263,7 @@ class AndroidInputHookManager(object):
                     if not line:
                         if p.poll() is not None:
                             print 'adb terminated.'
-                            self._consumer.stop()
+                            self._processor.stop()
                             break
                         continue
                     self._parser.feed(line)
@@ -266,8 +281,10 @@ class AndroidInputHookManager(object):
         if self._listener:
             self._listener.kill()
 
+HookManager = AndroidInputHookManager
+
 if __name__ == '__main__':
     hm = AndroidInputHookManager()
     hm.hook()
-    time.sleep(10)
+    time.sleep(30)
     hm.unhook()

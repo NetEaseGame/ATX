@@ -1,6 +1,7 @@
 #-*- encoding: utf-8 -*-
 
 import os
+import sys
 import win32api
 import win32con
 import win32gui
@@ -132,7 +133,10 @@ class RecorderGUI(object):
         win32api.PostQuitMessage(0)
 
     def mainloop(self):
-        self._root.mainloop()
+        try:
+            self._root.mainloop()
+        except KeyboardInterrupt:
+            self.destroy()
 
     def start_record(self):
         if not self.check_recorder():

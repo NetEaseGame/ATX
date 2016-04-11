@@ -68,20 +68,32 @@ class BaseRecorder(object):
         t.start()
 
     def attach(self, device):
-        """Attach to device, if current device is not None, should
-        detach from it first. """
+        '''Attach to device, if current device is not None, should
+        detach from it first. '''
         raise NotImplementedError()
 
     def detach(self):
-        """Detach from current device."""
+        '''Detach from current device.'''
         raise NotImplementedError()
 
     def run(self):
-        """Start watching inputs & device screen."""
+        '''Start watching inputs & device screen.'''
+        self.hook()
+        with self.capture_lock:
+            self.running = True
+
+    def hook(self):
         raise NotImplementedError()
 
     def stop(self):
-        """Stop record."""
+        '''Stop record.'''
+        with self.capture_lock:
+            self.running = False
+        self.unhook()
+        # for test, dump steps when stop
+        self.dump()
+
+    def unhook(self):
         raise NotImplementedError()
 
     def next_index(self):
@@ -89,11 +101,13 @@ class BaseRecorder(object):
             self.step_index += 1
             return self.step_index
 
-    def on_touch(self, position):
-        """Handle touch input event."""
+    def on_click(self, position):
+        '''Handle touch event.'''
         t = threading.Thread(target=self.__async_handle_touch, args=(position, ))
         t.setDaemon(True)
         t.start()
+
+    on_touch = on_click
 
     def __async_handle_touch(self, position):
         t = time.time()
@@ -170,22 +184,41 @@ class BaseRecorder(object):
         r = self.default_radius
         return (max(x-r,0), max(y-r,0), min(x+r,w), min(y+r,h))
 
-    def on_drag(self, start, end):
-        """Handle drag input event."""
+    def on_double_click(self, position):
+        '''Handle double click event'''
+        print 'on_double_click'
 
-    def on_text(self, text):
-        """Handle text input event."""
+    def on_drag(self, start, end, speed=1):
+        '''Handle drag event.'''
+        print 'on_drag'
+
+    on_pan = on_drag
+
+    def on_swipe(self, direction, percent=1, speed=1):
+        '''Handle swipe event.
+        Args:
+            direction: up/down/left/right
+            percent: swipe speed, 1 - 100
+        '''
+        print 'on_swipe', direction
+
+    def on_pinch(self, in_or_out, percent=1, speed=1):
+        '''Handle pinch event'''
+
+    def on_key(self, key, flags=None):
+        '''Handle key(down->up) event.'''
+        print 'on_key', key
 
     def dump(self, filepath=None):
-        """Generate python scripts."""
+        '''Generate python scripts.'''
         filepath = os.path.join(self.capture_tmpdir, 'steps.py')
         with open(filepath, 'w') as f:
             with self.steps_lock:
                 f.write('\n'.join(self.steps))
 
     def async_capture(self):
-        """Keep capturing device screen. Should run in background
-        as a thread."""
+        '''Keep capturing device screen. Should run in background
+        as a thread.'''
         while True:
             self.capture_lock.acquire()
             try:

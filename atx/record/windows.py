@@ -5,8 +5,7 @@ import win32con
 import win32gui
 import win32process
 import pywintypes
-import pyHook
-from pyHook import HookConstants
+from pyHook import HookManager, HookConstants
 
 from atx.record.base import BaseRecorder
 
@@ -21,7 +20,7 @@ class WindowsRecorder(BaseRecorder):
         self.watched_hwnds = set()
         super(WindowsRecorder, self).__init__(device)
         self.kbflag = 0
-        self.hm = pyHook.HookManager()
+        self.hm = HookManager()
         self.hm.MouseAllButtons = self._hook_on_mouse
         self.hm.KeyAll = self._hook_on_keyboard
 
@@ -51,20 +50,13 @@ class WindowsRecorder(BaseRecorder):
         self.device = None
         self.watched_hwnds = set()
 
-    def run(self):
+    def hook(self):
         self.hm.HookMouse()
         self.hm.HookKeyboard()
-        with self.capture_lock:
-            self.running = True
 
-    def stop(self):
-        with self.capture_lock:
-            self.running = False
+    def unhook(self):
         self.hm.UnhookMouse()
         self.hm.UnhookKeyboard()
-
-        # for test, dump steps when stop
-        self.dump()
 
     def _hook_on_mouse(self, event):
         if self.device is None:
@@ -73,10 +65,10 @@ class WindowsRecorder(BaseRecorder):
             return True
         if event.Message == HookConstants.WM_LBUTTONUP:
             x, y = self.device.norm_position(event.Position)
-            # ignore the touches outside the rect if the window has a frame.
+            # ignore the clicks outside the rect if the window has a frame.
             if x < 0 or y < 0:
                 return True
-            self.on_touch((x, y))
+            self.on_click((x, y))
 
         return True
 
