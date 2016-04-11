@@ -14,8 +14,10 @@ import subprocess
 import time
 import tempfile
 import warnings
+import functools
 import logging
 import uuid
+import inspect
 import xml.dom.minidom
 
 import cv2
@@ -273,13 +275,29 @@ class Watcher(object):
         sys.stdout.write('\n')
 
 
+HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs'])
+
+def hook_wrap(event_type):
+    def wrap(fn):
+        @functools.wraps(fn)
+        def _inner(*args, **kwargs):
+            func_args = inspect.getcallargs(fn, *args, **kwargs)
+            self = func_args.get('self')
+            if self and hasattr(self, '_listeners'):
+                for (f, event_flag) in self._listeners:
+                    if event_flag & event_type:
+                        f(HookEvent(event_flag, args[1:], kwargs)) # remove self from args
+            return fn(*args, **kwargs)
+        return _inner
+    return wrap
+
 class DeviceMixin(object):
     def __init__(self):
         self.image_match_method = consts.IMAGE_MATCH_METHOD_TMPL
         self.image_match_threshold = 0.8
         self._resolution = None
         self._bounds = None
-        self._event_handlers = []
+        self._listeners = []
         self.image_path = ['.']
 
     @property
@@ -474,10 +492,10 @@ class DeviceMixin(object):
         Returns:
             None
         """
-        self._event_handlers.append((fn, event_flags))
+        self._listeners.append((fn, event_flags))
 
     def _trigger_event(self, event_flag, event):
-        for (fn, flag) in self._event_handlers:
+        for (fn, flag) in self._listeners:
             if flag & event_flag:
                 fn(event)
 

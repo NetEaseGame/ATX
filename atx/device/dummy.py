@@ -6,9 +6,11 @@ from __future__ import absolute_import
 
 import os
 
-from atx.device.device_mixin import DeviceMixin
-from atx.device import Display
 from PIL import Image
+
+from atx.device.device_mixin import DeviceMixin, hook_wrap
+from atx.device import Display
+from atx import consts
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +21,7 @@ class DummyDevice(DeviceMixin):
         self._display = Display(1280, 720)
         self._rotation = 1
 
+    @hook_wrap(consts.EVENT_SCREENSHOT)
     def screenshot(self, filename=None):
         """ Take a screenshot """
         # screen size: 1280x720
