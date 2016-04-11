@@ -60,7 +60,7 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 	brew install python pillow opencv
 	```
 
-2. 安装airtest
+2. 安装ATX
 
 	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
 
