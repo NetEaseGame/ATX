@@ -48,6 +48,13 @@ UINode = collections.namedtuple('UINode', [
     'package'])
 
 
+def getenv(name, default_value=None, type=str):
+    try:
+        return type(os.getenv(name)) or default_value
+    except:
+        return default_value
+
+
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
         """Initial AndroidDevice
@@ -60,8 +67,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Raises:
             EnvironmentError
         """
-        self._host = kwargs.get('host', '127.0.0.1')
-        self._port = kwargs.get('port', 5037)
+        serialno = serialno or getenv('ATX_ADB_SERIALNO') or None
+        self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
+        self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
         self._adb = adb.Adb(serialno, self._host, self._port)
         serialno = self._adb.device_serial()
 

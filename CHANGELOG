@@ -1,12 +1,62 @@
 CHANGES
 =======
 
+* add ext
+* add android recorder structure
+* modify name
+* merge from ssx
+* split record to sub package
+* add new favicon, close #7
+* finish part of add_listener, add cloudtest log support
+* merge sxx
+* add refresh button to web ide
+* merge from ssx
+* merge from ssx
+* add recorder runner
+* add strutils.py in order to fix zh-simple encoding
+* use self defined logging module instead of standlib logging
+* merge code in company
+* add save screen button
+* prepare two position for console
+* add how to design images and code storage to todo.md
+* support stop run in browser
+* add mouse move detect, change save debug code to no debug code
+* change to python auto close blockly
+* use canvas to show screen
+* rename AirtestX to AuTo eXpress
+* rename project
+* generate py scripts
+* handle touch event, find clicked object
+* windows add screen_cv2 & make window foreground before capturing
+* windows capture entire screen to avoid failing on opengl programs
+* redirect output to webide
+* use images before & after the click to find out the step
+* handle touch input in background
+* merge sxx
+* recorder capture image in background
+* add screen in webide
+* record api change & merge sxx
+* use ctypes instead of win32ui for screenshot
+* add debug step by step support
+* add simple python intepreter: python -matx run <filename>
+* add websocket for atx webide
+* add image_search variable and properties for android
+* fix win32ui+tk.mainloop hangup
+* add record command
+* add record command
+* add get properties for android
+* merge ssx
+
 1.0.7
 -----
 
+* add it inorder to pass
+* add WatchItem
+* update changelog
 * resolution add assert check
 * update documentation
 * add update generate
+* record test
 * support save workspace
 * add atx auto code converter
 * update args ... match sphinx

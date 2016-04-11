@@ -140,6 +140,25 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d = atx.connect()
 	```
 
+	通过设置相应的环境变量也可以设置连接参数，用来方便持续集成
+
+	目前支持4个环境变量
+
+	```sh
+	ATX_ADB_SERIALNO
+	ATX_ADB_HOST
+	ATX_ADB_PORT
+	ATX_PLATFORM  默认是 android
+	```
+
+	```sh
+	$ python -c 'import atx; atx.connect('EFF153')
+
+	# 等价写法
+	$ export ATX_ADB_SERIALNO="EFF153"
+	$ python -c 'import atx; atx.connect()'
+	```
+
 * App的起停
 
 	```py
@@ -330,8 +349,6 @@ click(20， 30）
 ```
 
 ### 其他接口
-
-
 
 
 ## 批量运行脚本

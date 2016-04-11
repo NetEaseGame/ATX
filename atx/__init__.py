@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import os
 import sys
 import signal
 
@@ -31,7 +32,7 @@ def connect(*args, **kwargs):
     Raises:
         SyntaxError, EnvironmentError
     """
-    platform = kwargs.pop('platform', 'android')
+    platform = kwargs.pop('platform', os.getenv('ATX_PLATFORM') or 'android')
 
     cls = None
     if platform == 'android':
