@@ -34,8 +34,10 @@ def get_game_win():
     win = WindowsDevice(window_name=window_name)
     return win
 
+get_device = get_game_win
+
 def main():
-    win = get_game_win()
+    win = get_device()
     print "window handle", hex(win.hwnd)
     print "window size %dx%d" % win.size
 
