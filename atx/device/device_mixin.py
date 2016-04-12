@@ -183,7 +183,6 @@ class Watcher(object):
             self._stored_selector = self._dev(text=text)
         elif pattern is not None:
             selector = self._dev.pattern_open(pattern)
-            print 1111111, selector
             if selector is None:
                 raise IOError("Not found pattern: {}".format(pattern))
             self._stored_selector = selector

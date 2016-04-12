@@ -49,10 +49,8 @@ UINode = collections.namedtuple('UINode', [
 
 
 def getenv(name, default_value=None, type=str):
-    try:
-        return type(os.getenv(name)) or default_value
-    except:
-        return default_value
+    value = os.getenv(name)
+    return type(value) if value else default_value
 
 
 class AndroidDevice(DeviceMixin, UiaDevice):
@@ -67,7 +65,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Raises:
             EnvironmentError
         """
-        serialno = serialno or getenv('ATX_ADB_SERIALNO') or None
+        serialno = serialno or getenv('ATX_ADB_SERIALNO', None)
         self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
         self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
         self._adb = adb.Adb(serialno, self._host, self._port)
@@ -103,8 +101,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         port = self._adb.forward(device_port, local_port)
         return (self._host, port)
 
+    @property
+    def current_package_name(self):
+        return self.info['currentPackageName']
+
     def is_app_alive(self, package_name):
-        """ Check if app in running in foreground """
+        """ Deprecated: use current_package_name instaed.
+        Check if app in running in foreground """
         return self.info['currentPackageName'] == package_name
 
     def sleep(self, secs=None):

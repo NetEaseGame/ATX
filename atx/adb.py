@@ -73,8 +73,8 @@ class Adb(object):
         return subprocess.Popen(cmd_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def device_serial(self):
+        devices = self.devices()
         if not self.default_serial:
-            devices = self.devices()
             if devices:
                 if len(devices) is 1:
                     self.default_serial = list(devices.keys())[0]
@@ -82,6 +82,13 @@ class Adb(object):
                     raise EnvironmentError("Multiple devices attached but default android serial not set.")
             else:
                 raise EnvironmentError("Device not attached.")
+        else:
+            if self.default_serial not in devices:
+                raise EnvironmentError("Device(%s) not attached." % self.default_serial)
+
+        if devices[self.default_serial] != 'device':
+            raise EnvironmentError("Device(%s) is not ready. status(%s)." % 
+                (self.default_serial, devices[self.default_serial]))
         return self.default_serial
 
     def devices(self):
