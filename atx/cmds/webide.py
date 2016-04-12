@@ -53,21 +53,6 @@ def get_valid_port():
 
     raise SystemError("Can not find a unused port, amazing!")
 
-class AtxLogHandler(logging.Handler):
-    def emit(self, record):
-        log_entry = self.format(record)
-        print('RR:', log_entry)
-
-# def _init():
-#     hdlr = AtxLogHandler()
-#     hdlr.setLevel(logging.DEBUG)
-#     fmt = "%(asctime)s %(levelname)-8.8s [%(name)s:%(lineno)4s] %(message)s"
-#     hdlr.setFormatter(logging.Formatter(fmt))
-#     log = logging.getLogger('atx')
-#     log.addHandler(hdlr)
-#     log.setLevel(logging.DEBUG)
-
-# _init()
 
 class FakeStdout(object):
     def __init__(self, fn=sys.stdout.write):
@@ -77,7 +62,22 @@ class FakeStdout(object):
         self._fn(s)
 
     def flush(self):
-        self._fn('flush\n')
+        pass
+
+
+class ImageHandler(tornado.web.RequestHandler):
+    def get(self):
+        imgs = base.list_images(path=IMAGE_PATH)
+        images = []
+        for name in imgs:
+            realpath = name.replace('\\', '/') # fix for windows
+            name = os.path.basename(name).split('@')[0]
+            images.append([name, realpath])
+        self.write({
+            'images': images, 
+            'baseURL': self.request.protocol + '://' + self.request.host+'/static_imgs/'
+        })
+
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -102,22 +102,25 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         if not self._run:
             raise RuntimeError("stopped")
         else:
-            time.sleep(1.0)
+            time.sleep(.1)
 
     def write_console(self, s):
         self.write_message({'type': 'console', 'output': s})
 
     def run_blockly(self, code):
-        # content = ''
         filename = '__tmp.py'
         fake_sysout = FakeStdout(self.write_console)
 
         __sysout = sys.stdout
-        sys.stdout = fake_sysout
-        self.write_message({'type': 'console', 'output': '# start running\n'})
+        sys.stdout = fake_sysout # TODOs
+        self.write_message({'type': 'console', 'output': '# '+time.strftime('%H:%M:%S') + ' start running\n'})
         try:
             # python code always UTF-8
-            exec code.encode('utf-8') in {
+            code = code.encode('utf-8')
+            # hot patch
+            code = code.replace('atx.click_image', 'd.click_image')
+
+            exec code in {
                 'highlight_block': self._highlight_block,
                 '__name__': '__main__',
                 '__file__': filename}
@@ -153,10 +156,12 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
             imgs = [dict(
                 path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
             self.write_message({'type': 'image_list', 'data': list(imgs)})
+        elif command == 'stop':
+            self._run = False
+            self.write_message({'type': 'run', 'notify': '停止中'})
         elif command == 'run':
             if self._run:
-                self._run = False
-                self.write_message({'type': 'run', 'notify': '停止中'})
+                self.write_message({'type': 'run', 'notify': '运行中'})
                 return
             self._run = True
             res = yield self.background_task(message.get('code'))
@@ -186,7 +191,7 @@ class WorkspaceHandler(tornado.web.RequestHandler):
         write_file('blockly.py', python_text)
 
 
-class ImageHandler(tornado.web.RequestHandler):
+class ScreenshotHandler(tornado.web.RequestHandler):
     def get(self):
         d = atx.connect(**atx_settings)
         d.screenshot('_screen.png')
@@ -219,8 +224,9 @@ def make_app(settings={}):
     application = tornado.web.Application([
         (r"/", MainHandler),
         (r"/workspace", WorkspaceHandler),
-        (r"/images/?", ImageHandler),
+        (r"/images/screenshot", ScreenshotHandler),
         (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
+        (r'/api/images', ImageHandler),
         (r'/ws', EchoWebSocket),
     ], **settings)
     return application

@@ -28,6 +28,7 @@ from atx import base
 from atx import imutils
 from atx import adb
 from atx.device import Bounds
+from atx import logutils
 from atx.device.device_mixin import DeviceMixin, hook_wrap
 
 
@@ -46,6 +47,8 @@ UINode = collections.namedtuple('UINode', [
     'index', 'resource_id',
     'text', 'content_desc',
     'package'])
+
+log = logutils.getLogger(__name__)
 
 
 def getenv(name, default_value=None, type=str):

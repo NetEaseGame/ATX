@@ -557,7 +557,7 @@ class DeviceMixin(object):
                 sys.stdout.flush()
                 continue
             if not point.matched:
-                log.debug('Ignore confidence: %s', point.confidence)
+                log.info('Ignore confidence: %s', point.confidence)
                 continue
             log.debug('confidence: %s', point.confidence)
             self.touch(*point.pos)
