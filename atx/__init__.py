@@ -6,6 +6,7 @@
 
 from __future__ import absolute_import
 
+import os
 import sys
 import signal
 
@@ -31,10 +32,11 @@ def connect(*args, **kwargs):
     Raises:
         SyntaxError, EnvironmentError
     """
-    platform = kwargs.pop('platform', 'android')
+    platform = kwargs.pop('platform', os.getenv('ATX_PLATFORM') or 'android')
 
     cls = None
     if platform == 'android':
+        os.environ['JSONRPC_TIMEOUT'] = "10" # default is 90s which is too long.
         devcls = __import__('atx.device.android')
         cls = devcls.device.android.AndroidDevice
     elif platform == 'windows':
@@ -46,7 +48,8 @@ def connect(*args, **kwargs):
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
-    return cls(*args, **kwargs)
+    c = cls(*args, **kwargs)
+    return c
 
 
 # def _sig_handler(signum, frame):

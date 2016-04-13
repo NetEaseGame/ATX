@@ -14,7 +14,18 @@ $(function(){
     'running': '<span class="glyphicon glyphicon-stop"></span> 停止</a>',
   }
 
+  // Initial global value for blockly images
+  window.blocklyBaseURL = 'http://127.0.0.1:10010/static_imgs/';
+  window.blocklyImageList = [['haha.png', 'screenshot-0.0.6.png']]
+
+  $.getJSON('/api/images', function(res){
+    window.blocklyImageList = res.images;
+    window.blocklyBaseURL = res.baseURL;
+  })
+  
+
   function changeRunningStatus(status, message){
+    M.runStatus = status;
     var $play = $('a[href=#play]');
     if (message) {
       $play.notify(message, {className: 'success', position: 'top'});
@@ -41,12 +52,15 @@ $(function(){
         switch(data.type){
         case 'image_list':
           M.images = data.data;
-          $('#btn-imgrefresh').notify(
+          $('#btn-image-refresh').notify(
             '已刷新',
             {className: 'success', position: 'right'}
           );
           break;
         case 'run':
+          changeRunningStatus(data.status, data.notify);
+          break;
+        case 'stop':
           changeRunningStatus(data.status, data.notify);
           break;
         case 'traceback':
@@ -57,11 +71,10 @@ $(function(){
           workspace.highlightBlock(id)
           break;
         case 'console':
-          // var text = $('pre.console').text();
-          // var newText = text + data.output;
           var $console = $('pre.console');
-          $console.text($console.text() + data.output);
-          $console.scrollTop($console.height())
+          var text = $console.html();
+          $console.text($console.html() + data.output);
+          $console.scrollTop($console.prop('scrollHeight'))
         default:
           console.log("No match data type: ", data.type)
         }
@@ -175,20 +188,19 @@ $(function(){
 
   $('a[href=#play]').click(function(event){
     event.preventDefault();
+    console.log("Click play")
     M.workspace.traceOn(true); // enable step run
     var g = generateCode(workspace);
-    sendWebsocket({command: 'run', code: g.pythonDebugText})
-    // saveWorkspace(function(g){
-      // sendWebsocket({command: 'run', code: g.pythonDebugText})
-    // });
+    var isPlay = M.runStatus == 'running';
+    sendWebsocket({command: (isPlay ? 'stop' : 'run'), code: g.pythonDebugText})
   })
 
-  $('#btn-imgrefresh').click(function(event){
+  $('#btn-image-refresh').click(function(event){
     event.preventDefault();
     sendWebsocket({command: 'refresh'})
   })
 
-  $('.btn-clearconsole').click(function(){
+  $('.btn-clear-console').click(function(){
     $('pre.console').text('');
   })
 
@@ -205,7 +217,7 @@ $(function(){
     }
     filename = filename + '.png';
     $.ajax({
-      url: '/images',
+      url: '/images/screenshot',
       method: 'POST',
       data: {
         raw_image: M.canvas.toDataURL(), // FIXME(ssx): use server image is just ok
@@ -223,7 +235,7 @@ $(function(){
   })
 
   $('#btn-refresh-screen').click(function(){
-    M.screenURL = '/images?v=t' + new Date().getTime();
+    M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
     var $this = $(this);
     $this.notify('Refreshing', {className: 'info', position: 'top'})
     $this.prop('disabled', true);
@@ -273,14 +285,6 @@ $(function(){
     imageObj.src = url;
   }
 
-  function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-      x: Math.floor((evt.clientX - rect.left) / M.screenRatio),
-      y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
-    };
-  }
-
   function writeMessage(canvas, message) {
     var context = canvas.getContext('2d');
     context.font = '18pt Calibri';
@@ -304,9 +308,17 @@ $(function(){
 
   M.canvas = document.getElementById('canvas');
   M.screenURL = 'http://www.html5canvastutorials.com/demos/assets/darth-vader.jpg';
-  M.screenURL = '/images?v=t0';
+  M.screenURL = '/images/screenshot?v=t0';
   window.addEventListener('resize', onResize, false);
   onResize();
+
+  function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor((evt.clientX - rect.left) / M.screenRatio),
+      y: Math.floor((evt.clientY - rect.top) / M.screenRatio),
+    };
+  }
 
   var canvas = document.getElementById('canvas');
   canvas.addEventListener('mousemove', function(evt) {
@@ -322,6 +334,3 @@ $(function(){
     // onResize(); //Blockly.fireUiEvent(window, 'resize');
   // });
 })
-
-// var workspace = Blockly.inject('blocklyDiv',
-//       {toolbox: document.getElementById('toolbox')});

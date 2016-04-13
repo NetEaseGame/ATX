@@ -86,7 +86,7 @@
           </div>
           <div id="console-left" style='display: ;'>
             <h4>Console
-              <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
+              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
@@ -108,7 +108,7 @@
           </div>
           <div id="console-right" style='display: none;'>
             <h4>Console
-              <button type="button" class="btn btn-default btn-xs btn-clearconsole">Clear</button>
+              <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
@@ -139,6 +139,29 @@
             </block>
           </value>
         </block>
+        <block type="atx_click_image">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_file">
+            </block>
+          </value>
+        </block>
+        <block type="atx_click_image">
+          <value name="ATX_PATTERN">
+            <block type="atx_image_pattern">
+              <value name="FILENAME">
+                <block type="atx_image_file">
+                </block>
+              </value>
+              <value name="THRESHOLD">
+                <block type="math_number">
+                  <field name="NUM">0.8</field>
+                </block>
+              </value>
+            </block>
+          </value>
+        </block>
+        <block type="atx_image_file">
+        </block>
       </category>
       <category name="逻辑" colour="200">
         <block type="controls_if"></block>
@@ -157,6 +180,11 @@
               <field name="TEXT">abc</field>
             </shadow>
           </value>
+        </block>
+      </category>
+      <category name="扩展" colour="200">
+        <block type="text">
+          <field name="TEXT">ex.server_call(...) ex.login</field>
         </block>
       </category>
     </xml>

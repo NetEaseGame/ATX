@@ -28,6 +28,7 @@ from atx import base
 from atx import imutils
 from atx import adb
 from atx.device import Bounds
+from atx import logutils
 from atx.device.device_mixin import DeviceMixin, hook_wrap
 
 
@@ -47,6 +48,13 @@ UINode = collections.namedtuple('UINode', [
     'text', 'content_desc',
     'package'])
 
+log = logutils.getLogger(__name__)
+
+
+def getenv(name, default_value=None, type=str):
+    value = os.getenv(name)
+    return type(value) if value else default_value
+
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -60,8 +68,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Raises:
             EnvironmentError
         """
-        self._host = kwargs.get('host', '127.0.0.1')
-        self._port = kwargs.get('port', 5037)
+        serialno = serialno or getenv('ATX_ADB_SERIALNO', None)
+        self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
+        self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
         self._adb = adb.Adb(serialno, self._host, self._port)
         serialno = self._adb.device_serial()
 
@@ -95,8 +104,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         port = self._adb.forward(device_port, local_port)
         return (self._host, port)
 
+    @property
+    def current_package_name(self):
+        return self.info['currentPackageName']
+
     def is_app_alive(self, package_name):
-        """ Check if app in running in foreground """
+        """ Deprecated: use current_package_name instaed.
+        Check if app in running in foreground """
         return self.info['currentPackageName'] == package_name
 
     def sleep(self, secs=None):

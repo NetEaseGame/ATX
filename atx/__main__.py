@@ -8,7 +8,7 @@ import argparse
 import functools
 import json
 
-from atx.cmds import tkgui, minicap, tcpproxy, webide, run
+from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper
 import atx.androaxml as apkparse
 
 def _gui(args):
@@ -35,6 +35,10 @@ def _apkparse(args):
     }, indent=4)
 
 
+def _iosdeveloper(args):
+    iosdeveloper.main(args)
+
+
 def _run(args):
     run.main(args.filename)
 
@@ -42,7 +46,7 @@ def _run(args):
 def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    ap.add_argument("-s", "--serial", required=False, help="Android SerialNo")
+    ap.add_argument("-s", "--serial", "--udid", required=False, help="Android serial")
     ap.add_argument("-H", "--host", required=False, default='127.0.0.1', help="Adb host")
     ap.add_argument("-P", "--port", required=False, type=int, default=5037, help="Adb port")
 
@@ -60,18 +64,22 @@ def main():
     parser_tcpproxy.add_argument('-f', '--forward', default=26944, type=int, help='Forwarded port')
     parser_tcpproxy.set_defaults(func=_tcpproxy)
 
-    parser_webide = add_parser('web')
-    parser_webide.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
-    parser_webide.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
-    parser_webide.set_defaults(func=_webide)
+    parser_web = add_parser('web')
+    parser_web.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
+    parser_web.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
+    parser_web.set_defaults(func=_webide)
     
-    parser_webide = add_parser('apkparse')
-    parser_webide.add_argument('filename', help='Apk filename')
-    parser_webide.set_defaults(func=_apkparse)
+    parser_apk = add_parser('apkparse')
+    parser_apk.add_argument('filename', help='Apk filename')
+    parser_apk.set_defaults(func=_apkparse)
 
-    parser_webide = add_parser('run')
-    parser_webide.add_argument('filename', help='Python script filename')
-    parser_webide.set_defaults(func=_run)
+    parser_run = add_parser('run')
+    parser_run.add_argument('filename', help='Python script filename')
+    parser_run.set_defaults(func=_run)
+
+    parser_ios = add_parser('iosdeveloper')
+    parser_ios.add_argument('-u', '--udid', required=False, help='iOS udid')
+    parser_ios.set_defaults(func=_iosdeveloper)
 
     args = ap.parse_args()
     args.func(args)

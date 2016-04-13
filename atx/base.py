@@ -89,7 +89,7 @@ def list_images(path=['.']):
             continue
         for filename in os.listdir(image_dir):
             bname, ext = os.path.splitext(filename)
-            if ext not in VALID_IMAGE_EXTS:
+            if ext.lower() not in VALID_IMAGE_EXTS:
                 continue
 
             filepath = os.path.join(image_dir, filename)
