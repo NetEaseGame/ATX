@@ -7,7 +7,7 @@ import os
 import subprocess
 import tempfile
 import logging
-import urllib
+import urllib2
 import shutil
 
 
@@ -85,9 +85,18 @@ def device_product_version(udid):
 
 
 def http_download(url, target_path):
-    # not show errors, use urllib2.urlopen instead
-    dest, _ = urllib.urlretrieve(url, target_path)
-    return dest
+    try:
+        resp = urllib2.urlopen(url)
+    except urllib2.URLError, e:
+        if not hasattr(e, 'code'):
+            raise
+        resp = e
+    if resp.code != 200:
+        raise IOError("Request url(%s) expect 200 but got %d" %(url, resp.code))
+
+    with open(target_path, 'wb') as f:
+        shutil.copyfileobj(resp, f)
+    return target_path
 
 
 def download(filename, tmpdir, version, base_url=IMAGE_BASE_URL):
