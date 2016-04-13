@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+* add for remember
+* add click image support, close #10
+* update badge
+
+1.0.8
+-----
+
 * close #11, check adb device status, raise EnvironmentError in atx.connect if something went wrong
 * support connect through env-var, close #11
 * add ext
@@ -48,12 +55,12 @@ CHANGES
 * add record command
 * add get properties for android
 * merge ssx
-* add it inorder to pass
-* add WatchItem
 
 1.0.7
 -----
 
+* add it inorder to pass
+* add WatchItem
 * update changelog
 * resolution add assert check
 * update documentation

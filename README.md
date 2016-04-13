@@ -290,6 +290,48 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# out: HookEvent(flag=8, args=(), kwargs={})
 	```
 
+## 命令行工具
+为了方便测试以及开发，atx封装了很多的命令行工具
+
+如启动gui的命令是 `python -matx gui`, 命令有很多可以通过 `python -matx --help` 查看
+
+1. gui
+
+	简单版的GUI，主要用于截图
+
+2. minicap
+
+	用于安装minicap到手机上
+
+3. tcpproxy
+
+	简单的tcp转发工具，目前用在了模拟器的转发上面，对于海马玩模拟器，使用方法
+
+	* 在一台运行这海马玩的电脑上运行 `python -matx tcpproxy`
+	* 记录下机器的IP地址，比如 10.0.0.1
+	* 在另外一台机器上运行 `adb connect 10.0.0.1` 来远程连接
+
+4. apkparse
+
+	用于解析apk的包名和activity，使用方法
+
+	```
+	$ python -matx apkparse demo.apk
+	{
+    	"main_activity": "com.example.demo.activity.Main",
+    	"package_name": "com.example.demo"
+	}
+	```
+
+5. iosdeveloper (目前仅限网易内部用户使用)
+
+	将iPhone手机设置成开发者模式，(仅在Windows测试过，依赖点东西)
+
+	依赖: iTunes, [iMobileDevice](http://quamotion.mobi/iMobileDevice/Download)
+
+	使用: 苹果手机连接上电脑，然后运行 `python -matx iosdeveloper` 即可
+
+
 ## 配置项
 一般来说用默认的就好了，大部分都不需要改
 
