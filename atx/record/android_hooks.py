@@ -9,14 +9,12 @@ import numpy as np
 import subprocess
 import threading
 import Queue
+import traceback
 
 __all__ = ['AndroidInputHookManager', 'HookManager', 'HookConstants']
 
-SLOT_NUM = 5
-_X, _Y, _VR, _VA, _MJ, _PR, FIELD_NUM = range(7)
-INF = 9999
-
 class HookConstants:
+    # events
     TOUCH_DOWN = 0x01
     TOUCH_UP   = 0x02
     TOUCH_MOVE = 0x03
@@ -35,7 +33,7 @@ class HookConstants:
     KEY_VOLUMEUP_DOWN   = 0x0b
     KEY_VOLUMEUP_UP     = 0x0c
 
-    # gestures, single finger
+    # gestures
     GST_TAP = 0x01
     GST_DOUBLE_TAP = 0x02
     GST_LONG_PRESS = 0x03
@@ -51,6 +49,38 @@ class HookConstants:
     KEY_VOLUMEDOWN = 'volume_down'
     KEY_VOLUMEUP   = 'volume_up'
 
+class Event(object):
+    def __init__(self, time, msg):
+        self.time = time
+        self.msg = msg
+
+class TouchEvent(Event):
+    def __init__(self, time, msg, trackid, x, y, pressure, touch_major):
+        '''msg: touch_down, touch_up, touch_move'''
+        super(TouchEvent, self).__init__(time, msg)
+        self.trackid = trackid
+        self.x = x
+        self.y = y
+        self.pressure = pressure
+        self.touch_major = touch_major
+
+class TouchMoveEvent(TouchEvent):
+    def __init__(self, time, trackid, x, y, pressure, touch_major, distance, direction, speed):
+        super(TouchMoveEvent, self).__init__(time, HookConstants.TOUCH_MOVE, trackid, x, y, pressure, touch_major)
+        self.distance = distance
+        self.direction = direction
+        self.speed = speed
+
+class KeyEvent(Event):
+    def __init__(self, time, msg, key):
+        '''msg: keydown, keyup'''
+        super(KeyEvent, self).__init__(time, msg)
+        self.key = key
+
+SLOT_NUM = 5
+_X, _Y, _VR, _VA, _MJ, _PR, FIELD_NUM = range(7)
+INF = 9999
+
 class InputParser(object):
     _pat = re.compile('\[\s*(?P<time>[0-9.]+)\] (?P<device>/dev/.*): +(?P<type>\w+) +(?P<code>\w+) +(?P<value>\w+)')
     _move_radius = 10
@@ -65,6 +95,7 @@ class InputParser(object):
         # realtime status, minor changes are cumulated
         self._temp_status = np.ones((SLOT_NUM, FIELD_NUM), dtype=int) * (-INF)
         self._temp_status_time = 0
+        self._trackids = [None] * SLOT_NUM
 
         self._touch_batch = []
         self._curr_slot = 0
@@ -89,17 +120,22 @@ class InputParser(object):
             else:
                 print 'unknown syn code', _code
         elif _type == 'EV_KEY':
-            self.emit_key_event((_time, _code, _value))
+            self.emit_key_event(_time, _code, _value)
         elif _type == 'EV_ABS':
             self._touch_batch.append((_time, _device, _type, _code, _value))
         else:
             print 'unknown input event type', _type
 
-    def emit_key_event(self, event):
-        self.queue.put('key event %s' % (event,))
+    def emit_key_event(self, _time, _code, _value):
+        name = '%s_%s' % (_code, _value)
+        msg = getattr(HookConstants, name, None)
+        if msg is None:
+            return
+        event = KeyEvent(_time, msg, _code)
+        self.queue.put(event)
 
-    def emit_touch_events(self, events):
-        self.queue.put('multi touch events %s' % events)
+    def emit_touch_event(self, event):
+        self.queue.put(event)
 
     def _process_touch_batch(self):
         '''a batch syncs in about 0.001 seconds.'''
@@ -112,12 +148,11 @@ class InputParser(object):
         for (_time, _device, _type, _code, _value) in self._touch_batch:
             if _code == 'ABS_MT_TRACKING_ID':
                 if _value == 0xffffffff:
+                    self._trackids[self._curr_slot] = None
                     self._temp_status[self._curr_slot] = -INF
                     changed = True
                 else:
-                    # new touch. there will be POSITION_X(Y) in the batch
-                    # so we handle the changes there.
-                    pass
+                    self._trackids[self._curr_slot] = _value
             elif _code == 'ABS_MT_SLOT':
                 self._curr_slot = _value
             else:
@@ -142,29 +177,31 @@ class InputParser(object):
         # check differences, if position changes are big enough then emit events
         diff = self._temp_status - self._status
         dt = self._temp_status_time - self._status_time
-        events = [None] * SLOT_NUM
-        touchmoves = [None] * SLOT_NUM
+        emitted = False
         for i in range(SLOT_NUM):
+            arr = self._temp_status[i]
+            trackid = self._trackids[i]
             dx, dy = diff[i,_X], diff[i,_Y]
             if dx > INF or dy > INF:
                 # touch begin
-                events[i] = ('touch-down', self._temp_status[i,_X], self._temp_status[i,_Y])
+                event = TouchEvent(_time, HookConstants.TOUCH_DOWN, trackid, arr[_X], arr[_Y], arr[_PR], arr[_MJ])
+                self.emit_touch_event(event)
+                emitted = True
             elif dx < -INF or dy < -INF:
                 # touch end
-                events[i] = ('touch-up', self._status[i,_X], self._status[i,_Y])
+                event = TouchEvent(_time, HookConstants.TOUCH_UP, trackid, arr[_X], arr[_Y], arr[_PR], arr[_MJ])
+                self.emit_touch_event(event)
+                emitted = True
             else:
                 r, a = radang(float(dx), float(dy))
-                v = r / dt
-                touchmoves[i] = (a, r, v, self._temp_status[i,_X], self._temp_status[i,_Y])
                 if r > self._move_radius:
-                    events[i] = 'touch-move'
+                    v = r / dt
+                    event = TouchMoveEvent(_time, trackid, arr[_X], arr[_Y], arr[_PR], arr[_MJ], r, a, v)
+                    self.emit_touch_event(event)
+                    emitted = True
 
-        if not any(events):
+        if not emitted:
             return
-        for i in range(SLOT_NUM):
-            if touchmoves[i] and touchmoves[i][1] > 0:
-                events[i] = 'touch-move %3.f %3.f' % touchmoves[i][:2]
-        self.emit_touch_events(events)
         self._status = self._temp_status.copy()
         self._status_time = self._temp_status_time
 
@@ -188,10 +225,21 @@ def radang(x, y):
 class GestureRecognizer(object):
     def __init__(self, queue):
         self.queue = queue
+        self.dispatch_map = {}
         self.running = False
 
-    def register(self, func):
-        pass
+    def register(self, keycode, func):
+        self.dispatch_map[keycode] = func
+
+    def handle_event(self, event):
+        print 'handle event', event
+        func = self.dispatch_map.get(event.msg)
+        if not func:
+            return
+        try:
+            func(event)
+        except:
+            traceback.print_exc()
 
     def start(self):
         if self.running:
@@ -210,8 +258,8 @@ class GestureRecognizer(object):
         while True:
             try:
                 time.sleep(0.001)
-                evt = self.queue.get_nowait()
-                print 222, repr(evt)
+                event = self.queue.get_nowait()
+                self.handle_event(event)
             except Queue.Empty:
                 if not self.running:
                     break
@@ -224,7 +272,8 @@ class GestureRecognizer(object):
                     wait_begin_time = now
                 continue
             except Exception as e:
-                print 111, e, type(e)
+                traceback.print_exc()
+            
             wait_begin_time = None
             wait_seconds = 0
 
@@ -245,7 +294,7 @@ class AndroidInputHookManager(object):
 
     def register(self, keycode, func):
         '''register hook function'''
-        pass
+        self._processor.register(keycode, func)
 
     def hook(self):
         '''input should be a filelike object.'''
@@ -270,8 +319,8 @@ class AndroidInputHookManager(object):
                 except KeyboardInterrupt:
                     p.kill()
                 except Exception as e:
-                    print type(e), str(e)
                     p.kill()
+                    print type(e), str(e)
 
         t = threading.Thread(target=listen)
         t.setDaemon(True)
