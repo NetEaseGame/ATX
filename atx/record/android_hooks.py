@@ -180,6 +180,7 @@ class InputParser(object):
         emitted = False
         for i in range(SLOT_NUM):
             arr = self._temp_status[i]
+            oldarr = self._status[i]
             trackid = self._trackids[i]
             dx, dy = diff[i,_X], diff[i,_Y]
             if dx > INF or dy > INF:
@@ -189,7 +190,7 @@ class InputParser(object):
                 emitted = True
             elif dx < -INF or dy < -INF:
                 # touch end
-                event = TouchEvent(_time, HookConstants.TOUCH_UP, trackid, arr[_X], arr[_Y], arr[_PR], arr[_MJ])
+                event = TouchEvent(_time, HookConstants.TOUCH_UP, trackid, oldarr[_X], oldarr[_Y], oldarr[_PR], oldarr[_MJ])
                 self.emit_touch_event(event)
                 emitted = True
             else:

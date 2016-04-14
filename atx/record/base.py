@@ -52,11 +52,11 @@ class BaseRecorder(object):
         self.steps_lock = threading.Lock()
         self.step_index = 0
         self.last_step = None
-        self.default_radius = 20
+        self.default_radius = 180
 
         self.look_ahead_num = 3 # diff with later screens to find target object 
-        self.capture_interval = 0.05
-        self.capture_maxnum = 50 # watch out your memory!
+        self.capture_interval = 0.1
+        self.capture_maxnum = 30 # watch out your memory!
         self.capture_lock = threading.Lock()
         self.capture_cache = []
         self.capture_tmpdir = os.path.join(os.getcwd(), 'screenshots', time.strftime("%Y%m%d"))
@@ -141,8 +141,6 @@ class BaseRecorder(object):
         subimg = img0[y0:y1, x0:x1, :]
         filepath = os.path.join(self.capture_tmpdir, "%d-action.png" % idx)
         cv2.imwrite(filepath, subimg)
-        # filepath = os.path.join(self.capture_tmpdir, "%d-1.png" % idx)
-        # cv2.imwrite(filepath, img0)
         # filepath = os.path.join(self.capture_tmpdir, "%d-2.png" % idx)
         # cv2.imwrite(filepath, img1)
 
@@ -164,7 +162,7 @@ class BaseRecorder(object):
                 position = step.args
             else:
                 position = w/2, h/2
-            rect = self.__get_default_rect(step.image, position)
+            rect = self.__get_default_rect((h, w), position)
 
         x0, y0, x1, y1 = rect
         subimg = step.image[y0:y1, x0:x1, :]
