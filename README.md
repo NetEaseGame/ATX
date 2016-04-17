@@ -47,11 +47,11 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 
 	```
 	# For Win32
-	pip install http://goandroid.qiniudn.com/opencv_python-2.4.12-cp27-none-win32.whl
-	pip install http://goandroid.qiniudn.com/numpy-1.10.4.mkl-cp27-none-win32.whl
+	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win32.whl
+	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/numpy-1.10.4.mkl-cp27-none-win32.whl
 	# For AMD64
-	pip install http://goandroid.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
-	pip install http://goandroid.qiniucdn.com/numpy-1.10.4.mkl-cp27-none-win_amd64.whl
+	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/numpy-1.10.4.mkl-cp27-none-win_amd64.whl
 	```
 
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
