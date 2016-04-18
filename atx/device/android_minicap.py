@@ -28,6 +28,7 @@ class SubAdb(Adb):
     def __init__(self, *args, **kwargs):
         super(SubAdb, self).__init__(*args, **kwargs)
         self.subs = {}
+        self.touchqueue = Queue.Queue()
 
     def start_daemon(self, name, cmds, listener=None):
         if name in self.subs:
@@ -35,12 +36,11 @@ class SubAdb(Adb):
             p.kill()
 
         if listener is None:
-            self.subs[name] = subprocess.Popen(cmds)
-            return
+            p = self.subs[name] = subprocess.Popen(cmds)
+            return p
 
         queue = Queue.Queue()
-        p = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.subs[name] = p
+        p = self.subs[name] = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         
         # pull data from pipe, readline will block in subprocess
         def pull():
@@ -63,7 +63,7 @@ class SubAdb(Adb):
                     time.sleep(0.005)
                     line = queue.get_nowait()
                     listener(line)
-                except Queue.Empty():
+                except Queue.Empty:
                     if p.poll() is not None:
                         break
                     continue
@@ -74,16 +74,18 @@ class SubAdb(Adb):
         t.setDaemon(True)
         t.start()
 
+        return p
+
     def start_minicap_daemon(self, params, name='minicap', port=1313, listener=None):
         if name in self.subs:
             p = self.subs.pop(name)
             p.kill()
-            print 'stop p', p.pid
+            # print 'stop p', p.pid
 
         cmds = 'adb shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P %s -S' % params
         p = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.subs[name] = p
-        print 'start new p', p.pid
+        # print 'start new p', p.pid
         # wait for minicap server to start
         time.sleep(3)
         subprocess.call('adb forward tcp:%s localabstract:minicap' % port)
@@ -91,7 +93,7 @@ class SubAdb(Adb):
         queue = Queue.Queue()
         # pull data from socket
         def pull():
-            print 'start pull', p.pid, p.poll()
+            # print 'start pull', p.pid, p.poll()
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.connect(('127.0.0.1', port))
@@ -137,6 +139,67 @@ class SubAdb(Adb):
         t.setDaemon(True)
         t.start()
 
+    def start_minitouch(self, port=1111):
+        out = subprocess.check_output('adb shell ps -C /data/local/tmp/minitouch').strip().split('\n')
+        if len(out) > 1:
+            p = None
+        else:
+            p = self.start_daemon('minitouch', 'adb shell /data/local/tmp/minitouch')
+            time.sleep(3)
+            if p.poll() is not None:
+                print 'start minitouch failed.'
+                return
+        subprocess.call('adb forward tcp:%s localabstract:minitouch' % port)
+
+        def send():
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.connect(('127.0.0.1', port))
+            while True:
+                try:
+                    time.sleep(0.005)
+                    cmd = self.touchqueue.get_nowait()
+                    if not cmd:
+                        continue
+                    elif cmd[-1] != '\n':
+                        cmd += '\n'
+                    s.send(cmd)
+                except Queue.Empty:
+                    if p is not None and p.poll() is not None:
+                        print 'down'
+                        break
+                    continue
+                except:
+                    traceback.print_exc()
+            s.close()
+            subprocess.call('adb forward --remove tcp:%s' % port)
+            if p is not None:
+                p.kill()
+
+        t = threading.Thread(target=send)
+        t.setDaemon(True)
+        t.start()
+
+    def touch(self, x, y):
+        cmd = 'd 0 %d %d 30\nc\nu 0\nc\n' % (int(x), int(y))
+        self.touchqueue.put(cmd)
+
+    def swipe(self, x1, y1, x2, y2, steps=10):
+        x1, y1, x2, y2 = map(int, (x1, y1, x2, y2))
+        dx = (x2-x1)/steps
+        dy = (y2-y1)/steps
+        send = self.touchqueue.put
+        send('d 0 %d %d 30\nc\n' % (x1, y1))
+        for i in range(steps-1):
+            x, y = x1+(i+1)*dx, y1+(i+1)*dy
+            send('m 0 %d %d 30\nc\n' % (x, y))
+        send('u 0 %d %d 30\nc\nu 0\nc\n' % (x2, y2))
+
+    def keyevent(self, key):
+        subprocess.check_call('adb shell input keyevent %s' % key)
+
+    def home(self):
+        self.keyevent('KEYCODE_HOME')
 
     def check_output(self, *args):
         cmds = self._assemble(*args)
