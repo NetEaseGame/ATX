@@ -8,7 +8,7 @@ import argparse
 import functools
 import json
 
-from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper
+from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper, record
 import atx.androaxml as apkparse
 
 def _gui(args):
@@ -38,6 +38,8 @@ def _apkparse(args):
 def _iosdeveloper(args):
     iosdeveloper.main(args)
 
+def _record(args):
+    record.main()
 
 def _run(args):
     run.main(args.filename)
@@ -80,6 +82,9 @@ def main():
     parser_ios = add_parser('iosdeveloper')
     parser_ios.add_argument('-u', '--udid', required=False, help='iOS udid')
     parser_ios.set_defaults(func=_iosdeveloper)
+
+    parse_record = add_parser('record')
+    parse_record.set_defaults(func=_record)
 
     args = ap.parse_args()
     args.func(args)

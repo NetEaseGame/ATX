@@ -167,6 +167,9 @@ class RecorderGUI(object):
             self._recorder = record_class(self._device)
         return True
 
-if __name__ == '__main__':
+def main():
     w = RecorderGUI()
-    w.mainloop()
+    w.mainloop()  
+
+if __name__ == '__main__':
+    pass
