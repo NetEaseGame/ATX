@@ -10,6 +10,9 @@ import time
 import logging
 import threading
 
+from atx import strutils
+
+
 random.seed(time.time())
 
 def id_generator(n=5):
@@ -78,8 +81,8 @@ SYSTEM_ENCODING = 'gbk' if os.name == 'nt' else 'utf-8'
 VALID_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.bmp']
 
 
-def auto_decode(s, encoding='utf-8'):
-    return s if isinstance(s, unicode) else unicode(s, encoding)
+# def auto_decode(s, encoding='utf-8'):
+#     return s if isinstance(s, unicode) else unicode(s, encoding)
 
 
 def list_images(path=['.']):
@@ -93,22 +96,67 @@ def list_images(path=['.']):
                 continue
 
             filepath = os.path.join(image_dir, filename)
-            yield auto_decode(filepath, SYSTEM_ENCODING)
+            yield strutils.decode(filepath)
+
+
+def list_all_image(path, valid_exts=VALID_IMAGE_EXTS):
+    """List all images under path
+
+    @return unicode list
+    """
+    for filename in os.listdir(path):
+        bname, ext = os.path.splitext(filename)
+        if ext.lower() not in VALID_IMAGE_EXTS:
+            continue
+        filepath = os.path.join(path, filename)
+        yield strutils.decode(filepath)
+
+
+def image_name_match(name, target):
+    if name == target:
+        return True
+
+    bn = os.path.normpath(name)
+    bt = os.path.basename(target)
+
+    if bn == bt:
+        return True
+
+    bn, ext = os.path.splitext(bn)
+    if ext != '':
+        return False
+
+    for ext in VALID_IMAGE_EXTS:
+        if bn+ext == bt or bn+ext.upper() == bt:
+            return True
+
+    if bt.find('@') != -1:
+        if bn == bt[:bt.find('@')]:
+            return True
+    return False
 
 
 def search_image(name=None, path=['.']):
     """
     look for the image real path, if name is None, then return all images under path.
+
+    @return system encoded path string
     FIXME(ssx): this code is just looking wired.
     """
-    name = auto_decode(name)
+    name = strutils.decode(name)
 
     for image_dir in path:
         if not os.path.isdir(image_dir):
             continue
-        image_path = os.path.join(auto_decode(image_dir), name)
+        image_dir = strutils.decode(image_dir)
+        image_path = os.path.join(image_dir, name)
         if os.path.isfile(image_path):
-            return image_path.encode(SYSTEM_ENCODING)
+            return strutils.encode(image_path)
+
+        for image_path in list_all_image(image_dir):
+            if not image_name_match(name, image_path):
+                continue
+            return strutils.encode(image_path)
     return None
 
 
