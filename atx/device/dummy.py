@@ -20,6 +20,7 @@ class DummyDevice(DeviceMixin):
         DeviceMixin.__init__(self)
         self._display = Display(1280, 720)
         self._rotation = 1
+        self.last_click = None
 
     @hook_wrap(consts.EVENT_SCREENSHOT)
     def screenshot(self, filename=None):
@@ -38,3 +39,6 @@ class DummyDevice(DeviceMixin):
     @property
     def rotation(self):
         return self._rotation
+
+    def click(self, x, y):
+        self.last_click = (x, y)

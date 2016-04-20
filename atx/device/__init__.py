@@ -48,11 +48,10 @@ class Pattern(object):
             resolution: image origin screen resolution
             rsl: alias of resolution
         """
-        self._name = None
+        self._name = image if isinstance(image, basestring) else 'unknown'
         self._image = imutils.open(image)
         self._offset = offset
         self._resolution = rsl or resolution
-        
         if isinstance(image, basestring):
             self._name = image
 

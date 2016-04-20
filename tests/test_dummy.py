@@ -61,3 +61,20 @@ def test_assert_exists():
 
     with pytest.raises(atx.AssertExistsError):
         d.assert_exists('media/haima.png', timeout=0.1)
+
+def test_click():
+    d.click(50, 70)
+    assert d.last_click == (50, 70)
+
+def test_click_image():
+    """ require aircv installed """
+    d.click_image('media/system-app.png')
+    assert d.last_click == (139, 299)
+
+def test_click_image_offset1():
+    d.click_image(atx.Pattern('media/system-app.png'))
+    assert d.last_click == (139, 299)
+
+def test_click_image_offset2():
+    d.click_image(atx.Pattern('media/system-app.png', offset=(10, 10)))
+    assert d.last_click == (149, 309)    

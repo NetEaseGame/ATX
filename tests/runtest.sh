@@ -9,4 +9,4 @@ fi
 
 
 cd $(dirname $0)
-py.test -v test_dummy.py "$@"
+py.test -v test_dummy.py test_base.py "$@"

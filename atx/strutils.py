@@ -20,7 +20,7 @@ def decode(s, encodings=['utf-8', 'gbk']):
             return unicode(s, enc)
         except:
             pass
-    raise UnicodeDecodeError("string: %s not in encodings: %s" % (repr(s), encodings))
+    raise UnicodeDecodeError(','.join(encodings), "", 0, len(s or ''), "string: '%s'" % repr(s))
 
 
 if __name__ == '__main__':
