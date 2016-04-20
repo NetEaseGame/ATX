@@ -546,12 +546,11 @@ class DeviceMixin(object):
             ImageNotFoundError: An error occured when img not found in current screen.
         """
         pattern = self.pattern_open(pattern)
-        search_img = pattern.image
         log.info('click image: %s', pattern)
         start_time = time.time()
         found = False
         while time.time() - start_time < timeout:
-            point = self.match(search_img)
+            point = self.match(pattern)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
@@ -571,7 +570,7 @@ class DeviceMixin(object):
             start_time = time.time()
             while time.time()-start_time < timeout:
                 # screen_img = self.screenshot()
-                ret = self.match(search_img)
+                ret = self.match(pattern)
                 if ret is None:
                     break
         if not found:
