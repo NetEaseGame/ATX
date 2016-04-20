@@ -5,6 +5,7 @@ import sys
 import win32api
 import win32con
 import win32gui
+import traceback
 import Tkinter as tk
 
 from atx.device.android import AndroidDevice
@@ -81,7 +82,7 @@ class SystemTray(object):
         try:
             func()
         except Exception as e:
-            print str(e)
+            traceback.print_exc()
         return True
 
     def on_tray_notify(self, hwnd, msg, wp, lp):
@@ -113,13 +114,14 @@ class RecorderGUI(object):
         def calllater():
             icon_path = os.path.join(__dir__, 'static', 'recorder.ico')
             commands  = [
+                ('Choose Device', self.choose_device),
                 ("Start Record", self.start_record),
                 ("Stop Record", self.stop_record),
             ]
             tray = SystemTray(root.winfo_id(), "recorder", commands, icon_path)
             tray.balloon('hello')
 
-        root.after(2000, calllater)
+        root.after(1000, calllater)
 
         # no window for now.
         root.withdraw()
@@ -138,6 +140,9 @@ class RecorderGUI(object):
             self._root.mainloop()
         except KeyboardInterrupt:
             self.destroy()
+
+    def choose_device(self):
+        pass
 
     def start_record(self):
         if not self.check_recorder():
@@ -172,4 +177,4 @@ def main():
     w.mainloop()  
 
 if __name__ == '__main__':
-    pass
+    main()
