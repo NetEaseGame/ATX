@@ -15,16 +15,12 @@ import subprocess
 import tempfile
 import urllib
 import functools
-import logging
 
+from atx import logutils
+from atx.cmds.cmdutils import http_download
 
-logger = logging.getLogger('minicap')
-ch = logging.StreamHandler()
-fmt = "%(asctime)s [%(name)s:%(lineno)4s] %(message)s"
-formatter = logging.Formatter(fmt)
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-logger.setLevel(logging.DEBUG)
+logger = logutils.getLogger('minicap')
+
 
 def log(*args):
     logger.info(*args)
@@ -72,14 +68,14 @@ def install(serialno=None, host=None, port=None):
         logger.info("Downloading minicap.so ....")
         url = "https://github.com/openstf/stf/raw/master/vendor/minicap/shared/android-"+sdk+"/"+abi+"/minicap.so"
         target_path = os.path.join(tmpdir, 'minicap.so')
-        download(url, target_path)
+        http_download(url, target_path)
         logger.info("Push data to device ....")
         adb('push', target_path, '/data/local/tmp')
         
         logger.info("Downloading minicap ....")
         url = "https://github.com/openstf/stf/raw/master/vendor/minicap/bin/"+abi+"/minicap"
         target_path = os.path.join(tmpdir, 'minicap')
-        download(url, target_path)
+        http_download(url, target_path)
         logger.info("Push data to device ....")
         adb('push', target_path, '/data/local/tmp')
         adb('shell', 'chmod', '0755', '/data/local/tmp/minicap')
@@ -93,10 +89,6 @@ def install(serialno=None, host=None, port=None):
         if tmpdir:
             logger.info("Cleaning temp dir")
             shutil.rmtree(tmpdir)
-
-
-def download(url, target_path):
-    return urllib.urlretrieve(url, target_path)
     
 
 if __name__ == "__main__":

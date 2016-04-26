@@ -10,6 +10,8 @@ import logging
 import urllib2
 import shutil
 
+from atx.cmds.cmdutils import http_download
+
 
 IMAGE_BASE_URL = 'http://gohttp.nie.netease.com/tools-ios/DeveloperImages/'
 logger = logging.getLogger('ios')
@@ -82,21 +84,6 @@ def devices():
 
 def device_product_version(udid):
     return idevice('info', '-u', udid, '-k', 'ProductVersion').strip()
-
-
-def http_download(url, target_path):
-    try:
-        resp = urllib2.urlopen(url)
-    except urllib2.URLError, e:
-        if not hasattr(e, 'code'):
-            raise
-        resp = e
-    if resp.code != 200:
-        raise IOError("Request url(%s) expect 200 but got %d" %(url, resp.code))
-
-    with open(target_path, 'wb') as f:
-        shutil.copyfileobj(resp, f)
-    return target_path
 
 
 def download(filename, tmpdir, version, base_url=IMAGE_BASE_URL):

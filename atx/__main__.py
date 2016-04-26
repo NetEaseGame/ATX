@@ -8,7 +8,7 @@ import argparse
 import functools
 import json
 
-from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper, record
+from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper, install
 import atx.androaxml as apkparse
 
 def _gui(args):
@@ -27,7 +27,7 @@ def _webide(args):
     webide.main(open_browser=(not args.no_browser), port=args.web_port, adb_host=args.host, adb_port=args.port)
 
 
-def _apkparse(args):
+def _apk_parse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
         'package_name': pkg_name,
@@ -35,10 +35,17 @@ def _apkparse(args):
     }, indent=4)
 
 
+def _apk_install(args):
+    # print 'install ...', args
+    install.main(args)
+
+
 def _iosdeveloper(args):
     iosdeveloper.main(args)
 
 def _record(args):
+    # because record contains win32api which not working on unix system
+    from atx.cmds import record
     record.main()
 
 def _run(args):
@@ -48,7 +55,7 @@ def _run(args):
 def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    ap.add_argument("-s", "--serial", "--udid", required=False, help="Android serial")
+    ap.add_argument("-s", "--serial", "--udid", required=False, help="Android serial or iOS unid")
     ap.add_argument("-H", "--host", required=False, default='127.0.0.1', help="Adb host")
     ap.add_argument("-P", "--port", required=False, type=int, default=5037, help="Adb port")
 
@@ -73,7 +80,11 @@ def main():
     
     parser_apk = add_parser('apkparse')
     parser_apk.add_argument('filename', help='Apk filename')
-    parser_apk.set_defaults(func=_apkparse)
+    parser_apk.set_defaults(func=_apk_parse)
+
+    parser_ins = add_parser('install')
+    parser_ins.add_argument('path', help='<apk file path | apk url path> (only support android for now)')
+    parser_ins.set_defaults(func=_apk_install)
 
     parser_run = add_parser('run')
     parser_run.add_argument('filename', help='Python script filename')

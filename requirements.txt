@@ -4,3 +4,4 @@ uiautomator==0.2.6
 tornado==4.3
 maproxy==0.0.12
 Pillow>=2.7.0
+subprocess32==3.2.7

@@ -27,6 +27,7 @@ from atx import patch
 from atx import base
 from atx import imutils
 from atx import adb
+from atx import strutils
 from atx.device import Bounds
 from atx import logutils
 from atx.device.device_mixin import DeviceMixin, hook_wrap
