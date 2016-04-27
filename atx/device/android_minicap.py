@@ -49,6 +49,7 @@ class SubAdb(Adb):
                 if not line:
                     if p.poll() is not None:
                         break
+                    continue
                 queue.put(line)
             p.stdout.close()
 
@@ -250,6 +251,11 @@ class AndroidDeviceMinicap(DeviceMixin):
         self._watch_orientation()
         self.last_screenshot = None
 
+        for action in ('keyevent', 'home', 'back', 'menu', 'touch', 'swipe'):
+            func = getattr(self._adb, action, None)
+            if func is not None:
+                setattr(self, action, func)
+
     def _watch_screen(self):
         params = self._minicap_params()
         print 'watch screen', params
@@ -277,7 +283,6 @@ class AndroidDeviceMinicap(DeviceMixin):
         def str2img(jpgstr):
             arr = np.fromstring(jpgstr, np.uint8)
             img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            print img.shape
             return img
         self._screen = str2img(frame)
 
@@ -448,3 +453,13 @@ class AndroidDeviceMinicap(DeviceMixin):
         """
         self.adb_shell(['input', 'text', text])
         return self
+
+    def get_package_pids(self, package_name):
+        pids = []
+        for line in self.adb_shell(['ps | grep %s' % package_name]).splitlines():
+            line = line.split()
+            try:
+                pids.append(int(line[1]))
+            except:
+                pass
+        return pids

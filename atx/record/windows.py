@@ -16,6 +16,10 @@ class WindowsRecorder(BaseRecorder):
     KBFLAG_SHIFT = 0x04
     KBFLAG_CAPS = 0x08
 
+    default_radius = 25
+    capture_interval = 0.05
+    capture_maxnum = 30
+
     def __init__(self, device=None):
         self.watched_hwnds = set()
         super(WindowsRecorder, self).__init__(device)

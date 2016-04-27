@@ -358,12 +358,6 @@ class GestureRecognizer(object):
 
                 print dists[::-1]
 
-    def break_gestures(self):
-        # break guesture when time out
-        for i in range(SLOT_NUM):
-            if self.tracks[i]:
-                pass
-
     def post_gesture(self, slotid, track):
         print slotid, track
 
@@ -408,6 +402,8 @@ class GestureRecognizer(object):
                     self.touchups[event.slotid] = event
                     self.touchdowns[event.slotid] = None
                 elif event.msg == HC.TOUCH_MOVE:
+                    self.touchdowns[event.slotid] = None
+                    self.touchups[event.slotid] = None
                     self.touchmoves[event.slotid] = event
             except Queue.Empty:
                 if not self.running:

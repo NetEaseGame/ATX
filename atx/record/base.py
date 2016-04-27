@@ -41,6 +41,11 @@ class Step(__Step):
 
 class BaseRecorder(object):
 
+    default_radius = 180
+    capture_interval = 0.1
+    capture_maxnum = 30 # watch out your memory!
+    look_ahead_num = 3 # diff with later screens to find target object 
+
     def __init__(self, device=None):
         self.steps = []
         self.device = None
@@ -52,11 +57,7 @@ class BaseRecorder(object):
         self.steps_lock = threading.Lock()
         self.step_index = 0
         self.last_step = None
-        self.default_radius = 180
 
-        self.look_ahead_num = 3 # diff with later screens to find target object 
-        self.capture_interval = 0.1
-        self.capture_maxnum = 30 # watch out your memory!
         self.capture_lock = threading.Lock()
         self.capture_cache = []
         self.capture_tmpdir = os.path.join(os.getcwd(), 'screenshots', time.strftime("%Y%m%d"))
@@ -146,7 +147,6 @@ class BaseRecorder(object):
 
         step = Step(idx, t, img0, 'touch', position)
         self.__pack_last_step(step)
-
 
     def __pack_last_step(self, step):
         # find target for last step and pack it.
