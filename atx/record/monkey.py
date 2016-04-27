@@ -4,19 +4,23 @@
 import os
 import re
 import time
+import warnings
 import traceback
 from random import randint
 
 class Reporter(object):
 
     def prepare(self, device, package=None, pids=None):
-        pass
+        '''called before loop. initialize device related stuff.'''
+        raise NotImplementedError()
 
     def collect(self):
-        pass
+        '''called every run. collect logs.'''
+        raise NotImplementedError()
 
     def dump(self):
-        pass
+        '''called after loop. dump logs.'''
+        raise NotImplementedError()
 
 class AdbLineReporter(Reporter):
 
@@ -86,8 +90,7 @@ class LogcatReporter(AdbLineReporter):
         self.device.adb_shell('logcat -c')
 
     def command(self):
-        cmd = "logcat -t '%s' -v time" % self.timestr
-        return cmd
+        return "logcat -t '%s' -v time" % self.timestr
 
     def process_line(self, line):
         m = self.timepat.search(line)
@@ -97,6 +100,7 @@ class LogcatReporter(AdbLineReporter):
         # the last digits should be increased by 1,
         # or there will be some duplicated lines.
 
+# TODO: clean anr/traces.txt on non-root devices.
 class AnrTraceReporter(AdbLineReporter):
     name = 'anr'
 
@@ -116,10 +120,12 @@ class Monkey(object):
         accum = 0
         for i in range(len(self.actions)):
             a = self.actions[i]
-            w = probs.get(a, 0)
+            w = probs.pop(a, 0)
             self.weights.append(int(accum*10000./total))
             accum += w
         self.weights.append(int(accum*10000./total))
+        if probs:
+            warnings.warn('Unsupported actions: %s' % probs.keys())
 
         self.device = None
         self.reporters = [r() for r in _default_reporters]
@@ -185,10 +191,13 @@ class Monkey(object):
         return x1, y1, x2, y2
 
 def is_similar(img1, img2):
+    if img1.shape != img2.shape:
+        return False
+    diff = cv2.absdiff(img1, img2)
     return True
 
 class StupidMonkey(Monkey):
-    '''find scenes through hard work'''
+    '''find touchables through hard work'''
 
     movestep = 10 #pixels
 
@@ -199,7 +208,7 @@ class StupidMonkey(Monkey):
 
     def dectect_scene(self):
         # return 0
-        screen = self.devices.creenshot_cv2
+        screen = self.devices.screenshot_cv2
         i = 0
         for scene in self.scenes:
             if is_similar(screen, scene):
