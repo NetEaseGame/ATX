@@ -35,7 +35,8 @@ def adb_pushfile(filepath, remote_path):
         try:
             p.wait(0.5)
         except subprocess.TimeoutExpired:
-            pb.update(get_file_size(remote_path))
+            pb.n = get_file_size(remote_path)
+            pb.refresh()
             # log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
             pass
         except KeyboardInterrupt:
@@ -44,8 +45,9 @@ def adb_pushfile(filepath, remote_path):
         except:
             raise
         else:
-            log.info("Success pushed into device")
+            # log.info("Success pushed into device")
             break
+    pb.close()
 
 
 def get_file_size(remote_path):
