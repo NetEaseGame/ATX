@@ -11,6 +11,40 @@ import json
 from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper, install
 import atx.androaxml as apkparse
 
+
+def parser(name=None, debug=False):
+    return wrap
+
+
+def make_parser(debug=False):
+    m = {}
+
+    def wrap(fn):
+        @functools.wraps(fn)
+        def _inner(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except Exception as e:
+                if debug:
+                    raise
+                print 'ERROR: %s' % e
+                raise SystemExit(1)
+
+        m[fn.__name__] = _inner
+        return _inner
+    return (m, wrap)
+
+
+funcs, wrap = make_parser(debug=True)
+
+
+# serial, host, port, other args
+# args: {serial: 'EFSF', host: '127.0.0.1', port: 5037, path: 'demo.apk'}
+# name: gui
+def parser_gui(serial, host, port, path):
+    pass
+
+
 def _gui(args):
     tkgui.main(args.serial, host=args.host)
 
@@ -36,7 +70,6 @@ def _apk_parse(args):
 
 
 def _apk_install(args):
-    # print 'install ...', args
     install.main(args)
 
 

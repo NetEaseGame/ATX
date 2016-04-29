@@ -9,6 +9,7 @@ import urllib2
 import re
 import os
 
+import tqdm
 import atx.androaxml as apkparse
 
 from atx import logutils
@@ -26,6 +27,7 @@ def clean(tmpdir):
 
 def adb_pushfile(filepath, remote_path):
     filesize = os.path.getsize(filepath)
+    pb = tqdm.tqdm(unit='B', unit_scale=True, total=filesize)
     p = subprocess.Popen(['adb', 'push', filepath, remote_path],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -33,7 +35,8 @@ def adb_pushfile(filepath, remote_path):
         try:
             p.wait(0.5)
         except subprocess.TimeoutExpired:
-            log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
+            pb.update(get_file_size(remote_path))
+            # log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
             pass
         except KeyboardInterrupt:
             p.kill()

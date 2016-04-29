@@ -1,6 +1,21 @@
 CHANGES
 =======
 
+* add doc about install
+* add apk install support
+* add timeout events
+* add guesture recognize structure
+* let search search image support insteresting
+* fix click_image not support Pattern(offset) error, and add relevant tests
+* sort ui blocks by bounds area
+* add record to commands: python -matx record
+* add ui hook demo. may be used in record
+* add minitouch input
+* update qiniucdn address
+* add minicap device used for record
+* check download response code should be 200
+* handle android input events
+* add python -matx iosdeveloper support. close #13
 * add for remember
 * add click image support, close #10
 * update badge
