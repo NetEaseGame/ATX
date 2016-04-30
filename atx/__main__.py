@@ -70,7 +70,7 @@ def _apk_parse(args):
 
 
 def _apk_install(args):
-    install.main(args)
+    install.main(args.path, serial=args.serial, host=args.host, port=args.port)
 
 
 def _iosdeveloper(args):

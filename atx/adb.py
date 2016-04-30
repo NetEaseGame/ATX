@@ -4,7 +4,7 @@
 import os
 import re
 import socket
-import subprocess
+import subprocess32 as subprocess
 
 
 LOCAL_PORT = 10300
@@ -25,11 +25,18 @@ def next_local_port(adb_host=None):
 
 class Adb(object):
     def __init__(self, serial=None, server_host=None, server_port=None):
+        """
+        Args:
+            - serial: device serial number
+            - server_host: adb server host, default 127.0.0.1
+            - server_port: adb server port, default 5037
+        """
         self.__adb_cmd = None
         self.default_serial = serial if serial else os.environ.get("ANDROID_SERIAL", None)
         self.server_host = str(server_host if server_host else '127.0.0.1')
         self.server_port = str(server_port if server_port else '5037')
         self.adb_host_port_options = []
+        self.serial = serial or self.device_serial()
         if self.server_host not in ['localhost', '127.0.0.1']:
             self.adb_host_port_options += ["-H", self.server_host]
         if self.server_port != '5037':
@@ -57,7 +64,7 @@ class Adb(object):
 
     def cmd(self, *args, **kwargs):
         '''adb command, add -s serial by default. return the subprocess.Popen object.'''
-        serial = self.device_serial()
+        serial = self.device_serial() # TODO(ssx): useless here, need to remove and test
         if serial:
             if " " in serial:  # TODO how to include special chars on command line
                 serial = "'%s'" % serial
@@ -71,6 +78,14 @@ class Adb(object):
         if os.name != "nt":
             cmd_line = [" ".join(cmd_line)]
         return subprocess.Popen(cmd_line, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def build_cmd(self, *args):
+        '''adb command array
+        For example:
+            build_cmd("shell", "uptime") will get
+            ["adb", "-s", "xx..", "-P", "5037", "shell", "uptime"]
+        '''
+        return [self.adb(), "-s", self.serial] + self.adb_host_port_options + list(args)
 
     def device_serial(self):
         devices = self.devices()
@@ -123,6 +138,18 @@ class Adb(object):
         '''adb version'''
         match = re.search(r"(\d+)\.(\d+)\.(\d+)", self.raw_cmd("version").communicate()[0].decode("utf-8"))
         return [match.group(i) for i in range(4)]
+
+    def remove(self, path):
+        """Remove remote file
+        Return:
+            bool: true or false"""
+        p = self.cmd('shell', 'rm', path)
+        stdout, stderr = p.communicate()
+        if stdout or stderr:
+            return False
+        else:
+            return True
+
 
 if __name__ == '__main__':
     adb = Adb()

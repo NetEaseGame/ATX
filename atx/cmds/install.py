@@ -13,6 +13,7 @@ import tqdm
 import atx.androaxml as apkparse
 
 from atx import logutils
+from atx import adb as adbutils
 from atx.cmds import cmdutils
 
 
@@ -25,17 +26,16 @@ def clean(tmpdir):
     shutil.rmtree(tmpdir)
 
 
-def adb_pushfile(filepath, remote_path):
+def adb_pushfile(adb, filepath, remote_path):
     filesize = os.path.getsize(filepath)
     pb = tqdm.tqdm(unit='B', unit_scale=True, total=filesize)
-    p = subprocess.Popen(['adb', 'push', filepath, remote_path],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = adb.cmd('push', filepath, remote_path)
 
     while True:
         try:
             p.wait(0.5)
         except subprocess.TimeoutExpired:
-            pb.n = get_file_size(remote_path)
+            pb.n = get_file_size(adb, remote_path)
             pb.refresh()
             # log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
             pass
@@ -50,39 +50,31 @@ def adb_pushfile(filepath, remote_path):
     pb.close()
 
 
-def get_file_size(remote_path):
-    output = subprocess.check_output(['adb', 'shell', 'ls', '-l', remote_path])
-    m = re.search(r'(\d+)', output)
+def get_file_size(adb, remote_path):
+    output = subprocess.check_output(adb.build_cmd('shell', 'ls', '-l', remote_path))
+    m = re.search(r'\s(\d+)', output)
     if not m:
         return 0
     return int(m.group(1))
 
 
-def adb_cmd(*args):
-    cmd_args = ['adb'] + list(args)
-    p = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return p
+def adb_remove(adb, path):
+    p = adb.cmd('shell', 'rm', path)
+    stdout, stderr = p.communicate()
+    if stdout or stderr:
+        log.warn('%s\n%s', stdout, stderr)
 
 
-def adb_remove(path):
-    status, output = adb_call('shell', 'rm', path)
-    if output:
-        log.warn('%s', output)
+def adb_install(adb, remote_path):
+    p = adb.cmd('shell', 'pm', 'install', '-rt', remote_path)
+    stdout, _ = p.communicate()
+    if stdout.find('Success') == -1:
+        raise IOError("Adb install failed: %s" % stdout)
 
 
-def adb_call(*args):
-    p = adb_cmd(*args)
-    exit_code = p.wait()
-    output = p.stdout.read()
-    return exit_code, output
-
-
-def adb_install(remote_path):
-    return cmdutils.run_cmd('adb', 'shell', 'pm', 'install', '-rt', remote_path, success_text='Success')
-
-
-def main(args):
-    path = args.path
+def main(path, serial=None, host=None, port=None):
+    print serial, host
+    adb = adbutils.Adb(serial, host, port)
     if re.match(r'^https?://', path):
         tmpdir = tempfile.mkdtemp(prefix='atx-install-')
         atexit.register(clean, tmpdir)
@@ -99,9 +91,9 @@ def main(args):
     log.info("APK main activity: %s", main_activity)
 
     log.info("Push file to android device")
-    adb_pushfile(path, DEFAULT_REMOTE_PATH)
+    adb_pushfile(adb, path, DEFAULT_REMOTE_PATH)
 
     log.info("Install ..., will take a few seconds")
-    adb_install(DEFAULT_REMOTE_PATH)
+    adb_install(adb, DEFAULT_REMOTE_PATH)
     log.info("Done")
-    adb_remove(DEFAULT_REMOTE_PATH)
+    adb_remove(adb, DEFAULT_REMOTE_PATH)

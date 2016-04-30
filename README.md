@@ -331,20 +331,16 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	使用: 苹果手机连接上电脑，然后运行 `python -matx iosdeveloper` 即可
 
-6. install (仅限apk) TODO(hzsunshx): 还不支持多个设备
+6. install (仅限apk)
 
-	支持从URL安装应用，支持文件推送到手机时显示进度
+	支持从URL,以及本地路径安装应用，支持文件推送到手机时显示进度
 
 	```
 	$ python -matx install example.apk
 	2016-04-26 16:33:52.370 INFO  [install:  93] APK package name: com.netease.example
 	2016-04-26 16:33:52.370 INFO  [install:  94] APK main activity: com.netease.example.MainActivity
 	2016-04-26 16:33:52.371 INFO  [install:  96] Push file to android device
-	2016-04-26 16:33:53.028 INFO  [install:  36] Progress 1M/25M
-	2016-04-26 16:33:54.769 INFO  [install:  36] Progress 10M/25M
-	2016-04-26 16:33:55.859 INFO  [install:  36] Progress 16M/25M
-	2016-04-26 16:33:57.519 INFO  [install:  36] Progress 25M/25M
-	2016-04-26 16:33:57.520 INFO  [install:  44] Success pushed into device
+	100% |====================| 5.88M/5.88M [1.89M/s]
 	2016-04-26 16:33:57.521 INFO  [install:  99] Install ..., will take a few seconds
 	2016-04-26 16:34:08.179 INFO  [install: 101] Done
 	```
