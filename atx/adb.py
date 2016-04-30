@@ -11,6 +11,7 @@ LOCAL_PORT = 10300
 _init_local_port = LOCAL_PORT - 1
 
 def next_local_port(adb_host=None):
+    """ find avaliable free port """
     def is_port_listening(port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         result = s.connect_ex((str(adb_host) if adb_host else '127.0.0.1', port))
@@ -24,6 +25,8 @@ def next_local_port(adb_host=None):
 
 
 class Adb(object):
+    __adb_cmd = None
+
     def __init__(self, serial=None, server_host=None, server_port=None):
         """
         Args:
@@ -31,7 +34,6 @@ class Adb(object):
             - server_host: adb server host, default 127.0.0.1
             - server_port: adb server port, default 5037
         """
-        self.__adb_cmd = None
         self.default_serial = serial if serial else os.environ.get("ANDROID_SERIAL", None)
         self.server_host = str(server_host if server_host else '127.0.0.1')
         self.server_port = str(server_port if server_port else '5037')
@@ -42,8 +44,9 @@ class Adb(object):
         if self.server_port != '5037':
             self.adb_host_port_options += ["-P", self.server_port]
 
-    def adb(self):
-        if self.__adb_cmd is None:
+    @classmethod
+    def adb(cls):
+        if cls.__adb_cmd is None:
             if "ANDROID_HOME" in os.environ:
                 filename = "adb.exe" if os.name == 'nt' else "adb"
                 adb_cmd = os.path.join(os.environ["ANDROID_HOME"], "platform-tools", filename)
@@ -59,8 +62,18 @@ class Adb(object):
                     adb_cmd = os.path.realpath(adb_cmd)
                 else:
                     raise EnvironmentError("$ANDROID_HOME environment not set.")
-            self.__adb_cmd = adb_cmd
-        return self.__adb_cmd
+            cls.__adb_cmd = adb_cmd
+        return cls.__adb_cmd
+
+    @classmethod
+    def devices(cls):
+        '''get a dict of attached devices. key is the device serial, value is device name.'''
+        out = subprocess.check_output([cls.adb(), 'devices']).decode("utf-8")
+        match = "List of devices attached"
+        index = out.find(match)
+        if index < 0:
+            raise EnvironmentError("adb is not working.")
+        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() if s.strip()])
 
     def cmd(self, *args, **kwargs):
         '''adb command, add -s serial by default. return the subprocess.Popen object.'''
@@ -105,15 +118,6 @@ class Adb(object):
             raise EnvironmentError("Device(%s) is not ready. status(%s)." % 
                 (self.default_serial, devices[self.default_serial]))
         return self.default_serial
-
-    def devices(self):
-        '''get a dict of attached devices. key is the device serial, value is device name.'''
-        out = self.raw_cmd("devices").communicate()[0].decode("utf-8")
-        match = "List of devices attached"
-        index = out.find(match)
-        if index < 0:
-            raise EnvironmentError("adb is not working.")
-        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() if s.strip()])
 
     def forward(self, device_port, local_port=None):
         '''adb port forward. return local_port'''
