@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+* add ios utils
+* update requirements
+* change some method of adb to static
+* make python -matx install some.apk support multi device
+* fix progress
+* install use tqdm as progress bar
+* move image test functions in test_android to test_monkey
+* move RotationWatcher.apk to vendor
+* add monkey test
 * add doc about install
 * add apk install support
 * add timeout events
