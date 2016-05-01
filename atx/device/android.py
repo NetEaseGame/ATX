@@ -424,6 +424,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """Input some text, TODO(ssx): not tested.
         Args:
             text: string (text to input)
+
+        TODO: escape space
         """
         self.adb_shell(['input', 'text', text])
         return self
