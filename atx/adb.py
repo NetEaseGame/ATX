@@ -46,6 +46,7 @@ class Adb(object):
 
     @classmethod
     def adb(cls):
+        """return adb binary full path"""
         if cls.__adb_cmd is None:
             if "ANDROID_HOME" in os.environ:
                 filename = "adb.exe" if os.name == 'nt' else "adb"

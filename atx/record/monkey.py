@@ -1,12 +1,14 @@
 #-*- encoding: utf-8 -*-
 # I'm Shakespeare!
 
-import os
 import re
+import cv2
 import time
 import warnings
 import traceback
 from random import randint
+
+from scene_detector import SceneDetector
 
 class Reporter(object):
 
@@ -190,76 +192,64 @@ class Monkey(object):
         x1, y1, x2, y2 = randint(1, w), randint(1, h), randint(1, w), randint(1, h)
         return x1, y1, x2, y2
 
-def is_similar(img1, img2):
-    if img1.shape != img2.shape:
-        return False
-    diff = cv2.absdiff(img1, img2)
-    return True
 
 class StupidMonkey(Monkey):
     '''find touchables through hard work'''
 
-    movestep = 10 #pixels
+    movestep = 30 #pixels
 
-    def __init__(self, probs):
+    def __init__(self, probs, scene_directory, device=None):
         super(StupidMonkey, self).__init__(probs)
-        self.scenes = []
         self.scene_touches = {}
-
-    def dectect_scene(self):
-        # return 0
-        screen = self.devices.screenshot_cv2
-        i = 0
-        for scene in self.scenes:
-            if is_similar(screen, scene):
-                return i
-            i += 1
-        self.scenes.append(screen)
-        return len(self.scenes)-1
+        self.scene_detector = SceneDetector(scene_directory, device)
+        self.device = device
 
     def get_touch_point(self):
-        i = self.dectect_scene()
-        pos = self.scene_touches.get(i, 0)
-        w, h = self.device.display
-        # w, h = 1920, 1080
+        scene = self.scene_detector.detect()
+        if scene is None:
+            return
+
+        pos = self.scene_touches.get(str(scene), 0)
+        # w, h = self.device.display
+        w, h = 1080, 1920
         w, h = w/self.movestep, h/self.movestep # grid points
-        y, x = divmod(pos, w-1)
-        if y >= h-1:
+        x, y = divmod(pos, w-1)
+        if x >= h-1:
             return
 
         x, y = (x+1)*self.movestep, (y+1)*self.movestep
-        self.scene_touches[i] = pos+1
+        self.scene_touches[str(scene)] = pos+1
         return x, y
 
     def get_swipe_points(self):
         pass
 
-def test_grid():
-    m = StupidMonkey({'touch':10})
-    poss = []
-    while True:
-        pos = m.get_touch_point()
-        if not pos:
-            break
-        poss.append(pos)
-    print 'grid point count:', len(poss)
-
-    import cv2
-    import numpy
-    img = numpy.zeros((1920, 1080))
-    for x,y in poss:
-        img[x,y] = 255
-    img = cv2.resize(img, (540, 960))
-    cv2.imshow('grid', img)
-    cv2.waitKey()
-
 if __name__ == '__main__':
     from atx.device.android_minicap import AndroidDeviceMinicap
     dev = AndroidDeviceMinicap()
     dev._adb.start_minitouch()
+    time.sleep(3)
     probs = {'touch':5, 'swipe':1}
-    m = Monkey(probs)
-    m.run(dev, package='com.netease.testease', maxruns=10000)
-    # test_grid()
+    # m = Monkey(probs)
+    # m.run(dev, package='im.yixin', maxruns=100)
+    m = StupidMonkey(probs, '../../tests/txxscene', dev)
+    old, new = None, None
+    while True:
+        # time.sleep(0.3)
+        screen = m.device.screenshot_cv2()
+        h, w = screen.shape[:2]
+        img = cv2.resize(screen, (w/2, h/2))
 
+        tic = time.clock()
+        new = str(m.scene_detector.detect())
+        t = time.clock() - tic
+        if new != old:
+            print 'change to', new
+            print 'cost time', t
+        old = new
 
+        if m.cur_rect is not None:
+            x, y, x1, y1 = m.cur_rect
+            cv2.rectangle(img, (x,y), (x1,y1), (0,255,0) ,2)
+        cv2.imshow('test', img)
+        cv2.waitKey(1)

@@ -39,7 +39,7 @@ def adb_pushfile(adb, filepath, remote_path):
             pb.refresh()
             # log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
             pass
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit) as e:
             p.kill()
             raise
         except:

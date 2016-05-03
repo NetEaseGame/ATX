@@ -439,8 +439,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         "Hi world" maybe spell into "H iworld"
 
         Args:
-            text: string (text to input)
-            enter(bool): input enter at last
+            - text: string (text to input)
+            - enter(bool): input enter at last
 
         The android source code show that
         space need to change to %s

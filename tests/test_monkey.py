@@ -285,5 +285,173 @@ def test_detect_ui(imgname = 'base1'):
             # cv2.imwrite('%s-%s-%s.png' % (imgname, tran, method), mat)
             cv2.waitKey()
 
+def test_similar():
+    from itertools import permutations, combinations
+    from collections import defaultdict
+    from heapq import heappush
+
+
+    def sim1(img1, img2):
+        h, w, d = img1.shape
+        total = h*w*d
+        diff = cv2.absdiff(img1, img2)
+        num = (diff<10).sum()
+        return num*1.0/total
+
+    names = [os.path.join('scene', c) for c in os.listdir('scene')]
+    imgs = dict(zip(names, map(cv2.imread, names)))
+    diffs = defaultdict(list)
+
+    for name1, name2 in combinations(names, 2):
+        img1, img2 = imgs[name1], imgs[name2]
+        similarity = sim1(img1, img2)
+        # print 'diff', name1, name2, 'result is:', similarity
+        heappush(diffs[name1], (-similarity, name2))
+        heappush(diffs[name2], (-similarity, name1))
+
+    for k, v in diffs.iteritems():
+        print k, v[0][1], -v[0][0]
+
+def test_find_scene():
+    scenes = {}
+    for s in os.listdir('txxscene'):
+        if '-' in s: continue
+        i = cv2.imread(os.path.join('txxscene', s), cv2.IMREAD_GRAYSCALE)
+        scenes[s] = i
+
+    names = [os.path.join('scene', c) for c in os.listdir('scene')]
+    imgs = {}
+    for n in os.listdir('scene'):
+        i = cv2.imread(os.path.join('scene', n), cv2.IMREAD_GRAYSCALE)
+        i = cv2.resize(i, (960, 540))
+        imgs[n] = i
+
+    for name, img in imgs.iteritems():
+        for scene, tmpl in scenes.iteritems():
+            res = cv2.matchTemplate(img, tmpl, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            if max_val < 0.6:
+                continue
+            x, y = max_loc
+            h, w = tmpl.shape
+            cv2.rectangle(img, (x, y), (x+w, y+h), 255, 2)
+            print name, scene, max_val, min_val
+            cv2.imshow('found', img)
+            cv2.waitKey()
+
+def build_scene_tree():
+    from collections import defaultdict
+    from pprint import pprint
+
+    class node(defaultdict):
+        name = 'root'
+        parent = None
+        tmpl = None
+
+        def __str__(self):
+            obj = self
+            names = []
+            while obj.parent is not None:
+                names.append(obj.name)
+                obj = obj.parent
+            return '-'.join(names[::-1])
+
+    def tree():
+        return node(tree)
+
+    def walk(node, func=None, depth=0):
+        if func:
+            func(node)
+        else:
+            print ' '*depth*2, node
+        for k, v in node.iteritems():
+            walk(v, func, depth+1)
+
+    scenes = tree()
+
+    for s in os.listdir('txxscene'):
+        if not s.endswith('.png'): continue
+        obj = scenes
+        for i in s[:-4].split('-'):
+            obj[i].name = i
+            obj[i].parent = obj
+            obj = obj[i]
+        obj.tmpl = cv2.imread(os.path.join('txxscene', s))#, cv2.IMREAD_GRAYSCALE)
+
+    # walk(scenes)
+
+    return scenes
+
+def test_find_scene_by_tree():
+    scenes = build_scene_tree()
+
+    names = [os.path.join('scene', c) for c in os.listdir('scene')]
+    imgs = {}
+    for n in os.listdir('scene'):
+        i = cv2.imread(os.path.join('scene', n))#, cv2.IMREAD_GRAYSCALE)
+        i = cv2.resize(i, (960, 540))
+        imgs[n] = i
+
+    def find_match(node, img):
+        # for root node
+        if node.parent is None:
+            for k, v in node.iteritems():
+                res = find_match(v, img)
+                if res is not None:
+                    return res
+            return node
+
+        # find in this node
+        if node.tmpl is not None:
+            s_bgr = cv2.split(node.tmpl) # Blue Green Red
+            i_bgr = cv2.split(img)
+            weight = (0.3, 0.3, 0.4)
+            resbgr = [0, 0, 0]
+            for i in range(3): # bgr
+                resbgr[i] = cv2.matchTemplate(i_bgr[i], s_bgr[i], cv2.TM_CCOEFF_NORMED)
+            match = resbgr[0]*weight[0] + resbgr[1]*weight[1] + resbgr[2]*weight[2]
+
+            # match = cv2.matchTemplate(img, node.tmpl, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+            # found!
+            if max_val > 0.7:
+                x, y = max_loc
+                h, w = node.tmpl.shape[:2]
+                cv2.rectangle(img, (x, y), (x+w, y+h), 255, 2)
+                # find in children
+                for k, v in node.iteritems():
+                    res = find_match(v, img)
+                    if res is not None: 
+                        return res
+                return node
+
+    for name, img in imgs.iteritems():
+        cur = find_match(scenes, img)
+        print '%20s %s' % (name, cur)
+        cv2.imshow('img', img)
+        cv2.waitKey()
+
+def test_grid():
+    m = StupidMonkey({'touch':10})
+    poss = []
+    while True:
+        pos = m.get_touch_point()
+        if not pos:
+            break
+        poss.append(pos)
+    print 'grid point count:', len(poss)
+
+    import cv2
+    import numpy
+    img = numpy.zeros((1920, 1080))
+    for x,y in poss:
+        img[x,y] = 255
+    img = cv2.resize(img, (540, 960))
+    cv2.imshow('grid', img)
+    cv2.waitKey()
+
 if __name__ == '__main__':
-    test_detect_ui('base1')
+    # test_detect_ui('base1')
+    # test_similar()
+    # test_find_scene()
+    test_find_scene_by_tree()
