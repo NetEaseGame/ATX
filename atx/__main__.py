@@ -61,6 +61,11 @@ def _webide(args):
     webide.main(open_browser=(not args.no_browser), port=args.web_port, adb_host=args.host, adb_port=args.port)
 
 
+def _monkey(args):
+    from atx.cmds import monkey
+    monkey.main(args.serial, args.host, args.port)
+
+
 def _apk_parse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
@@ -129,6 +134,9 @@ def main():
 
     parse_record = add_parser('record')
     parse_record.set_defaults(func=_record)
+
+    parse_monkey = add_parser('monkey')
+    parse_monkey.set_defaults(func=_monkey)
 
     args = ap.parse_args()
     args.func(args)

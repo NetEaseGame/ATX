@@ -10,7 +10,7 @@ import logging
 import urllib2
 import shutil
 
-from atx.cmds.cmdutils import http_download
+from atx.cmds.utils import http_download
 
 
 IMAGE_BASE_URL = 'http://gohttp.nie.netease.com/tools-ios/DeveloperImages/'

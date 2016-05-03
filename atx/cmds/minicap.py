@@ -17,7 +17,7 @@ import urllib
 import functools
 
 from atx import logutils
-from atx.cmds.cmdutils import http_download
+from atx.cmds.utils import http_download
 
 logger = logutils.getLogger('minicap')
 

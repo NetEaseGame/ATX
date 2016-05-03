@@ -14,11 +14,11 @@ import atx.androaxml as apkparse
 
 from atx import logutils
 from atx import adb as adbutils
-from atx.cmds import cmdutils
+from atx.cmds import utils
 
 
 log = logutils.getLogger('install')
-DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_ins_tmp.apk'
+DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
 
 
 def clean(tmpdir):
@@ -83,7 +83,7 @@ def main(path, serial=None, host=None, port=None):
         target = os.path.join(tmpdir, '_tmp.apk')
         path = target
         log.info("Download from: %s", urlpath)
-        cmdutils.http_download(urlpath, target)
+        utils.http_download(urlpath, target)
 
     package_name, main_activity = apkparse.parse_apk(path)
     log.info("APK package name: %s", package_name)
