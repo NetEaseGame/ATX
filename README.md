@@ -219,6 +219,11 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d(text='Enter').click()
 	```
 
+* 文本的输入
+
+	d.type("hello world")
+	d.type("atx", enter=True) # perform enter after input
+
 * 常用配置
 	
 	```py
@@ -518,6 +523,9 @@ click(20， 30）
 	- <https://github.com/codeskyblue/airtest-uiautomator>
 3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 4. Blockly <https://github.com/codeskyblue/blockly>
+
+## 相关文章
+1. [让adb install显示进度](https://testerhome.com/topics/4772)
 
 ## Contribute
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。文档有错误的话，直接提Issue，或者提PR都可以。

@@ -18,7 +18,7 @@ from PIL import Image
 
 from atx import patch
 from atx.adb import Adb
-from atx.device.device_mixin import DeviceMixin
+from atx.device.mixin import DeviceMixin
 
 DISPLAY_RE = re.compile(
     r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')

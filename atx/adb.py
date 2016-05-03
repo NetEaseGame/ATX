@@ -74,7 +74,8 @@ class Adb(object):
         index = out.find(match)
         if index < 0:
             raise EnvironmentError("adb is not working.")
-        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() if s.strip()])
+        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() 
+                if s.strip() and not s.strip().startswith('*')])
 
     def cmd(self, *args, **kwargs):
         '''adb command, add -s serial by default. return the subprocess.Popen object.'''
