@@ -1,7 +1,7 @@
 Method for Android and Windows
 --------------------------
 
-.. autoclass:: atx.device.device_mixin.DeviceMixin
+.. autoclass:: atx.device.mixin.DeviceMixin
     :members:
 
 

@@ -30,7 +30,7 @@ from atx import adb
 from atx import strutils
 from atx.device import Bounds
 from atx import logutils
-from atx.device.device_mixin import DeviceMixin, hook_wrap
+from atx.device.mixin import DeviceMixin, hook_wrap
 
 
 DISPLAY_RE = re.compile(
