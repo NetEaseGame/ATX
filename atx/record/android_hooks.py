@@ -429,7 +429,7 @@ class GestureRecognizer(object):
                         self.handle_event(TouchMoveStopTimeout(now, i))
                         self.touchmoves[i] = None
 
-            except Exception as e:
+            except:
                 traceback.print_exc()
 
         print 'process done.'

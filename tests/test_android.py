@@ -78,8 +78,8 @@ def test_minicap():
 
     while True:
         try:
-            w, h = d._screen.shape[:2]
-            img = cv2.resize(d._screen, (h/2, w/2))
+            h, w = d._screen.shape[:2]
+            img = cv2.resize(d._screen, (w/2, h/2))
             cv2.imshow('preview', img)
             key = cv2.waitKey(1)
             if key == 100: # d for dump
@@ -108,5 +108,5 @@ def test_minitouch():
 
 if __name__ == '__main__':
     # test_screenshot()
-    # test_minicap()
-    adb = test_minitouch()
+    test_minicap()
+    # adb = test_minitouch()

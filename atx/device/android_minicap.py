@@ -14,6 +14,7 @@ import threading
 import subprocess
 import collections
 import numpy as np
+from PIL import Image
 
 from atx import patch
 from atx.adb import Adb
@@ -286,8 +287,18 @@ class AndroidDeviceMinicap(DeviceMixin):
             return img
         self._screen = str2img(frame)
 
-    def screenshot_cv2(self):
+    def screenshot(self, filename=None):
+        if filename is not None:
+            cv2.imwrite(filename, self._screen)
+        return Image.fromarray(self._screen[:, :, ::-1].copy())
+
+    def screenshot_cv2(self, filename=None):
+        if filename is not None:
+            cv2.imwrite(filename, self._screen)
         return self._screen.copy()
+
+    def dump_nodes(self):
+        return []
 
     @property
     def wlan_ip(self):

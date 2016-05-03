@@ -2,16 +2,11 @@
 
 import os
 import cv2
-import sys
 import time
 import bisect
-import tempfile
 import threading
-from math import ceil
 from collections import namedtuple
 
-from atx.device.windows import WindowsDevice
-from atx.device.android import AndroidDevice
 from atx.imutils import diff_rect
 
 __CaptureRecord = namedtuple('__CaptureRecord', ('ctime', 'image'))

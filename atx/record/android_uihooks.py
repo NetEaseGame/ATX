@@ -9,7 +9,6 @@
 
 import re
 import cv2
-import tempfile
 import subprocess
 import collections
 import xml.dom.minidom
