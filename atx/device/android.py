@@ -420,10 +420,45 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             ui_nodes.append(self._parse_xml_node(node))
         return ui_nodes
 
-    def type(self, text):
-        """Input some text, TODO(ssx): not tested.
+    def _escape_text(self, s):
+        return s.replace(' ', '%s')
+
+    def keyevent(self, keycode):
+        """call adb shell input keyevent ${keycode}
+
+        Args:
+            - keycode(string): for example, KEYCODE_ENTER
+
+        keycode need reference:
+        http://developer.android.com/reference/android/view/KeyEvent.html
+        """
+        self.adb_shell(['input', 'keyevent', keycode])
+
+    def type(self, text, enter=False):
+        """Input some text, this method has been tested not very stable on some device.
+        "Hi world" maybe spell into "H iworld"
+
         Args:
             text: string (text to input)
+            enter(bool): input enter at last
+
+        The android source code show that
+        space need to change to %s
+        insteresting thing is that if want to input %s, it is really unconvinent.
+        android source code can be found here.
+        https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
-        self.adb_shell(['input', 'text', text])
-        return self
+        first = True
+        for s in text.split('%s'):
+            if s == '':
+                continue
+            estext = self._escape_text(s)
+            if first:
+                first = False
+            else:
+                self.adb_shell(['input', 'text', '%'])
+                estext = 's' + estext
+            self.adb_shell(['input', 'text', estext])
+
+        if enter:
+            self.keyevent('KEYCODE_ENTER')

@@ -73,7 +73,6 @@ def adb_install(adb, remote_path):
 
 
 def main(path, serial=None, host=None, port=None):
-    print serial, host
     adb = adbutils.Adb(serial, host, port)
     if re.match(r'^https?://', path):
         tmpdir = tempfile.mkdtemp(prefix='atx-install-')

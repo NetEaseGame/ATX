@@ -1,1 +1,1 @@
-Documents in <https://github.com/codeskyblue/AirtestX>
+Documents in <https://github.com/codeskyblue/AutomatorX>
