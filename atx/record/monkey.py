@@ -114,7 +114,7 @@ _default_reporters = (LogcatReporter,)
 class Monkey(object):
 
     actions = ('touch', 'swipe', 'pinchin', 'pinchout', 'home', 'menu', 'back')
-    delay = 0.2
+    delay = 0.5
 
     def __init__(self, probs):
         total = sum(probs.values())
@@ -300,10 +300,13 @@ class RandomContourMonkey(Monkey):
             x, y = randint(x1, x2), randint(y1, y2)
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
+        x, y = self.device.screen2touch(x*2, y*2)
+        self.device.touch(x, y)
         cv2.imshow('img', img)
         cv2.waitKey(1)
-        self.device.touch(x, y)
 
+    def do_swipe(self):
+        pass
 
 if __name__ == '__main__':
     pass

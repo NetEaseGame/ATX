@@ -313,6 +313,20 @@ class AndroidDeviceMinicap(DeviceMixin):
     def dump_nodes(self):
         return []
 
+    def screen2touch(self, x, y):
+        '''convert touch position'''
+        w, h = self.display
+        ori = self.screen_rotation
+        if ori == 0:
+            return x, y
+        elif ori == 1: # landscape-right
+            return w-y, x
+        elif ori == 2: # upsidedown
+            return w-x, h-y
+        elif ori == 3: # landscape-left
+            return h-x, y
+        return x, y
+
     @property
     def wlan_ip(self):
         """ Wlan IP """
