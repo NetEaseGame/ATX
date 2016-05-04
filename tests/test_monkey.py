@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import scipy.fftpack
 from cv2 import cv
 
+from atx.record.monkey import Monkey, StupidMonkey, RandomContourMonkey
+from atx.device.android_minicap import AndroidDeviceMinicap
+
 def _binary_array_to_hex(arr):
     """
     internal function to make a hex string out of a binary array
@@ -90,7 +93,7 @@ def test_features():
             #     cv2.rectangle(img, (x, y), (x+w, y+h), 255, 2)
             #     cv2.imshow('preview', img)
             # # cv2.imshow('preview', img)
-            key = cv2.waitKey(1)
+            cv2.waitKey(1)
         except KeyboardInterrupt:
             break
 
@@ -286,7 +289,7 @@ def test_detect_ui(imgname = 'base1'):
             cv2.waitKey()
 
 def test_similar():
-    from itertools import permutations, combinations
+    from itertools import combinations
     from collections import defaultdict
     from heapq import heappush
 
@@ -319,7 +322,7 @@ def test_find_scene():
         i = cv2.imread(os.path.join('txxscene', s), cv2.IMREAD_GRAYSCALE)
         scenes[s] = i
 
-    names = [os.path.join('scene', c) for c in os.listdir('scene')]
+    # names = [os.path.join('scene', c) for c in os.listdir('scene')]
     imgs = {}
     for n in os.listdir('scene'):
         i = cv2.imread(os.path.join('scene', n), cv2.IMREAD_GRAYSCALE)
@@ -341,7 +344,7 @@ def test_find_scene():
 
 def build_scene_tree():
     from collections import defaultdict
-    from pprint import pprint
+    # from pprint import pprint
 
     class node(defaultdict):
         name = 'root'
@@ -378,14 +381,14 @@ def build_scene_tree():
             obj = obj[i]
         obj.tmpl = cv2.imread(os.path.join('txxscene', s))#, cv2.IMREAD_GRAYSCALE)
 
-    # walk(scenes)
+    walk(scenes)
 
     return scenes
 
 def test_find_scene_by_tree():
     scenes = build_scene_tree()
 
-    names = [os.path.join('scene', c) for c in os.listdir('scene')]
+    # names = [os.path.join('scene', c) for c in os.listdir('scene')]
     imgs = {}
     for n in os.listdir('scene'):
         i = cv2.imread(os.path.join('scene', n))#, cv2.IMREAD_GRAYSCALE)
@@ -450,8 +453,34 @@ def test_grid():
     cv2.imshow('grid', img)
     cv2.waitKey()
 
+def _get_mini_dev():
+    dev = AndroidDeviceMinicap()
+    dev._adb.start_minitouch()
+    time.sleep(3)
+    return dev
+
+def test_monkey():
+    dev = _get_mini_dev()
+    probs = {'touch':5, 'swipe':1}
+
+    m = Monkey(probs)
+    m.run(dev, package='im.yixin', maxruns=100)
+
+def test_stupid_monkey():
+    dev = _get_mini_dev()
+    probs = {'touch':5}
+
+    m = StupidMonkey(probs, 'txxscene')
+    m.run(dev, package='com.netease.txx.mi')
+
+def test_contour_monkey():
+    dev = _get_mini_dev()
+    probs = {'touch':5, 'swipe':1}
+
+    m = RandomContourMonkey(probs)
+    m.run(dev, package='com.netease.txx.mi')
+
 if __name__ == '__main__':
-    # test_detect_ui('base1')
-    # test_similar()
-    # test_find_scene()
-    test_find_scene_by_tree()
+    # test_monkey()
+    # test_stupid_monkey()
+    test_contour_monkey()

@@ -2,24 +2,27 @@
 
 import os
 import cv2
-import time
 import yaml
 import numpy as np
 from collections import defaultdict
 
 def find_match(img, tmpl, rect=None, mask=None):
     if rect is not None:
+        h, w = img.shape[:2]
         x, y, x1, y1 = rect
+        if x1 > w or y1 > h:
+            return 0, None
         img = img[y:y1, x:x1, :]
 
         if mask is not None:
             img = img.copy()
-            img[mask] = 0
+            img[mask!=0] = 0
             tmpl = tmpl.copy()
-            tmpl[mask] = 0
+            tmpl[mask!=0] = 0
 
     s_bgr = cv2.split(tmpl) # Blue Green Red
     i_bgr = cv2.split(img)
+
     weight = (0.3, 0.3, 0.4)
     resbgr = [0, 0, 0]
     for i in range(3): # bgr
@@ -41,12 +44,12 @@ def get_mask(img1, img2, thresh=20):
         return
     diff = cv2.absdiff(img1, img2)
     diff = np.mean(diff, axis=2)
-    diff[diff<=thresh] = 1
-    diff[diff>thresh] = 0
+    diff[diff<=thresh] = 0
+    diff[diff>thresh] = 255
     mask = np.dstack([diff]*3)
     return mask
 
-def is_match(img1, img2):
+def get_match_confidence(img1, img2, mask=None):
     if img1.shape != img2.shape:
         return False
     ## first try, using absdiff
@@ -55,23 +58,28 @@ def is_match(img1, img2):
     # total = h*w*d
     # num = (diff<20).sum()
     # print 'is_match', total, num
-    # return num > total*0.65
-
+    # return num > total*0.90
+    if mask is not None:
+        img1 = img1.copy()
+        img1[mask!=0] = 0
+        img2 = img2.copy()
+        img2[mask!=0] = 0
     ## using match
     match = cv2.matchTemplate(img1, img2, cv2.TM_CCOEFF_NORMED)
     _, confidence, _, _ = cv2.minMaxLoc(match)
     # print confidence
-    return confidence > 0.65
+    return confidence
 
 class SceneDetector(object):
-    def __init__(self, scene_directory, device=None):
+    '''detect game scene from screen image'''
+
+    def __init__(self, scene_directory):
         self.scene_touches = {}
+        self.scene_directory = scene_directory
         self.build_tree(scene_directory)
-        self.device = device
 
     def build_tree(self, directory):
         '''build scene tree from images'''
-
         confile = os.path.join(directory, 'config.yml')
         conf = {}
         if os.path.exists(confile):
@@ -97,7 +105,8 @@ class SceneDetector(object):
 
         root = tree()
         for s in os.listdir(directory):
-            if not s.endswith('.png'): continue
+            if not s.endswith('.png') or s.endswith('_mask.png'): 
+                continue
             obj = root
             for i in s[:-4].split('-'):
                 obj[i].name = i
@@ -105,85 +114,87 @@ class SceneDetector(object):
                 obj = obj[i]
             obj.tmpl = cv2.imread(os.path.join(directory, s))
             obj.rect = conf.get(s[:-4], {}).get('rect')
-            obj.mask = conf.get(s[:-4], {}).get('mask')
+            maskimg = conf.get(s[:-4], {}).get('mask')
+            if maskimg is not None:
+                maskimg = os.path.join(directory, maskimg)
+                if os.path.exists(maskimg):
+                    obj.mask = cv2.imread(maskimg)
 
         self.tree = root
-        self.cur_scene = None
-        self.cur_rect = None
+        self.current_scene = []
         self.confile = confile
         self.conf = conf
+
+    def match_child(self, img, node):
+        c, s, r = (0, None, None)
+        for scene in node.itervalues():
+            if scene.tmpl is None:
+                continue
+            print str(scene), scene.rect, img.shape
+            confidence, rect = find_match(img, scene.tmpl, scene.rect, scene.mask)
+            # print scene.name, confidence, rect
+            if confidence > c:
+                c, s, r = (confidence, scene, rect)
+
+        if c > 0.95:
+            key = str(s)
+            if key not in self.conf:
+                self.conf[key] = {}
+
+            changed = False
+            if c > self.conf[key].get('confidence', 0):
+                s.rect = r
+                self.conf[key]['confidence'] = c
+                self.conf[key]['rect'] = list(r)
+                changed = True
+
+            if changed or s.mask is None:
+                x, y, x1, y1 = r
+                s.mask = get_mask(img[y:y1, x:x1, :], s.tmpl, 20)
+                maskimg = os.path.join(self.scene_directory, '%s_mask.png' % key)
+                cv2.imwrite(maskimg, s.mask)
+                self.conf[key]['mask'] = maskimg
+                changed = True
+
+            if changed:
+                self.save_config()
+
+        return c, s, r
 
     def save_config(self):
         print 'save config', self.conf
         with open(self.confile, 'w') as f:
             yaml.dump(self.conf, f)
 
-    def dectect(self):
-        screen = self.device.screenshot_cv2()
-        h, w = screen.shape[:2]
-        img = cv2.resize(screen, (w/2, h/2))
-
-        if self.cur_scene is not None:
-            # print 'checking current scene'
-            x, y, x1, y1 = self.cur_rect
-            if is_match(img[y:y1, x:x1, :], self.cur_scene.tmpl):
-                # print 'current scene ok'
-                return self.cur_scene
-
-        # print 'check all top level'
-        s, c, r = None, 0, None
-        for scene in self.tree.itervalues():
-            if scene.tmpl is None:
-                continue
-            confidence, rect = find_match(img, scene.tmpl, scene.rect, scene.mask)
-            # print scene.name, confidence, rect
-            if confidence > c:
-                c = confidence
-                s = scene
-                r = rect
-
-        if c < 0.5:
-            return
-        if c > 0.95:
-            s.rect = r
-            if s.mask is None:
+    def detect(self, img):
+        # check current scene path        
+        # print 'checking current scene'
+        if self.current_scene:
+            for i in range(len(self.current_scene)):
+                s, r = self.current_scene[i]
                 x, y, x1, y1 = r
-                s.mask = get_mask(img[y:y1, x:x1, :], s.tmpl, 25)
+                c = get_match_confidence(img[y:y1, x:x1, :], s.tmpl, s.mask)
+                if c < 0.75:
+                    break
+            else:
+                # print 'current scene ok'
+                s = self.current_scene[-1][0]
+                if len(s.values()) == 0:
+                    return s
+            self.current_scene = self.current_scene[:i]
 
-            key = str(s)
-            if key not in self.conf:
-                self.conf[key] = {}
-            self.conf[key]['rect'] = list(r)
-            self.conf[key]['confidence'] = c
-            self.save_config()
-        self.cur_scene = s
-        self.cur_rect = r
+        # top scene has changed
+        if not self.current_scene:
+            c, s, r = self.match_child(img, self.tree)
+            if c < 0.75:
+                return
+            self.current_scene = [(s, r)]
+        
+        s = self.current_scene[-1][0]
+        while True:
+            c, s, r = self.match_child(img, s)
+            if c < 0.75:
+                break
+            self.current_scene.append((s, r))
+
         return s
-
-
-if __name__ == '__main__':
-    from atx.device.android_minicap import AndroidDeviceMinicap
-    dev = AndroidDeviceMinicap()
-    dev._adb.start_minitouch()
-    time.sleep(3)
-    m = SceneDetector('../../tests/txxscene', dev)
-    old, new = None, None
-    while True:
-        # time.sleep(0.3)
-        screen = m.device.screenshot_cv2()
-        h, w = screen.shape[:2]
-        img = cv2.resize(screen, (w/2, h/2))
-
-        tic = time.clock()
-        new = str(m.dectect_scene())
-        t = time.clock() - tic
-        if new != old:
-            print 'change to', new
-            print 'cost time', t
-        old = new
-
-        if m.cur_rect is not None:
-            x, y, x1, y1 = m.cur_rect
-            cv2.rectangle(img, (x,y), (x1,y1), (0,255,0) ,2)
-        cv2.imshow('test', img)
-        cv2.waitKey(1)

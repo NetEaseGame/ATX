@@ -56,6 +56,9 @@ def getenv(name, default_value=None, type=str):
     value = os.getenv(name)
     return type(value) if value else default_value
 
+class AndroidMixin(object):
+    def __init__(self, serialno=None):
+        pass
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
