@@ -2,10 +2,15 @@
 var M = {};
 
 new Vue({
-  el: '#app',
+  el: '#main-content',
   data: {
-    message: "Hello vue"
-  }
+    landscape: false,
+  },
+  methods: {
+    toggleLandscape: function() {
+      this.landscape = !this.landscape;
+    }
+  },
 })
 
 $(function(){

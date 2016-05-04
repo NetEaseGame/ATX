@@ -34,7 +34,7 @@
       </div>
     </nav>
 
-    <div class="container-fluid">
+    <div class="container-fluid" id='main-content'>
       <div class="col-md-12">
 <!--       <div id="app">
         {{! message }}
@@ -58,7 +58,7 @@
             {% end %}
           </ul>
         </div> -->
-        <div id="left-panel" class="col-md-6">
+        <div id="left-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-9'">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
               <a href="#blocklyDiv" aria-controls="blocklyDiv" role="tab" data-toggle="tab">Blockly</a>
@@ -87,18 +87,19 @@
               <pre class='code-python'></pre>
             </div>
           </div>
-          <div id="console-left" style='display: ;'>
+          <div v-show="!landscape">
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
             <pre class='console'></pre>
           </div>
         </div>
-        <div id="right-panel" class="col-md-6">
+        <div id="right-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-3'">
           <div>
             <h4>Screen
               <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存</button>
               <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
+              <button type="button" v-on:click="toggleLandscape" class="btn btn-default btn-xs">宽屏切换</button>
             </h4>
             <div id="screen-wrapper" style="border: 1px solid red">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
@@ -109,7 +110,7 @@
             <div class='status-bar'>Status: <span></span></div>
             <!-- <pre class='code-python'></pre> -->
           </div>
-          <div id="console-right" style='display: nosne;'>
+          <div v-show="landscape">
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
