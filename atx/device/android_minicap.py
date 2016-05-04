@@ -183,6 +183,7 @@ class SubAdb(Adb):
         t.start()
 
     def touch(self, x, y):
+        print 'touch', (x, y)
         cmd = 'd 0 %d %d 30\nc\nu 0\nc\n' % (int(x), int(y))
         self.touchqueue.put(cmd)
 
@@ -197,11 +198,23 @@ class SubAdb(Adb):
             send('m 0 %d %d 30\nc\n' % (x, y))
         send('u 0 %d %d 30\nc\nu 0\nc\n' % (x2, y2))
 
+    def pinchin(self, x1, y1, x2, y2, steps=10):
+        pass
+
+    def pinchout(self, x1, y1, x2, y2, steps=10):
+        pass
+
     def keyevent(self, key):
         subprocess.check_call('adb shell input keyevent %s' % key)
 
     def home(self):
         self.keyevent('KEYCODE_HOME')
+
+    def menu(self):
+        self.keyevent('KEYCODE_MENU')
+
+    def back(self):
+        self.keyevent('KEYCODE_BACK')
 
     def check_output(self, *args):
         cmds = self._assemble(*args)
@@ -252,7 +265,7 @@ class AndroidDeviceMinicap(DeviceMixin):
         self._watch_orientation()
         self.last_screenshot = None
 
-        for action in ('keyevent', 'home', 'back', 'menu', 'touch', 'swipe'):
+        for action in ('keyevent', 'home', 'back', 'menu', 'touch', 'swipe', 'pinchin', 'pinchout'):
             func = getattr(self._adb, action, None)
             if func is not None:
                 setattr(self, action, func)
