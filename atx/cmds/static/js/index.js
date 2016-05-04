@@ -1,6 +1,13 @@
 /* Javascript */
 var M = {};
 
+new Vue({
+  el: '#app',
+  data: {
+    message: "Hello vue"
+  }
+})
+
 $(function(){
   var blocklyDiv = document.getElementById('blocklyDiv');
   var workspace = Blockly.inject(blocklyDiv,

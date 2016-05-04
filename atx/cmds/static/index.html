@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <link rel="stylesheet" href="//oss.maxcdn.com/fancybox/2.1.5/jquery.fancybox.min.css">
     <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
-    <link rel="stylesheet" href="{{static_url('index.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/index.css')}}">
   </head>
   <body>
     <nav class="navbar navbar-default">
@@ -36,6 +36,9 @@
 
     <div class="container-fluid">
       <div class="col-md-12">
+<!--       <div id="app">
+        {{! message }}
+      </div> -->
         <!-- <div class="col-md-3">
           <h3>图片列表
             <button id="btn-imgrefresh" type="button" class="btn btn-default btn-sm">Refresh</button>
@@ -55,7 +58,7 @@
             {% end %}
           </ul>
         </div> -->
-        <div class="col-md-9">
+        <div id="left-panel" class="col-md-6">
           <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
               <a href="#blocklyDiv" aria-controls="blocklyDiv" role="tab" data-toggle="tab">Blockly</a>
@@ -91,7 +94,7 @@
             <pre class='console'></pre>
           </div>
         </div>
-        <div class="col-md-3">
+        <div id="right-panel" class="col-md-6">
           <div>
             <h4>Screen
               <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存</button>
@@ -106,7 +109,7 @@
             <div class='status-bar'>Status: <span></span></div>
             <!-- <pre class='code-python'></pre> -->
           </div>
-          <div id="console-right" style='display: none;'>
+          <div id="console-right" style='display: nosne;'>
             <h4>Console
               <button type="button" class="btn btn-default btn-xs btn-clear-console">Clear</button>
             </h4>
@@ -201,7 +204,8 @@
     <script src="//cdn.rawgit.com/codeskyblue/blockly/release/msg/js/en.js"></script>
     <script src="//cdn.rawgit.com/codeskyblue/blockly/release/python_compressed.js"></script>
 
-    <script src="{{static_url('index.js')}}"></script>
+    <script src="{{static_url('js/vue.min.js')}}"></script>
+    <script src="{{static_url('js/index.js')}}"></script>
     
     <!-- Google Analytics Code -->
     <script>
