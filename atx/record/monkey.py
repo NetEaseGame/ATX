@@ -6,7 +6,7 @@ import cv2
 import time
 import warnings
 import traceback
-from random import randint
+from random import randint, choice
 
 from scene_detector import SceneDetector
 
@@ -264,6 +264,46 @@ class StupidMonkey(Monkey):
 
     def do_swipe(self):
         pass
+
+class RandomContourMonkey(Monkey):
+
+    def do_touch(self):
+        width, height = 1080, 1920
+
+        screen = self.device.screenshot_cv2()
+        h, w = screen.shape[:2]
+        img = cv2.resize(screen, (w/2, h/2))
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        edges = cv2.Canny(gray, 80, 200)
+        _, thresh = cv2.threshold(edges, 0, 255, cv2.THRESH_OTSU)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        contours.sort(key=lambda cnt: len(cnt), reverse=True)
+
+        rects = []
+        for cnt in contours:
+            hull = cv2.convexHull(cnt)
+            hull_area = cv2.contourArea(hull)
+            x,y,w,h = cv2.boundingRect(cnt)
+            rect_area = float(w*h)
+            if w<20 or h<20 or rect_area<100:
+                continue
+            if hull_area/rect_area < 0.50:
+                continue
+            rects.append((x, y, x+w, y+h))
+            cv2.rectangle(img, (x, y), (x+w, y+h), 255, 2)
+
+        if not rects:
+            x, y = randint(1, width), randint(1, height)
+        else:
+            x1, y1, x2, y2 = choice(rects)
+            x, y = randint(x1, x2), randint(y1, y2)
+            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        cv2.imshow('img', img)
+        cv2.waitKey(1)
+        self.device.touch(x, y)
+
 
 if __name__ == '__main__':
     pass

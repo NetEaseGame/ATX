@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import scipy.fftpack
 from cv2 import cv
 
-from atx.record.monkey import Monkey, StupidMonkey
+from atx.record.monkey import Monkey, StupidMonkey, RandomContourMonkey
 from atx.device.android_minicap import AndroidDeviceMinicap
 
 def _binary_array_to_hex(arr):
@@ -453,24 +453,34 @@ def test_grid():
     cv2.imshow('grid', img)
     cv2.waitKey()
 
-def test_monkey():
+def _get_mini_dev():
     dev = AndroidDeviceMinicap()
     dev._adb.start_minitouch()
     time.sleep(3)
+    return dev
+
+def test_monkey():
+    dev = _get_mini_dev()
     probs = {'touch':5, 'swipe':1}
 
     m = Monkey(probs)
     m.run(dev, package='im.yixin', maxruns=100)
 
 def test_stupid_monkey():
-    dev = AndroidDeviceMinicap()
-    dev._adb.start_minitouch()
-    time.sleep(3)
-    probs = {'touch':5, 'swipe':1}
+    dev = _get_mini_dev()
+    probs = {'touch':5}
 
     m = StupidMonkey(probs, 'txxscene')
     m.run(dev, package='com.netease.txx.mi')
 
+def test_contour_monkey():
+    dev = _get_mini_dev()
+    probs = {'touch':5, 'swipe':1}
+
+    m = RandomContourMonkey(probs)
+    m.run(dev, package='com.netease.txx.mi')
+
 if __name__ == '__main__':
     # test_monkey()
-    test_stupid_monkey()
+    # test_stupid_monkey()
+    test_contour_monkey()
