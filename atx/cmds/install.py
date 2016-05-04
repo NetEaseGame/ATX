@@ -19,6 +19,8 @@ from atx.cmds import utils
 
 log = logutils.getLogger('install')
 DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
+__apks = dict(
+    utf8ime='http://7rfh09.com2.z0.glb.qiniucdn.com/Utf7Ime.apk')
 
 
 def clean(tmpdir):
@@ -39,7 +41,7 @@ def adb_pushfile(adb, filepath, remote_path):
             pb.refresh()
             # log.info("Progress %dM/%dM", get_file_size(remote_path) >>20, filesize >>20)
             pass
-        except (KeyboardInterrupt, SystemExit) as e:
+        except (KeyboardInterrupt, SystemExit):
             p.kill()
             raise
         except:
@@ -72,8 +74,13 @@ def adb_install(adb, remote_path):
         raise IOError("Adb install failed: %s" % stdout)
 
 
-def main(path, serial=None, host=None, port=None):
+def main(path, serial=None, host=None, port=None, start=False):
     adb = adbutils.Adb(serial, host, port)
+    
+    # use qiniu paths
+    if __apks.get(path):
+        path = __apks.get(path)
+
     if re.match(r'^https?://', path):
         tmpdir = tempfile.mkdtemp(prefix='atx-install-')
         atexit.register(clean, tmpdir)
@@ -94,5 +101,10 @@ def main(path, serial=None, host=None, port=None):
 
     log.info("Install ..., will take a few seconds")
     adb_install(adb, DEFAULT_REMOTE_PATH)
-    log.info("Done")
+    log.info("Clean _tmp.apk")
     adb_remove(adb, DEFAULT_REMOTE_PATH)
+
+    if start:
+        log.info("Start app '%s'" % package_name)
+        adb.cmd('shell', 'am', 'start', '-n', package_name+'/'+main_activity).wait()
+    log.info("Done")

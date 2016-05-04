@@ -75,7 +75,7 @@ def _apk_parse(args):
 
 
 def _apk_install(args):
-    install.main(args.path, serial=args.serial, host=args.host, port=args.port)
+    install.main(args.path, serial=args.serial, host=args.host, port=args.port, start=args.start)
 
 
 def _iosdeveloper(args):
@@ -122,6 +122,7 @@ def main():
 
     parser_ins = add_parser('install')
     parser_ins.add_argument('path', help='<apk file path | apk url path> (only support android for now)')
+    parser_ins.add_argument('--start', action='store_true', help='Start app when app success installed')
     parser_ins.set_defaults(func=_apk_install)
 
     parser_run = add_parser('run')

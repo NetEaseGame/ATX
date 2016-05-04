@@ -345,10 +345,17 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	2016-04-26 16:33:52.370 INFO  [install:  93] APK package name: com.netease.example
 	2016-04-26 16:33:52.370 INFO  [install:  94] APK main activity: com.netease.example.MainActivity
 	2016-04-26 16:33:52.371 INFO  [install:  96] Push file to android device
-	100% |====================| 5.88M/5.88M [1.89M/s]
+	100% |===========================================| 5.88M/5.88M [4.89M/s]
 	2016-04-26 16:33:57.521 INFO  [install:  99] Install ..., will take a few seconds
 	2016-04-26 16:34:08.179 INFO  [install: 101] Done
+
+	$ python -matx install --start example.apk
+	# Start app after installed.
 	```
+
+	另外install支持一些默认软件的安装，目前有 utf8ime
+
+	使用方法如 `python -matx install utf8ime`
 
 ## 配置项
 一般来说用默认的就好了，大部分都不需要改
