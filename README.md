@@ -452,7 +452,8 @@ click(20， 30）
 
 	```
 	adb kill-server
-	adb -P 5037 -a fork-server server
+	adb -P 5037 -a nodaemon server
+	# or: adb -P 5037 -a fork-server server
 	```
 
 	连接时指定远程机器的IP和端口号就好了
@@ -515,6 +516,15 @@ click(20， 30）
 
 	执行完代码后，把 `cloudtest` 这个目录发送到平台就好了。
 
+6. 遇到 IOError: RPC server not started!
+
+	卸载已有的应用，重新运行测试
+
+	```
+	adb uninstall com.github.uiautomator
+	adb uninstall com.github.uiautomator.test
+	```
+
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
 
@@ -533,6 +543,9 @@ click(20， 30）
 
 ## 相关文章
 1. [让adb install显示进度](https://testerhome.com/topics/4772)
+
+## Developer dashboards
+1. Platform Versions, Screen Size, Open GL Version <http://developer.android.com/intl/zh-cn/about/dashboards/index.html>
 
 ## Contribute
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。文档有错误的话，直接提Issue，或者提PR都可以。
