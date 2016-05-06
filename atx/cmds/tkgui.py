@@ -357,7 +357,7 @@ class CropIDE(object):
         
 
 def main(serial, **kwargs):
-    log.debug("GUI Started.")
+    log.debug("GUI Starting ...")
     d = atx.connect(serial, **kwargs)
     d.wakeup()
     gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)

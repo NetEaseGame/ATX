@@ -221,8 +221,10 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 文本的输入
 
+	```py
 	d.type("hello world")
 	d.type("atx", enter=True) # perform enter after input
+	```
 
 * 常用配置
 	

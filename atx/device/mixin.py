@@ -57,8 +57,9 @@ class WatcherItem(object):
     w.on('button.png').click('enter.png')
     w.run()
     """
-    def __init__(self, dev, handler, pattern):
+    def __init__(self, dev, done, handler, pattern):
         self._dev = dev
+        self._done = done # list
         self._handler = handler
         self._hooks = handler['hooks'] = []
         self._conditions = handler['conditions'] = [_Condition(pattern, True)]
@@ -66,10 +67,12 @@ class WatcherItem(object):
     def on(self, pattern):
         """Trigger when pattern exists"""
         self._conditions.append(_Condition(pattern, True))
+        return self
 
     def on_not(self, pattern):
         """Trigger when pattern not exists"""
         self._conditions.append(_Condition(pattern, False))
+        return self
 
     def do(self, func):
         """Trigger with function call
@@ -100,6 +103,18 @@ class WatcherItem(object):
                 self._dev.click(*event.pos)
         return self.do(_inner)
 
+    def click_image(self, *args, **kwargs):
+        """ async trigger click_image """
+        def _inner(event):
+            return self._dev.click_image(*args, **kwargs)
+
+        return self.do(_inner)
+
+    def quit(self):
+        def _inner(event):
+            self._done[0] = True
+            # raise RuntimeError("Not finished yet.")
+        return self.do(_inner)
 
 class Watcher(object):
     ACTION_CLICK = 1 <<0
@@ -114,49 +129,57 @@ class Watcher(object):
         self._dev = device
         self._run = False
         self._stored_selector = None
-        self._wids = []
+
+        self._wids = [] # store orders
         self._handlers = {}
+        self._done = [False]
 
         self.name = name
         self.touched = {}
         self.timeout = timeout
 
-    def on_pattern(self, pattern):
+    def on(self, pattern):
+        # TODO(ssx): maybe an array is just enough
         watch_id = str(uuid.uuid1())
         self._wids.append(watch_id)
         handler = self._handlers[watch_id] = {}
-        return WatcherItem(self._dev, handler, pattern)
+        return WatcherItem(self._dev, self._done, handler, pattern)
 
     def _do_hook(self, screen):
         patterns = set()
-        for handler in self._handlers:
-            for c in handler.conditions:
+        for handler in self._handlers.values():
+            for c in handler['conditions']:
                 patterns.add(c.pattern)
 
+        # TODO(ssx): here can have a better optimized way.
+        # no need to match all pattern all the time
         matches = {}
         for pattern in patterns:
-            matches[pattern] = self._match(pattern)
+            matches[pattern] = self._match(pattern, screen)
+        print matches
 
         for wid in self._wids:
-            handler = self._handlers[wid]
-            pos = self._match(handler.pattern)
-            if pos is None:
-                continue
+            hdlr = self._handlers[wid]
+            # pos = self._match(handler.pattern)
+            # if pos is None:
+            #     continue
 
             last_pos = None
-            for c in handler.conditions:
+            ok = True
+            for c in hdlr['conditions']:
                 last_pos = matches[c.pattern]
                 exists = last_pos is not None
                 if exists != c.exists:
+                    ok = False
                     break
-            else:
-                for fn in handler.hooks:
+            if ok:
+                for fn in hdlr['hooks']:
                     fn(Watcher.Event(None, last_pos))
 
     def run(self):
-        self._run = True
+        # self._run = True
         start_time = time.time()
-        while self._run:
+        while not self._done[0]:
             screen = self._dev.screenshot()
             self._do_hook(screen)
 
@@ -167,29 +190,29 @@ class Watcher(object):
                 sys.stdout.flush()
             sys.stdout.write('\n')
 
-    def on(self, pattern=None, text=None):
-        """Trigger when some object exists
-        Args:
-            image: image filename or Pattern
-            text: For uiautomator
+    # def on_old(self, pattern=None, text=None):
+    #     """Trigger when some object exists
+    #     Args:
+    #         image: image filename or Pattern
+    #         text: For uiautomator
 
-        Returns:
-            None
+    #     Returns:
+    #         None
 
-        Raises:
-            TypeError
-        """
-        if text:
-            self._stored_selector = self._dev(text=text)
-        elif pattern is not None:
-            selector = self._dev.pattern_open(pattern)
-            if selector is None:
-                raise IOError("Not found pattern: {}".format(pattern))
-            self._stored_selector = selector
-        else:
-            raise TypeError("unsupported type: %s", pattern)
+    #     Raises:
+    #         TypeError
+    #     """
+    #     if text:
+    #         self._stored_selector = self._dev(text=text)
+    #     elif pattern is not None:
+    #         selector = self._dev.pattern_open(pattern)
+    #         if selector is None:
+    #             raise IOError("Not found pattern: {}".format(pattern))
+    #         self._stored_selector = selector
+    #     else:
+    #         raise TypeError("unsupported type: %s", pattern)
             
-        return self
+    #     return self
 
     def touch(self):
         return self.click()
@@ -227,12 +250,18 @@ class Watcher(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self._run_watch()
+        print self._handlers
+        # self._run_watch()
+        self.run()
 
     def _match(self, selector, screen):
-        ''' returns position(x, y) or None'''
-        if isinstance(selector, Pattern):
-            ret = self._dev.exists(selector.image, screen=screen)
+        ''' Find position for AtxPattern or UIAutomator Object
+
+        Return:
+            position(x, y) or None
+        '''
+        if isinstance(selector, Pattern) or isinstance(selector, basestring):
+            ret = self._dev.match(selector, screen=screen)
             log.debug('watch match: %s, confidence: %s', selector, ret)
             if ret is None:
                 return None
@@ -245,33 +274,33 @@ class Watcher(object):
             y = (info['bottom'] + info['top']) / 2
             return (x, y)
 
-    def _hook(self, screen):
-        for evt in self._events:
-            pos = self._match(evt.selector, screen)
-            if pos is None:
-                continue
+    # def _hook(self, screen):
+    #     for evt in self._events:
+    #         pos = self._match(evt.selector, screen)
+    #         if pos is None:
+    #             continue
 
-            if callable(evt.action):
-                evt.action(Watcher.Event(evt.selector, pos))
-            elif evt.action == Watcher.ACTION_CLICK:
-                log.info('Watch match %s, click: %s', evt.selector, pos)
-                self._dev.click(*pos)
-            elif evt.action == Watcher.ACTION_QUIT:
-                self._run = False
+    #         if callable(evt.action):
+    #             evt.action(Watcher.Event(evt.selector, pos))
+    #         elif evt.action == Watcher.ACTION_CLICK:
+    #             log.info('Watch match %s, click: %s', evt.selector, pos)
+    #             self._dev.click(*pos)
+    #         elif evt.action == Watcher.ACTION_QUIT:
+    #             self._run = False
 
-    def _run_watch(self):
-        self._run = True
-        start_time = time.time()
+    # def _run_watch(self):
+    #     self._run = True
+    #     start_time = time.time()
         
-        while self._run:
-            screen = self._dev.screenshot()
-            self._hook(screen)
-            if self.timeout is not None:
-                if time.time() - start_time > self.timeout:
-                    raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
-                sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-                sys.stdout.flush()
-        sys.stdout.write('\n')
+    #     while self._run:
+    #         screen = self._dev.screenshot()
+    #         self._hook(screen)
+    #         if self.timeout is not None:
+    #             if time.time() - start_time > self.timeout:
+    #                 raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+    #             sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+    #             sys.stdout.flush()
+    #     sys.stdout.write('\n')
 
 
 HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs'])
