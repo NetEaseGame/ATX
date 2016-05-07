@@ -8,8 +8,11 @@ import argparse
 import functools
 import json
 
-from atx.cmds import tkgui, minicap, tcpproxy, webide, run, iosdeveloper, install
 import atx.androaxml as apkparse
+
+from atx.cmds import run
+from atx.cmds import iosdeveloper
+from atx.cmds import install
 
 
 def parser(name=None, debug=False):
@@ -46,18 +49,22 @@ def parser_gui(serial, host, port, path):
 
 
 def _gui(args):
+    from atx.cmds import tkgui
     tkgui.main(args.serial, host=args.host)
 
 
 def _minicap(args):
+    from atx.cmds import minicap
     minicap.install(args.serial, host=args.host, port=args.port)
 
 
 def _tcpproxy(args):
+    from atx.cmds import tcpproxy
     tcpproxy.main(local_port=args.forward, listen_port=args.listen)
 
 
 def _webide(args):
+    from atx.cmds import webide
     webide.main(open_browser=(not args.no_browser), port=args.web_port, adb_host=args.host, adb_port=args.port)
 
 

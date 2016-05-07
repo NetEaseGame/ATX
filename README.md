@@ -150,7 +150,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	```
 
 	```sh
-	$ python -c 'import atx; atx.connect('EFF153')
+	$ python -c 'import atx; atx.connect("EFF153")'
 
 	# 等价写法
 	$ export ATX_ADB_SERIALNO="EFF153"
