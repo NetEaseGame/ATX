@@ -6,3 +6,4 @@ maproxy==0.0.12
 Pillow>=2.7.0
 subprocess32==3.2.7
 tqdm==4.5.0
+numpy==1.11.0
