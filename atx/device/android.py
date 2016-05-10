@@ -92,6 +92,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self.last_screenshot = None
 
     @property
+    def serial(self):
+        """ Android Device Serial Number """
+        return self._serial
+    
+    @property
     def wlan_ip(self):
         """ Wlan IP """
         return self.adb_shell(['getprop', 'dhcp.wlan0.ipaddress']).strip()
@@ -204,6 +209,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         finally:
             base.remove_force(tmp_file)
 
+    @hook_wrap(consts.EVENT_CLICK)
     def click(self, x, y):
         """
         Touch specify position

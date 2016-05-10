@@ -156,7 +156,6 @@ class Watcher(object):
         matches = {}
         for pattern in patterns:
             matches[pattern] = self._match(pattern, screen)
-        print matches
 
         for wid in self._wids:
             hdlr = self._handlers[wid]
@@ -250,7 +249,7 @@ class Watcher(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        print self._handlers
+        # print self._handlers
         # self._run_watch()
         self.run()
 
@@ -560,6 +559,7 @@ class DeviceMixin(object):
             sys.stdout.write('\n')
             raise errors.AssertExistsError('image not found %s' %(pattern,))
 
+    @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_image(self, pattern, timeout=20.0, wait_change=False):
         """Simulate click according image position
 
