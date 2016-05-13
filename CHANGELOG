@@ -1,6 +1,32 @@
 CHANGES
 =======
 
+* update doc, add taskqueue for ios
+* add report for atx
+* add atx.yml runner
+* add more hook_wrap
+* move dep to their own
+* use numpy version on pypi
+* catch subprocess.CalledError and use new watch instead of old one
+* use atx-uiautomator instead uiautomator
+* use vue to toggle landscape
+* more good structured web page
+* fix touch position according to screen orientation
+* add random contour monkey. use random contour rect
+* add bruteforce monkey
+* add start app after install
+* merge type code, forgot when edited
+* add monkey, even through not very stable
+* save template mask
+* rename device_mixin to mixin
+* add keyevent api, type support space
+* fix errors found by pyflakes
+* add scene detector
+
+1.0.9
+-----
+
+* update change log
 * add ios utils
 * update requirements
 * change some method of adb to static

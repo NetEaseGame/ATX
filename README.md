@@ -265,7 +265,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	```
 
 
-* 监控事件
+* 监控事件 (这个挺好用的)
 
 	```py
 	# watcher, trigger when screenshot is called
@@ -275,7 +275,8 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	timeout = 50 # 50s
 	with d.watch('enter game', timeout) as w:
-		w.on('enter-game').click()
+		w.on('enter-game.png').click()
+		w.on('notification.png').click('confirm.png')
 		w.on('inside.png').quit()
 		w.on(text='Login').quit() # UI Component
 		w.on('outside.png').do(foo)
