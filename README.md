@@ -295,6 +295,34 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# out: HookEvent(flag=8, args=(), kwargs={})
 	```
 
+## 生成测试报告
+注：该功能还不完善，因为部分URL没有改掉，所有外网用户还不能使用
+
+### Usage
+```py
+import atx
+from atx.ext import report # report lib
+
+
+d = d.connect()
+report.listen(d, save_dir='report')
+d.click(200, 200)
+```
+
+After done, HTML report will be saved to report dir. with such directory
+
+```
+report/
+  |-- index.html
+  `-- images/
+      |-- before_123123123123.png
+      |-- ...
+```
+
+open `index.html` with browser.
+
+![report](docs/report.png)
+
 ## 命令行工具
 为了方便测试以及开发，atx封装了很多的命令行工具
 

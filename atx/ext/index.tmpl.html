@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" /> -->
+  <title>Atx Web IDE</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="http://gohttp.nie.netease.com/qard-libs/libs/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="http://gohttp.nie.netease.com/qard-libs/libs/fancybox/2.1.5/jquery.fancybox.min.css">
+  <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
+  <style>
+  body {
+    padding-top: 70px;
+  }
+  
+  .info-name {
+    padding-right: 1em;
+    display: inline-block;
+    width: 7em;
+    font-family: 'Courier New';
+    font-weight: 700;
+  }
+  
+  ul.device-info {
+    padding-left: 10px;
+  }
+  
+  ul.device-info > li {
+    list-style-type: none;
+  }
+  
+  div.image-wrapper {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  span.positioner {
+    position: absolute;
+    display: block;
+  }
+  
+  span.finger {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    width: 8mm;
+    height: 8mm;
+    top: -4mm;
+    left: -4mm;
+    pointer-events: none;
+    border-width: 1px;
+    border-color: #464646;
+    opacity: 0.5;
+    background-color: red;
+  }
+  
+  .halfsize {
+    -moz-transform: scale(0.5);
+    -webkit-transform: scale(0.5);
+    transform: scale(0.5);
+  }
+  
+  a.anchor {
+    display: block;
+    position: relative;
+    top: -70px;
+    visibility: hidden;
+    width: 0px;
+    height: 0px;
+  }
+  
+  span.success {
+    color: white;
+    background-color: green;
+    padding: 3px;
+  }
+  
+  span.failure {
+    color: white;
+    background-color: red;
+    padding: 3px;
+  }
+  </style>
+</head>
+
+<body id="app">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">ATX Report</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="/">Home</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+              Actions <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" role="menu">
+              <li v-for="step in steps">
+                <a href="#{{step.time}}">{{step.time}} {{step.action}}</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        基本信息
+      </div>
+      <div class="panel-body">
+        <div class="col-md-6">
+          <ul class="device-info">
+            <li><span class="info-name">SerialNo</span>{{device.serial}}</li>
+            <li><span class="info-name">Brand</span>{{device.product_brand}}</li>
+            <li><span class="info-name">StepCount</span>{{step_count}}</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="device-info">
+            <li><span class="info-name">Display</span>{{device.display.width}}x{{device.display.height}}</li>
+            <li>
+              <span class="info-name">Result</span>
+              <span v-bind:class="test_result ? 'success' : 'failure'">{{test_result ? "PASS": "FAIL"}}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!-- steps -->
+    <div id="steps">
+      <div v-for="step in steps" class="panel" v-bind:class="step.success ? 'panel-success': 'panel-danger'">
+        <div class="panel-heading">
+          <a class="anchor" href="#{{step.time}}" name="{{step.time}}">$</a>
+          <i>{{step.time}}s</i> {{step.action}}
+        </div>
+        <div class="panel-body">
+          <template v-if="step.action == 'click'">
+            <p>
+              <code>{{step.action}}({{step.position.x + ", " + step.position.y}})</code>
+            </p>
+            <div class="col-md-6">
+              <a class="fancybox" title="Before click" rel="{{step.time}}" v-bind:href="step.screen_before">
+                <div class="image-wrapper">
+                  <span class="positioner" v-bind:style="step.position | displayPosition">
+                  <span class="finger"></span>
+                  </span>
+                  <img width="100%" v-bind:src="step.screen_before" />
+                </div>
+                <p class="text-center">Before click</p>
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a class="fancybox" title="After click" rel="{{step.time}}" v-bind:href="step.screen_after">
+                <div class="image-wrapper">
+                  <img width="100%" v-bind:src="step.screen_after" />
+                </div>
+                <p class="text-center">After click</p>
+              </a>
+            </div>
+          </template>
+          <template v-if="step.action == 'click_image'">
+            <div>
+              点击图片
+              <a class="fancybox" v-bind:href="step.target">
+                <img class="halfsize" v-bind:src="step.target" />
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a class="fancybox" title="Before click" rel="{{step.time}}" v-bind:href="step.screen_before">
+                <div class="image-wrapper">
+                  <span class="positioner" v-bind:style="step.position | displayPosition">
+                  <span class="finger"></span>
+                  </span>
+                  <img width="100%" v-bind:src="step.screen_before" />
+                </div>
+                <p class="text-center">Before click</p>
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a class="fancybox" title="After click" rel="{{step.time}}" v-bind:href="step.screen_after">
+                <div class="image-wrapper">
+                  <img width="100%" v-bind:src="step.screen_after" />
+                </div>
+                <p class="text-center">After click</p>
+              </a>
+            </div>
+          </template>
+          <template v-if="step.action == 'print'">
+            {{step.message}}
+          </template>
+          <template v-if="step.action == 'traceback'">
+            <pre>{{step.content}}</pre>
+          </template>
+        </div>
+      </div>
+    </div>
+    <!-- from -->
+    <blockquote>
+      <p>Make the mobile game test automated, release QAers from the repeated work.</p>
+      <footer>Powered by
+        <a href="https:http://github.com/codeskyblue/AutomatorX">
+          <cite title="Short for AutomatorX">ATX</cite>
+        </a>
+      </footer>
+    </blockquote>
+  </div>
+</body>
+<script src="http://gohttp.nie.netease.com/qard-libs/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="http://gohttp.nie.netease.com/qard-libs/libs/mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+<script src="http://gohttp.nie.netease.com/qard-libs/libs/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+<!-- <script src="//cdn.rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script> -->
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://gohttp.nie.netease.com/qard-libs/libs/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="http://gohttp.nie.netease.com/qard-libs/libs/vue/1.0.22/vue.min.js"></script>
+<script>
+$(function() {
+  $(".panel-heading").on('click', function() {
+    $(this).next().toggle();
+  })
+
+  var json = $$data$$;
+
+  Vue.filter('displayPosition', function(pos) {
+    var x = (pos.x * 100 / this.device.display.width).toFixed(2) + '%';
+    var y = (pos.y * 100 / this.device.display.height).toFixed(2) + '%';
+    return "left: " + x + "; top: " + y + ";"
+  })
+
+  Vue.nextTick(function() {
+    $(".fancybox").fancybox()
+  })
+
+  // $.getJSON("result.json", function(json) {
+  // })
+
+  new Vue({
+    el: '#app',
+    data: json,
+    computed: {
+      step_count: function() {
+        return this.steps.length;
+      },
+      test_result: function() {
+        return !this.steps.some(function(v) {
+          return v.success === false
+        })
+      }
+    }
+  })
+
+})
+</script>
+<script src="/_d/js"></script>
+
+</html>

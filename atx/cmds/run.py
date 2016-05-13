@@ -14,23 +14,33 @@ import yaml
 import subprocess32 as subprocess
 
 
-CONFIG_FILE = 'atx.yml'
-
-
 def json2obj(data):
     return json.loads(json.dumps(data), object_hook=lambda d: Namespace(**d))
 
 
+def must_exec(*cmds, **kwargs):
+    shell = kwargs.get('shell', False)
+    cmdline = cmds[0] if shell else subprocess.list2cmdline(cmds)
+    ret = os.system(cmdline)
+    if ret != 0:
+        raise SystemExit("Execute '%s' error" % cmdline)
+
+
 def install(src):
-    print src
+    must_exec('python', '-matx', 'install', src)
 
 
 def runtest(scripts):
-    print scripts
+    for script in scripts:
+        must_exec(script, shell=True)
 
 
 def notify_popo(users, message):
-    print users, message
+    print 'Skip, todo'
+    for user in users:
+        pass
+    # maybe should not put code here
+    # print users, message
 
 
 def main(config_file):
@@ -40,19 +50,20 @@ def main(config_file):
     with open(config_file, 'rb') as f:
         cfg = json2obj(yaml.load(f))
     
-    if hasattr(cfg, 'installation'):
-        install(cfg.installation)
+    try:
+        if hasattr(cfg, 'installation'):
+            install(cfg.installation)
 
-    if hasattr(cfg, 'script'):
-        if isinstance(cfg.script, basestring):
-            scripts = [cfg.script]
-        else:
-            scripts = cfg.script
-        runtest(scripts)
-
-    if hasattr(cfg, 'notification'):
-        if hasattr(cfg.notification, 'popo'):
-            notify_popo(cfg.notification.popo, 'hi')
+        if hasattr(cfg, 'script'):
+            if isinstance(cfg.script, basestring):
+                scripts = [cfg.script]
+            else:
+                scripts = cfg.script
+            runtest(scripts)
+    finally:
+        if hasattr(cfg, 'notification'):
+            if hasattr(cfg.notification, 'popo'):
+                notify_popo(cfg.notification.popo, 'hi')
 
 
 if __name__ == '__main__':
