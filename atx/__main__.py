@@ -94,7 +94,7 @@ def _record(args):
     record.main()
 
 def _run(args):
-    run.main(args.filename)
+    run.main(args.config_file)
 
 
 def main():
@@ -133,7 +133,7 @@ def main():
     parser_ins.set_defaults(func=_apk_install)
 
     parser_run = add_parser('run')
-    parser_run.add_argument('filename', help='Python script filename')
+    parser_run.add_argument('-f', dest='config_file', default='atx.yml', help='config file')
     parser_run.set_defaults(func=_run)
 
     parser_ios = add_parser('iosdeveloper')

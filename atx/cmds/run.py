@@ -1,37 +1,59 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# python simple interpreter
+# parse and run atx.yml
 #
-from __future__ import print_function
+# from __future__ import print_function
 
+import os
+import sys
 import json
-import time
+from argparse import Namespace
+
+import yaml
+import subprocess32 as subprocess
 
 
-def interpreter(*args):
-    print('TRACE:', args)
-    time.sleep(0.5)
+CONFIG_FILE = 'atx.yml'
 
 
-def main(filename):
-    code = ''
-    lineno = 0
-    for line in open(filename):
-        lineno += 1
-        contain_code = False
-        if line.strip() and not line.strip().startswith('#'):
-            contain_code = True
-        if line.strip().startswith('except'):
-            contain_code = False
-        if line.find('__future__') != -1:
-            contain_code = False
-        prefix = line[:len(line) - len(line.lstrip())]
-        if contain_code:
-            code += prefix+'interpreter({}, {})\n'.format(lineno, json.dumps(line.strip()))
-        code += line
+def json2obj(data):
+    return json.loads(json.dumps(data), object_hook=lambda d: Namespace(**d))
 
-    exec(code, {'__name__': '__main__', 'interpreter': interpreter})
+
+def install(src):
+    print src
+
+
+def runtest(scripts):
+    print scripts
+
+
+def notify_popo(users, message):
+    print users, message
+
+
+def main(config_file):
+    if not os.path.exists(config_file):
+        sys.exit('config file (%s) not found.' % config_file)
+
+    with open(config_file, 'rb') as f:
+        cfg = json2obj(yaml.load(f))
+    
+    if hasattr(cfg, 'installation'):
+        install(cfg.installation)
+
+    if hasattr(cfg, 'script'):
+        if isinstance(cfg.script, basestring):
+            scripts = [cfg.script]
+        else:
+            scripts = cfg.script
+        runtest(scripts)
+
+    if hasattr(cfg, 'notification'):
+        if hasattr(cfg.notification, 'popo'):
+            notify_popo(cfg.notification.popo, 'hi')
+
 
 if __name__ == '__main__':
-    main('tcpproxy.py')
+    main('atx.yml')
