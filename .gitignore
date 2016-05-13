@@ -42,4 +42,6 @@ _site
 apps
 __cache__
 *.png
+.eggs
+.cache
 AUTHORS

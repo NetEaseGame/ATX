@@ -16,11 +16,10 @@ ATX is short for _AutomatorX_
 4. 对于游戏测试，可以使用图像缩放的方法适应不同分辨率的手机
 
 ## 历史起源
-改版自一个老项目 <https://github.com/netease/airtest>
-airtest已经有人用，但是这次重构，估计好多api都会变了。最好的办法还是重建一个项目比较好
+以前写过一个项目 <https://github.com/netease/airtest>，atx是airtest的重构版本,。
+因为原版代码冗余太严重，维护成本太高，所以就新开了一个新的项目。
 
-另外airtest中的很多代码不符合python编码规范, 冗余的功能夹杂在里面，很不好维护。
-为了能够重现该软件昔日的光芒，是时候擦亮代码，重出江湖了。
+新版有哪些新的功能呢？
 
 ### 与原版主要变化
 * 简化安装方式，只需要安装opencv以及通过pip安装atx 无其他依赖
@@ -34,16 +33,16 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 * 移除性能监控功能，暂时移除iOS支持
 * 图像匹配默认使用模版匹配，将SIFT匹配改为可选
 
-## 依赖
+## Dependency
 1. python2.7
-2. opencv2.4, numpy
+2. opencv2.4
 3. Android4.1+
 
-## 安装
+## Installation
 1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
 
 	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本，如果pip安装不上，就需要把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)
-	安装方法很简单，例如 `pip install np??.whl`, pip最好版本高一点(>=8.1.0)，避免出错
+	安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错
 
 	```
 	# For Win32
@@ -83,7 +82,7 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 
 	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 
-## 快速入门
+## Quick start
 1. 连接一台安卓手机 (4.1+)
 
 	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
@@ -122,7 +121,7 @@ airtest已经有人用，但是这次重构，估计好多api都会变了。最�
 
 	可以使用的接口还有很多，请接着往下看
 
-## 使用举例
+## Examples
 ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 接口可以参考sphinx自动生成文档
@@ -295,7 +294,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# out: HookEvent(flag=8, args=(), kwargs={})
 	```
 
-## 生成测试报告
+## Generate HTML report
 注：该功能还不完善，因为部分URL没有改掉，所有外网用户还不能使用
 
 ### Usage
@@ -306,6 +305,7 @@ from atx.ext import report # report lib
 
 d = d.connect()
 report.listen(d, save_dir='report')
+d.screenshot()
 d.click(200, 200)
 ```
 
@@ -323,7 +323,7 @@ open `index.html` with browser.
 
 ![report](docs/report.png)
 
-## 命令行工具
+## Command line tools
 为了方便测试以及开发，atx封装了很多的命令行工具
 
 如启动gui的命令是 `python -matx gui`, 命令有很多可以通过 `python -matx --help` 查看
@@ -385,10 +385,10 @@ open `index.html` with browser.
 
 	使用方法如 `python -matx install utf8ime`
 
-## 配置项
+## Configuration
 一般来说用默认的就好了，大部分都不需要改
 
-## 接口说明
+## API documentation
 其实看ReadTheDocs上的文档更好一点，这里也不打算列出来多少接口 [Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
 
 ### 连接设备
@@ -569,13 +569,13 @@ click(20， 30）
 3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 4. Blockly <https://github.com/codeskyblue/blockly>
 
-## 相关文章
+## Articles
 1. [让adb install显示进度](https://testerhome.com/topics/4772)
 
 ## Developer dashboards
 1. Platform Versions, Screen Size, Open GL Version <http://developer.android.com/intl/zh-cn/about/dashboards/index.html>
 
-## Contribute
+## Contribution
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。文档有错误的话，直接提Issue，或者提PR都可以。
 由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。但是如果不提交Issue，说不定我真的会忘掉。
 
