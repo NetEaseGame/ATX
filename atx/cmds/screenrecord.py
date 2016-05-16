@@ -11,7 +11,6 @@ import numpy as np
 from atx import adb2 as adb
 
 def main(output='out.avi', scale=0.5, portrait=False, overwrite=True, verbose=True):
-    print output, scale, portrait, overwrite, verbose
     if os.path.exists(output):
         print 'output file exists!'
         if overwrite:
@@ -43,9 +42,9 @@ def main(output='out.avi', scale=0.5, portrait=False, overwrite=True, verbose=Tr
     tic = time.clock()
     toc = time.clock()
     while True:
-        time.sleep(1.0/fps - max(toc-tic, 0))
-        tic = time.clock()
         try:
+            time.sleep(1.0/fps - max(toc-tic, 0))
+            tic = time.clock()
             img = adb.screenshot()
             h, w = img.shape[:2]
             if h*vw == w*vh:
