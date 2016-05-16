@@ -96,6 +96,13 @@ def _record(args):
 def _run(args):
     run.main(args.config_file)
 
+def _screen(args):
+    from atx.cmds import screen
+    screen.main(args.scale)
+
+def _screenrecord(args):
+    from atx.cmds import screenrecord
+    screenrecord.main(args.output, args.scale, args.portrait, args.overwrite, args.verbose)
 
 def main():
     ap = argparse.ArgumentParser(
@@ -145,6 +152,18 @@ def main():
 
     parse_monkey = add_parser('monkey')
     parse_monkey.set_defaults(func=_monkey)
+
+    parse_scr = add_parser('screen')
+    parse_scr.add_argument('-s', '--scale', required=False, default=0.5, help='image scale, default is 0.5')
+    parse_scr.set_defaults(func=_screen)
+
+    parse_scrrec = add_parser('screenrecord')
+    parse_scrrec.add_argument('-o', '--output', required=False, default='out.avi', help='video output path, default is out.avi')
+    parse_scrrec.add_argument('--overwrite', action='store_true', help='overwrite video output file.')
+    parse_scrrec.add_argument('-s', '--scale', required=False, default=0.5, help='image scale for video, default is 0.5')
+    parse_scrrec.add_argument('-q', '--quiet', dest='verbose', action='store_false', help='display screen while recording.')
+    parse_scrrec.add_argument('--portrait', action='store_true', help='set video framesize to portrait instead of landscape.')
+    parse_scrrec.set_defaults(func=_screenrecord)
 
     args = ap.parse_args()
     args.func(args)

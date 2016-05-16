@@ -2,11 +2,16 @@
 
 import os
 import sys
+import traceback
+import Tkinter as tk
+import tkSimpleDialog
+import tkMessageBox
+
+mswindows = (sys.platform == "win32")
+
 import win32api
 import win32con
 import win32gui
-import traceback
-import Tkinter as tk
 
 from atx.device.android import AndroidDevice
 from atx.device.android_minicap import AndroidDeviceMinicap
@@ -32,8 +37,11 @@ class SystemTray(object):
         wc.hInstance = hinst = win32api.GetModuleHandle(None)
         wc.lpszClassName = name.title()
         wc.lpfnWndProc = wndproc
-        class_atom = win32gui.RegisterClass(wc)
-        self.hwnd = win32gui.CreateWindow(wc.lpszClassName, "", win32con.WS_POPUP, 0,0,1,1, parent, 0, hinst, None)
+        try:
+            class_atom = win32gui.RegisterClass(wc)
+        except:
+            pass
+        self.hwnd = win32gui.CreateWindow(wc.lpszClassName, "", win32con.WS_POPUP, 0,0,1,1, 0, 0, hinst, None)
         win32gui.UpdateWindow(self.hwnd)
 
         if icon_path is not None and os.path.isfile(icon_path):
@@ -70,10 +78,11 @@ class SystemTray(object):
 
     def on_destroy(self, hwnd, msg, wp, lp):
         win32gui.Shell_NotifyIcon(win32gui.NIM_DELETE, (self.hwnd, 0))
-        win32gui.PostMessage(self.parent, win32con.WM_CLOSE, 0, 0)
+        # win32gui.PostMessage(self.parent, win32con.WM_CLOSE, 0, 0)
         return True
 
     def on_command(self, hwnd, msg, wp, lp):
+        print 1111111
         cid = win32api.LOWORD(wp)
         if not self.commands.get(cid):
             print "Unknown command -", cid
@@ -103,30 +112,101 @@ class SystemTray(object):
             win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
         return True
 
+    # def create_menu(self, menu, menu_options):
+    #     for option_text, option_icon, option_action, option_id in menu_options[::-1]:
+    #         if option_icon:
+    #             option_icon = self.prep_menu_icon(option_icon)
+            
+    #         if option_id in self.menu_actions_by_id:                
+    #             item, extras = win32gui_struct.PackMENUITEMINFO(text=option_text,
+    #                                                             hbmpItem=option_icon,
+    #                                                             wID=option_id)
+    #             win32gui.InsertMenuItem(menu, 0, 1, item)
+    #         else:
+    #             submenu = win32gui.CreatePopupMenu()
+    #             self.create_menu(submenu, option_action)
+    #             item, extras = win32gui_struct.PackMENUITEMINFO(text=option_text,
+    #                                                             hbmpItem=option_icon,
+    #                                                             hSubMenu=submenu)
+    #             win32gui.InsertMenuItem(menu, 0, 1, item)
+
+class SelectDeviceDialog(tkSimpleDialog.Dialog):
+    def body(self, master):
+        print 'SelectDeviceDialog'
+        box = tk.Frame(master)
+        self.btn_and = tk.Button(box, text='Android', command=self.show_android_device)
+        self.btn_and.pack(side=tk.LEFT, padx=10)
+        self.btn_win = tk.Button(box, text='Windows', command=self.show_windows_device)
+        self.btn_win.pack(side=tk.LEFT, padx=10)
+        box.pack()
+        self.listbox = tk.Listbox(master, width=50, height=10, selectmode=tk.SINGLE)
+        self.listbox.pack()
+
+        self.listbox.bind('<Double-Button-1>', self.ok)
+
+        self.update_idletasks()
+        self.show_android_device()
+
+    def apply(self, event=None):
+        sel = self.listbox.curselection()
+        if not sel:
+            return
+        idx = sel[0]
+        self.result = self.devices[idx]
+        print self.result
+
+    def show_android_device(self):
+        self.btn_and.config(relief=tk.SUNKEN, state=tk.ACTIVE)
+        self.btn_win.config(relief=tk.RAISED, state=tk.NORMAL)
+        self.device_class = 'android'
+        self.devices = ['sdfsfsf xiaomi IV', 'sdfsdfsf hasdf wx']
+        self.listbox.delete(0, tk.END)
+        for d in self.devices:
+            self.listbox.insert(tk.END, d)
+
+    def show_windows_device(self):
+        self.btn_win.config(relief=tk.SUNKEN, state=tk.ACTIVE)
+        self.btn_and.config(relief=tk.RAISED, state=tk.NORMAL)
+        self.device_class = 'windows'
+        self.devices = ['window-%d' % i for i in range(100)]
+        self.listbox.delete(0, tk.END)
+        for d in self.devices:
+            self.listbox.insert(tk.END, d)
+
 class RecorderGUI(object):
     def __init__(self, device=None):
         self._device = device
         self._recorder = None
+        self.recording = False
         self._root = root = tk.Tk()
 
         root.protocol("WM_DELETE_WINDOW", self.destroy)
 
+        self.tray = None
         def calllater():
-            icon_path = os.path.join(__dir__, 'static', 'recorder.ico')
-            commands  = [
-                ('Choose Device', self.choose_device),
-                ("Start Record", self.start_record),
-                ("Stop Record", self.stop_record),
-            ]
-            tray = SystemTray(root.winfo_id(), "recorder", commands, icon_path)
-            tray.balloon('hello')
+            self.create_tray()
 
-        root.after(1000, calllater)
+        tk.Button(root, text='choose', command=self.choose_device).pack()
+
+        root.after(200, calllater)
 
         # no window for now.
         root.withdraw()
 
         # need to handle device event
+
+    def create_tray(self):
+        icon_path = os.path.join(__dir__, 'static', 'recorder.ico')
+        commands  = [
+            ('Choose Device', self.choose_device),
+            ("Start Record", self.start_record),
+            ("Stop Record", self.stop_record),
+        ]
+        tray = SystemTray(self._root.winfo_id(), "recorder", commands, icon_path)
+        self.tray = tray
+        tray.balloon('hello')
+        win32gui.PumpMessages()
+        self.tray = None
 
     def destroy(self):
         print "root destroy"
@@ -141,8 +221,14 @@ class RecorderGUI(object):
         except KeyboardInterrupt:
             self.destroy()
 
-    def choose_device(self):
-        pass
+    def choose_device(self, event=None):
+        print 1111111, self.tray
+        win32gui.PostMessage(self.tray.hwnd, win32con.WM_CLOSE, 0, 0)
+        # self.tray.destroy()
+        # self._root.deiconify()
+        d = SelectDeviceDialog(self._root)
+        self.create_tray()
+        print d.result
 
     def start_record(self):
         if not self.check_recorder():
