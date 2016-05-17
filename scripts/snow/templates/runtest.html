@@ -1,0 +1,13 @@
+{% extends "layout.html" %} {% block js %}
+<script type="text/javascript" src="{{static_url('js/jquery.form.min.js')}}"></script>
+<script type="text/javascript" src="{{static_url('js/index.js')}}"></script>
+{% end %} {% block content %}
+<div class="panel panel-success">
+  <div class="panel-heading">
+    当前进度 <small>简化版</small>
+  </div>
+  <div class="panel-body">
+    脚本安装中
+  </div>
+</div>
+{% end %}

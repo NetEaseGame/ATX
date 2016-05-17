@@ -1,0 +1,18 @@
+{% extends "layout.html" %} {% block js %}
+<script type="text/javascript" src="{{static_url('js/jquery.form.min.js')}}"></script>
+<script type="text/javascript" src="{{static_url('js/index.js')}}"></script>
+{% end %} {% block content %}
+<div class="panel panel-success">
+  <div class="panel-heading">
+    运行测试 <small>简化版</small>
+  </div>
+  <div class="panel-body">
+    <form action="/runtest" method="post">
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="安装包地址 (optional)">
+      </div>
+      <button type="submit" class="btn btn-default">运行测试</button>
+    </form>
+  </div>
+</div>
+{% end %}

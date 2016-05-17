@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <link rel="icon" href="/static/favicon.png?v=2" type="image/x-icon" /> -->
+  <title>Snow is back</title>
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="//gohttp.nie.netease.com/qard-libs/libs/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//gohttp.nie.netease.com/qard-libs/libs/fancybox/2.1.5/jquery.fancybox.min.css">
+  <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
+  <style>
+  body {
+    padding-top: 70px;
+  }
+  </style>
+</head>
+
+<body id="app">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">Snow is back</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="/">Home</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+              Actions <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu" role="menu">
+              <li>
+                <a href="#">1234</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container">
+    {% block content %} {% end %}
+  </div>
+  <script src="//gohttp.nie.netease.com/qard-libs/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="//gohttp.nie.netease.com/qard-libs/libs/mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+  <script src="//gohttp.nie.netease.com/qard-libs/libs/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
+  <script src="//gohttp.nie.netease.com/qard-libs/libs/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <script src="//gohttp.nie.netease.com/qard-libs/libs/vue/1.0.22/vue.min.js"></script>
+  {% block js %} {% end %}
+</body>
+
+</html>
