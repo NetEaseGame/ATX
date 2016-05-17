@@ -1,3 +1,10 @@
+Public class
+--------------------------
+
+.. autoclass:: atx.device
+    :members:
+
+
 Method for Android and Windows
 --------------------------
 

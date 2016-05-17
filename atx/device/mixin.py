@@ -344,8 +344,17 @@ class DeviceMixin(object):
                 raise TypeError("Value should be tuple, contains two values")
             self._resolution = tuple(sorted(value))
     
+    def _search_image(self, name, raise_error=True):
+        image_path = base.search_image(name, self.image_path)
+        if raise_error and image_path is None:
+            raise IOError('image file not found: {}'.format(name))
+        return image_path
+
     def pattern_open(self, image):
         if isinstance(image, Pattern):
+            if image._image is None:
+                image_path = self._search_image(image._name)
+                image._image = imutils.open(image_path)
             return image
         elif isinstance(image, basestring):
             image_path = base.search_image(image, self.image_path)
@@ -588,10 +597,17 @@ class DeviceMixin(object):
                 sys.stdout.write('.')
                 sys.stdout.flush()
                 continue
-            if not point.matched:
-                log.info('Ignore confidence: %s', point.confidence)
-                continue
+
             log.debug('confidence: %s', point.confidence)
+            if pattern.threshold:
+                if point.confidence < pattern.threshold:
+                    log.info('confidence %f below threshold %f', point.confidence, pattern.threshold)
+                    continue
+            else:
+                if not point.matched:
+                    log.info('Ignore confidence: %s', point.confidence)
+                    continue
+                    
             self.touch(*point.pos)
             self._trigger_event(consts.EVENT_UIAUTO_CLICK, point)
             found = True

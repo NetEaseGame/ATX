@@ -39,7 +39,7 @@ class Bounds(__boundstuple):
 
 
 class Pattern(object):
-    def __init__(self, image, offset=(0, 0), anchor=0, rsl=None, resolution=None):
+    def __init__(self, image, offset=(0, 0), anchor=0, rsl=None, resolution=None, th=None, threshold=None):
         """
         Args:
             image: image filename or image URL
@@ -47,11 +47,14 @@ class Pattern(object):
             anchor: not supported
             resolution: image origin screen resolution
             rsl: alias of resolution
+            threshold: image match threshold, usally (0, 1]
+            th: alias of threshold
         """
         self._name = image if isinstance(image, basestring) else 'unknown'
-        self._image = imutils.open(image)
+        self._image = None # because the search_path is now known for now. so delay to pattern_open()
         self._offset = offset
         self._resolution = rsl or resolution
+        self._threshold = th or threshold
         if isinstance(image, basestring):
             self._name = image
 
@@ -69,3 +72,7 @@ class Pattern(object):
     @property
     def resolution(self):
         return self._resolution
+
+    @property
+    def threshold(self):
+        return self._threshold
