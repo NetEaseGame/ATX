@@ -3,7 +3,17 @@
 #
 # parse and run atx.yml
 #
-# from __future__ import print_function
+# # example of atx.yml
+# #
+# installation: http://example.com/demo.apk
+# script:
+# - python test1.py
+# - python test2.py
+# notification:
+#   popo:
+#   - someone@example.com
+#
+from __future__ import absolute_import
 
 import os
 import sys
@@ -18,7 +28,12 @@ def json2obj(data):
     return json.loads(json.dumps(data), object_hook=lambda d: Namespace(**d))
 
 
+def prompt(message):
+    print '>>>', message
+
+
 def must_exec(*cmds, **kwargs):
+    prompt("Exec %s" % cmds)
     shell = kwargs.get('shell', False)
     cmdline = cmds[0] if shell else subprocess.list2cmdline(cmds)
     ret = os.system(cmdline)
@@ -27,15 +42,18 @@ def must_exec(*cmds, **kwargs):
 
 
 def install(src):
+    prompt("Install")
     must_exec('python', '-matx', 'install', src)
 
 
 def runtest(scripts):
+    prompt("Run scripts")
     for script in scripts:
         must_exec(script, shell=True)
 
 
 def notify_popo(users, message):
+    prompt("Notify popo users")
     print 'Skip, todo'
     for user in users:
         pass

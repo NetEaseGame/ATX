@@ -23,6 +23,8 @@ def listen(d, save_dir='report'):
     result = dict(device=dict(
         display=dict(width=w, height=h),
         serial=d.serial,
+        start_time=time.strftime("%Y-%m-%d %H:%M:%S"),
+        start_timestamp=time.time(),
     ), steps=steps)
     start_time = time.time()
 
@@ -52,9 +54,13 @@ def listen(d, save_dir='report'):
         data = json.dumps(result)
         tmpl_path = os.path.join(__dir__, 'index.tmpl.html')
         save_path = os.path.join(save_dir, 'index.html')
+        json_path = os.path.join(save_dir, 'result.json')
 
         with open(tmpl_path) as f:
             html_content = f.read().replace('$$data$$', data)
+
+        with open(json_path, 'wb') as f:
+            f.write(json.dumps(result, indent=4))
 
         with open(save_path, 'wb') as f:
             f.write(html_content)
