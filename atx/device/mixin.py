@@ -124,7 +124,7 @@ class Watcher(object):
     Handler = collections.namedtuple('Handler', ['selector', 'action'])
     Event = collections.namedtuple('Event', ['selector', 'pos'])
 
-    def __init__(self, device, name=None, timeout=None):
+    def __init__(self, device, name=None, timeout=None, raise_errors=True):
         self._events = []
         self._dev = device
         self._run = False
@@ -137,6 +137,7 @@ class Watcher(object):
         self.name = name
         self.touched = {}
         self.timeout = timeout
+        self.raise_errors = raise_errors
 
     def on(self, pattern):
         # TODO(ssx): maybe an array is just enough
@@ -174,6 +175,7 @@ class Watcher(object):
             if ok:
                 for fn in hdlr['hooks']:
                     fn(Watcher.Event(None, last_pos))
+                break # quick and dirty fix
 
     def run(self):
         # self._run = True
@@ -184,7 +186,9 @@ class Watcher(object):
 
             if self.timeout is not None:
                 if time.time() - start_time > self.timeout:
-                    raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+                    if self.raise_errors:
+                        raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+                    break
                 sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
                 sys.stdout.flush()
             sys.stdout.write('\n')
@@ -605,7 +609,7 @@ class DeviceMixin(object):
         if not found:
             raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
-    def watch(self, name, timeout=None):
+    def watch(self, name, timeout=None, raise_errors=True):
         """Return a new watcher
         Args:
             name: string watcher name
@@ -614,7 +618,7 @@ class DeviceMixin(object):
         Returns:
             watcher object
         """
-        w = Watcher(self, name, timeout)
+        w = Watcher(self, name, timeout, raise_errors)
         w._dev = self
         return w
 

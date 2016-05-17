@@ -267,6 +267,8 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 监控事件 (这个挺好用的)
 
+	watch是一个内部循环，对于on函数中的所有出现的图片进行监控，如果发现吻合的，就执行后续的操作，知道timeout时间到
+
 	```py
 	# watcher, trigger when screenshot is called
 	def foo(event):
@@ -278,8 +280,12 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 		w.on('enter-game.png').click()
 		w.on('notification.png').click('confirm.png')
 		w.on('inside.png').quit()
-		w.on(text='Login').quit() # UI Component
+		w.on(text='Login').quit() # UI Component, FIXME(ssx): BUG 还没修复
 		w.on('outside.png').do(foo)
+
+	# will not raise errors
+	with d.watch('enter game', timeout, raise_errors=False) as w:
+		w.on('output.png').click()
 	```	
 
 * events函数调用事件
