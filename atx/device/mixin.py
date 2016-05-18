@@ -13,6 +13,7 @@ import sys
 import subprocess
 import time
 import tempfile
+import traceback
 import warnings
 import functools
 import logging
@@ -193,30 +194,6 @@ class Watcher(object):
                 sys.stdout.flush()
             sys.stdout.write('\n')
 
-    # def on_old(self, pattern=None, text=None):
-    #     """Trigger when some object exists
-    #     Args:
-    #         image: image filename or Pattern
-    #         text: For uiautomator
-
-    #     Returns:
-    #         None
-
-    #     Raises:
-    #         TypeError
-    #     """
-    #     if text:
-    #         self._stored_selector = self._dev(text=text)
-    #     elif pattern is not None:
-    #         selector = self._dev.pattern_open(pattern)
-    #         if selector is None:
-    #             raise IOError("Not found pattern: {}".format(pattern))
-    #         self._stored_selector = selector
-    #     else:
-    #         raise TypeError("unsupported type: %s", pattern)
-            
-    #     return self
-
     def touch(self):
         return self.click()
 
@@ -306,7 +283,8 @@ class Watcher(object):
     #     sys.stdout.write('\n')
 
 
-HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs'])
+Traceback = collections.namedtuple('Traceback', ['stack', 'exception'])
+HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth'])
 
 def hook_wrap(event_type):
     def wrap(fn):
@@ -314,11 +292,22 @@ def hook_wrap(event_type):
         def _inner(*args, **kwargs):
             func_args = inspect.getcallargs(fn, *args, **kwargs)
             self = func_args.get('self')
-            if self and hasattr(self, '_listeners'):
-                for (f, event_flag) in self._listeners:
-                    if event_flag & event_type:
-                        f(HookEvent(event_flag, args[1:], kwargs)) # remove self from args
-            return fn(*args, **kwargs)
+            
+            _traceback = None
+            _retval = None
+            try:
+                self._depth += 1
+                _retval = fn(*args, **kwargs)
+                return _retval
+            except Exception as e:
+                _traceback = Traceback(traceback.format_exc(), e)
+                raise
+            finally:
+                if self and hasattr(self, '_listeners'):
+                    for (f, event_flag) in self._listeners:
+                        if event_flag & event_type:
+                            f(HookEvent(event_type, args[1:], kwargs, _retval, _traceback, self._depth)) # remove self from args
+                self._depth -= 1
         return _inner
     return wrap
 
@@ -329,6 +318,7 @@ class DeviceMixin(object):
         self._resolution = None
         self._bounds = None
         self._listeners = []
+        self._depth = 0 # used for hook_wrap
         self.image_path = ['.']
 
     @property
@@ -360,9 +350,9 @@ class DeviceMixin(object):
             image_path = base.search_image(image, self.image_path)
             if image_path is None:
                 raise IOError('image file not found: {}'.format(image))
-            return Pattern(image_path)
+            return Pattern(image_path, image=imutils.open(image_path))
         elif 'numpy' in str(type(image)):
-            return Pattern(image)
+            return Pattern('unknown', image=image)
         else:
             raise TypeError("Not supported image type: {}".format(type(image)))
 
@@ -573,13 +563,13 @@ class DeviceMixin(object):
             raise errors.AssertExistsError('image not found %s' %(pattern,))
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0, wait_change=False):
+    def click_image(self, pattern, timeout=20.0):
         """Simulate click according image position
 
         Args:
             - pattern (str or Pattern): filename or an opencv image object.
             - timeout (float): if image not found during this time, ImageNotFoundError will raise.
-            - wait_change (bool): wait until background image changed.
+            - wait_change (bool): Depreciated, wait until background image changed.
 
         Returns:
             None
@@ -591,6 +581,7 @@ class DeviceMixin(object):
         log.info('click image: %s', pattern)
         start_time = time.time()
         found = False
+        point = None
         while time.time() - start_time < timeout:
             point = self.match(pattern)
             if point is None:
@@ -609,21 +600,16 @@ class DeviceMixin(object):
                     continue
                     
             self.touch(*point.pos)
-            self._trigger_event(consts.EVENT_UIAUTO_CLICK, point)
+            # self._trigger_event(consts.EVENT_UIAUTO_CLICK, point)
             found = True
             break
         sys.stdout.write('\n')
 
-        # wait until click area not same
-        if found and wait_change:
-            start_time = time.time()
-            while time.time()-start_time < timeout:
-                # screen_img = self.screenshot()
-                ret = self.match(pattern)
-                if ret is None:
-                    break
         if not found:
             raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
+
+        # FIXME(ssx): maybe this function is too complex
+        return point #collections.namedtuple('X', ['pattern', 'point'])(pattern, point)
 
     def watch(self, name, timeout=None, raise_errors=True):
         """Return a new watcher

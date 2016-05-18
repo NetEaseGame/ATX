@@ -7,6 +7,7 @@ import time
 import json
 
 from atx import consts
+from atx import errors
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -29,9 +30,12 @@ def listen(d, save_dir='report'):
     start_time = time.time()
 
     def listener(evt):
+        screen_before = 'images/before_%d.png' % time.time()
+        screen_before_abspath = os.path.join(save_dir, screen_before)
+
         if evt.flag == consts.EVENT_CLICK:
-            screen_before = 'images/before_%d.png' % time.time()
-            screen_before_abspath = os.path.join(save_dir, screen_before)
+            if evt.depth > 1: # base depth is 1
+                return
             d.last_screenshot.save(screen_before_abspath)
             screen_after = 'images/after_%d.png' % time.time()
             d.screenshot(os.path.join(save_dir, screen_after))
@@ -45,6 +49,33 @@ def listen(d, save_dir='report'):
                 'position': {'x': x, 'y': y},
                 'success': True,
             })
+        elif evt.flag == consts.EVENT_CLICK_IMAGE:
+            step = {
+                'time': '%.1f' % (time.time()-start_time,),
+                'action': 'click_image',
+                'success': evt.traceback is None,
+                'traceback': None if evt.traceback is None else evt.traceback.stack,
+            }
+            if d.last_screenshot:
+                d.last_screenshot.save(screen_before_abspath)
+                step['screen_before'] = screen_before
+            if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
+                target = 'images/target_%d.png' % time.time()
+                target_abspath = os.path.join(save_dir, target)
+                pattern = d.pattern_open(evt.args[0])
+                pattern.save(target_abspath)
+                step['target'] = target
+            if evt.traceback is None:
+                screen_after = 'images/after_%d.png' % time.time()
+                d.screenshot(os.path.join(save_dir, screen_after))
+                step['screen_after'] = screen_after
+                step['confidence'] = evt.retval.confidence
+                (x, y) = evt.retval.pos
+                step['position'] = {'x': x, 'y': y}
+
+            steps.append(step)
+            # screen_before = 'images/before_%d.png' % time.time()
+            # screen_before_abspath = os.path.join(save_dir, screen_before)
 
         # print 'EVENT:', evt
 

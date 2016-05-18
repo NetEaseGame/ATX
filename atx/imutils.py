@@ -40,7 +40,14 @@ def _open_data_url(data, flag=cv2.IMREAD_COLOR):
 
 
 def open(image):
-    # data:image/png;base64,
+    '''
+    Args:
+        - image: support many type. filepath or url or data:image/png:base64
+    Return:
+        Pattern
+    Raises
+        IOError
+    '''
     if isinstance(image, basestring):
         name = image
         if name.startswith('data:image/'):
@@ -100,7 +107,7 @@ def crop(image, left=0, top=0, right=None, bottom=None):
 def diff_rect(img1, img2, pos=None):
     """find counters include pos in differences between img1 & img2 (cv2 images)"""
     diff = cv2.absdiff(img1, img2)
-    diff = cv2.GaussianBlur(diff, (3,3), 0)
+    diff = cv2.GaussianBlur(diff, (3, 3), 0)
     edges = cv2.Canny(diff, 100, 200)
     _, thresh = cv2.threshold(edges, 0, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)

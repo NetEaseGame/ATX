@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import collections
 
+import cv2
 from atx import imutils
 from atx import strutils
 
@@ -39,10 +40,11 @@ class Bounds(__boundstuple):
 
 
 class Pattern(object):
-    def __init__(self, image, offset=(0, 0), anchor=0, rsl=None, resolution=None, th=None, threshold=None):
+    def __init__(self, name, image=None, offset=(0, 0), anchor=0, rsl=None, resolution=None, th=None, threshold=None):
         """
         Args:
-            image: image filename or image URL
+            name: image filename
+            image: opencv image object
             offset: offset of image center
             anchor: not supported
             resolution: image origin screen resolution
@@ -50,8 +52,8 @@ class Pattern(object):
             threshold: image match threshold, usally (0, 1]
             th: alias of threshold
         """
-        self._name = image if isinstance(image, basestring) else 'unknown'
-        self._image = None # because the search_path is now known for now. so delay to pattern_open()
+        self._name = name # better to be the image path
+        self._image = image # if image is None, it will delay to pattern_open function
         self._offset = offset
         self._resolution = rsl or resolution
         self._threshold = th or threshold
@@ -60,6 +62,10 @@ class Pattern(object):
 
     def __str__(self):
         return 'Pattern(name: {}, offset: {})'.format(strutils.encode(self._name), self.offset)
+
+    def save(self, path):
+        """ save image to path """
+        cv2.imwrite(path, self._image)
     
     @property
     def image(self):

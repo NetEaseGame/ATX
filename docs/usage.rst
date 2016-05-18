@@ -1,7 +1,7 @@
 Public class
 --------------------------
 
-.. autoclass:: atx.device
+.. autoclass:: atx.device.__init__
     :members:
 
 
