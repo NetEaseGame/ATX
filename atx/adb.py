@@ -1,5 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Blueprint, not finished yet.
+
+>>> from atx import adb
+>>>
+>>> client = adb.Client(host='127.0.0.1', port=5037)
+>>> client.devices()
+# {'EP7333W7XB': 'device'}
+>>> client.version()
+# 1.0.32
+>>> client.connect('10.0.0.1', 5555)
+True
+>>> client.disconnect('10.0.0.1:5555')
+True
+>>> client.packages()
+[{'name': 'com.example.demo', 'version': 2}]
+>>>
+>>> dev = client.device(serial=None)
+>>> dev.forward_list()
+[{'local': 'tcp:8001', 'remote': 'tcp:8000'}]
+"""
 
 import os
 import re
