@@ -40,6 +40,8 @@ import collections
 from PIL import Image
 from functools import partial
 
+__dir__ = os.path.dirname(os.path.abspath(__file__))
+
 _serial = None
 _default_serial = os.environ.get('ANDROID_SERIAL')
 _host = DEFAULT_HOST = '127.0.0.1'
@@ -526,7 +528,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
         def watch_rotation(self, listener):
             package_name = 'jp.co.cyberagent.stf.rotationwatcher'
             if package_name not in get_installed_pacakges():
-                install('vendor/RotationWatcher.apk')
+                install(os.path.join(__dir__, 'vendor', 'RotationWatcher.apk'))
 
             if self.sub_rotationwatcher is not None:
                 self.sub_rotationwatcher.kill()

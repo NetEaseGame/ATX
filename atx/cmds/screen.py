@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 #
-# Usage: python -matx screenrecord -o out.avi
+# Usage: python -matx screen [-s 0.8]
 
 import time
 import traceback
