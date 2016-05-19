@@ -29,7 +29,6 @@ import os
 import re
 import sys
 import time
-import Image
 import Queue
 import socket
 import struct
@@ -38,7 +37,10 @@ import traceback
 import threading
 import subprocess
 import collections
+from PIL import Image
 from functools import partial
+
+__dir__ = os.path.dirname(os.path.abspath(__file__))
 
 _serial = None
 _default_serial = os.environ.get('ANDROID_SERIAL')
@@ -486,7 +488,9 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             if serial is None:
                 serial = _serial
             self.serial = serial
+            self.start()
 
+        def start(self):
             # watch screen
             self._screen = None
             self.sub_minicap = None
@@ -524,7 +528,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
         def watch_rotation(self, listener):
             package_name = 'jp.co.cyberagent.stf.rotationwatcher'
             if package_name not in get_installed_pacakges():
-                install('vendor/RotationWatcher.apk')
+                install(os.path.join(__dir__, 'vendor', 'RotationWatcher.apk'))
 
             if self.sub_rotationwatcher is not None:
                 self.sub_rotationwatcher.kill()
@@ -603,7 +607,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 try:
                     s.connect(('127.0.0.1', port))
                     t = s.recv(24)
-                    print 'minicap conntected', struct.unpack('<2B5I2B', t)
+                    print 'minicap connected', struct.unpack('<2B5I2B', t)
                     while True:
                         frame_size = struct.unpack("<I", s.recv(4))[0]
                         trunks = []
@@ -616,7 +620,6 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                         queue.put(''.join(trunks))
                 except Exception as e:
                     if not isinstance(e, struct.error):
-                        print 111
                         traceback.print_exc()
                     p.kill()
                 finally:
@@ -639,7 +642,6 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                             break
                         continue
                     except:
-                        print 222
                         traceback.print_exc()
 
             t = threading.Thread(target=_listen)
@@ -675,7 +677,6 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                             p.kill()
                             break
                 except:
-                    print 333
                     traceback.print_exc()
                 finally:
                     s.close()
