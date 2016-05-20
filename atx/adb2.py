@@ -22,7 +22,7 @@ UserWarning: Empty function. Please call use_uiautomator or use_openstf first.
 0
 >>> adb.screenshot('./test.png')
 >>> img1 = adb.screenshot(format='pil')
->>> img2 = adb.screenshot(format='cv2')
+>>> img2 = adb.screenshot(format='cv2', scale=0.5)
 '''
 
 import os
@@ -420,7 +420,11 @@ def screenshot(filename=None, format='pil', scale=1.0):
     pull(remote, filename or 'screenshot.png')
     if format == 'cv2':
         import cv2
-        return cv2.imread('screenshot.png')
+        img = cv2.imread('screenshot.png')
+        h, w = img.shape[:2]
+        h, w = int(scale*h), int(scale*w)
+        img = cv2.resize(img, (w, h))
+        return img
     return Image('screenshot.png')
 
 def input(text):
@@ -472,6 +476,7 @@ def use_uiautomator():
 #------------------ interact functions from openstf -------------------#
 def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
     _mod = sys.modules[__name__]
+    import cv2
 
     def str2img(jpgstr):
         import numpy as np
@@ -583,6 +588,13 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             if self.sub_minicap is not None:
                 self.sub_minicap.kill()
 
+            out = _adb_output('shell', 'ps', '-C', '/data/local/tmp/minicap').split('\n')
+            if len(out) > 1:
+                idx = out[0].split().index('PID')
+                pid = out[1].split()[idx]
+                print 'minicap already started. killing..', pid
+                _adb_call('shell', 'kill', pid)
+
             w, h = display()
             params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=self._orientation*90)
             p = _adb_device_cmd('shell', 
@@ -656,7 +668,17 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             if self.sub_minitouch is not None:
                 self.sub_minitouch.kill()
 
-            self.sub_minitouch = p = _adb_device_cmd('shell', '/data/local/tmp/minitouch')
+            out = _adb_output('shell', 'ps', '-C', '/data/local/tmp/minitouch').split('\n')
+            if len(out) > 1:
+                p = None
+            else:
+                p = _adb_device_cmd('shell', '/data/local/tmp/minitouch')
+                time.sleep(3)
+                if p.poll() is not None:
+                    print 'start minitouch failed.'
+                    return
+
+            self.sub_minitouch = p
             port = self.minitouch_port
             forward(port, 'localabstract:minitouch')
 
@@ -671,11 +693,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                             continue
                         elif cmd[-1] != '\n':
                             cmd += '\n'
-                        try:
-                            s.send(cmd)
-                        except socket.error:
-                            p.kill()
-                            break
+                        s.send(cmd)    
                 except:
                     traceback.print_exc()
                 finally:
@@ -708,8 +726,17 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 send('m 0 %d %d 30\nc\n' % (x, y))
             send('u 0 %d %d 30\nc\nu 0\nc\n' % (ex, ey))
 
-        def screenshot(self):
-            return self._screen
+        def screenshot(self, format='pil', scale=1.0):
+            if scale != 1.0:
+                h, w = self._screen.shape[:2]
+                h, w = int(scale*h), int(scale*w)
+                image = cv2.resize(self._screen, (w, h))
+            else:
+                image = self._screen
+            if format == 'cv2':
+                return image
+            if self._screen is not None:
+                return Image.fromarray(image[:, :, ::-1])
 
     # re entrance
     if getattr(_mod, '_mini', None) is not None:
