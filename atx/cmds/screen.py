@@ -20,6 +20,7 @@ def gui(scale=0.5):
     class Screen(object):
         def __init__(self):
             self.root = tk.Tk()
+            self.root.title('Sync Screen')
             # self.image = Image.open(os.path.join(__dir__, 'static', 'screen.png'))
             self.image = None
             self.tkimage = None
@@ -174,11 +175,12 @@ def simple(scale=0.5):
 
     print 'Press Ctrl-C or Esc to quit.'
 
-    cv2.namedWindow('screen')
+    winname = 'Sync Screen'
+    cv2.namedWindow(winname)
     while True:
         try:
             img = adb.screenshot(format='cv2', scale=scale)
-            cv2.imshow('screen', img)
+            cv2.imshow(winname, img)
             key = cv2.waitKey(10)
             if key == 27: # Escape
                 break
@@ -189,7 +191,7 @@ def simple(scale=0.5):
             traceback.print_exc()
             break
 
-    cv2.destroyWindow('screen')
+    cv2.destroyWindow(winname)
 
 def main(scale=0.5, controls=True):
     '''interact'''

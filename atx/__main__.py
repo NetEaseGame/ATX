@@ -98,7 +98,7 @@ def _run(args):
 
 def _screen(args):
     from atx.cmds import screen
-    screen.main(args.scale)
+    screen.main(args.scale, args.controls)
 
 def _screenrecord(args):
     from atx.cmds import screenrecord
@@ -155,6 +155,7 @@ def main():
 
     parse_scr = add_parser('screen')
     parse_scr.add_argument('-s', '--scale', required=False, default=0.5, help='image scale, default is 0.5')
+    parse_scr.add_argument('--simple', dest='controls', action='store_false', help='disable interact controls')
     parse_scr.set_defaults(func=_screen)
 
     parse_scrrec = add_parser('screenrecord')
