@@ -132,7 +132,9 @@ def disconnect(host=None, port=5555):
         print _adb_server_cmd('disconnect', '%s:%s' % (host, port))
 
 def _adb_device_cmd(*args, **kwargs):
-    '''run raw adb command, return subprocess.Popen object.'''
+    '''run raw adb command, return subprocess.Popen object.
+    Notice that the `adb shell xxx` command always use stdout for stderr 
+    due to its underline sockets (at least on windows.)'''
     cmd = [_adbexe]
     if _host != DEFAULT_HOST:
         cmd.extend(['-H', _host])
@@ -142,31 +144,101 @@ def _adb_device_cmd(*args, **kwargs):
         use(None, _host, _port)
     cmd.extend(['-s', _serial])
     cmd.extend(list(args))
-
-    if kwargs.get('stdin'):
-        _stdin = subprocess.PIPE
-    else:
-        _stdin = None
-    if kwargs.get('stdout'):
-        _stdout = subprocess.PIPE
-        if kwargs.get('err2out'):
-            _stderr = subprocess.STDOUT
-        else:
-            _stderr = subprocess.PIPE
-    else:
-        _stdout, _stderr = None, None
-
-    p = subprocess.Popen(cmd, stdin=_stdin, stdout=_stdout, stderr=_stderr)
+    p = subprocess.Popen(cmd, **kwargs)
     return p
 
 def _adb_output(*args):
-    p = _adb_device_cmd(*args, stdout=True)
+    p = _adb_device_cmd(*args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     out, err = p.communicate()
     return out.strip()
 
 def _adb_call(*args):
     p = _adb_device_cmd(*args)
     p.wait()
+
+def get_shell():
+    '''Get a shell one can communicate with.
+
+    Example:
+    >>> shell = adb.get_shell()
+    >>> out = shell.call('ls', '-al')
+    ['lrwxrwxrwx root xxxxxx..', ...]
+    >>> out = shell.call('lss', '-al')
+    ['/system/bin/sh: lss: not found']
+    >>> shell.call('input', 'tap', '100', '100')
+    # tap at screen'''
+
+    import tempfile
+
+    class Shell(object):
+        '''A simple adb shell. Not quite sure of the output.'''
+
+        def __init__(self):
+            self.stdout = tempfile.SpooledTemporaryFile()
+            self.p = _adb_device_cmd('shell', stdin=subprocess.PIPE, stdout=self.stdout, 
+                stderr=subprocess.STDOUT)
+            self.serial = _serial
+
+        def call(self, *args):
+            if self.p.poll() is not None:
+                self.close()
+                raise Exception('process is dead!')
+
+            args = subprocess.list2cmdline(args)
+            self.p.stdin.write('%s\r\n' % args)
+            self.p.stdin.flush()
+            # wait and clean buffer
+            time.sleep(0.1)
+            self.stdout.seek(0)
+            self.stdout.truncate()
+
+        def check_output(self, *args, **kwargs):
+            if self.p.poll() is not None:
+                self.close()
+                raise Exception('process is dead!')
+            
+            # wait and clean buffer
+            time.sleep(0.1)
+            self.stdout.seek(0)
+            self.stdout.truncate()
+
+            # input command
+            args = subprocess.list2cmdline(args)
+            self.p.stdin.write('%s\r\n' % args)
+            self.p.stdin.flush()
+
+            # wait and read output
+            timeout = kwargs.pop('timeout', 0.5)
+            time.sleep(timeout)
+            self.stdout.seek(0)
+            stdout = self.stdout.readlines()
+            # clean buffer after read
+            self.stdout.seek(0)
+            self.stdout.truncate()
+
+            # first line is the command itself and last line is prompt
+            stdout = ''.join(stdout[1:-1])
+            return stdout
+
+        def close(self):
+            self.p.kill()
+            self.stdout.close()
+
+    # cache the shell
+
+    _mod = sys.modules[__name__]
+    if getattr(_mod, '_shell', None) is not None:
+        shell = _mod._shell
+        if shell.p.poll() is None:
+            if shell.serial == _serial:
+                return shell
+            shell.close()
+
+    shell = Shell()
+    # the first command's output would include the prompt, skip it.
+    shell.check_output('echo', 'hello')
+    setattr(_mod, '_shell', shell)
+    return shell
 
 #------------------ adb device commands -------------------#
 
@@ -399,7 +471,9 @@ def swipe(sx, sy, ex, ey, steps=100):
     _adb_call('shell', 'input', 'swipe', sx, sy, ex, ey, steps*0.5) # duration(ms) 
 
 def keyevent(keycode, longpress=False):
-    _adb_call('shell', 'input', 'keyevent', keycode)
+    # _adb_call('shell', 'input', 'keyevent', keycode)
+    shell = get_shell()
+    shell.call('input', 'keyevent', keycode)
 
 def dumpui(filename='window_dump.xml', compressed=None, pretty=True):
     '''dump device window and pull to local file.'''
@@ -429,7 +503,9 @@ def screenshot(filename=None, format='pil', scale=1.0):
 
 def input(text):
     # TODO: handle %s problem
-    _adb_call('shell', 'input', 'text', '"%s"' % text)
+    shell = get_shell()
+    shell.call('input', 'text', '"%s"' % text)
+    # _adb_call('shell', 'input', 'text', '"%s"' % text)
 
 #------------------ interact functions from uiautomator -------------------#
 
@@ -545,7 +621,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 'app_process',
                 '/system/bin',
                 '"jp.co.cyberagent.stf.rotationwatcher.RotationWatcher"', 
-                stdout=True)
+                stdout=subprocess.PIPE)
             self.sub_rotationwatcher = p
 
             queue = Queue.Queue()
@@ -602,7 +678,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                         '/data/local/tmp/minicap', 
                         '-P %s' % params,
                         '-S',
-                        stdout=True)
+                        stdout=subprocess.PIPE)
             self.sub_minicap = p
             time.sleep(1)
 
