@@ -565,7 +565,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
         minicap_port = 1313
         minitouch_port = 1111
 
-        def __init__(self, serial=None, enabletouch=False, on_rotation=None, on_screenchange=None):
+        def __init__(self, serial=None):
             if serial is None:
                 serial = _serial
             self.serial = serial
@@ -620,7 +620,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 'CLASSPATH="%s"' % path, 
                 'app_process',
                 '/system/bin',
-                '"jp.co.cyberagent.stf.rotationwatcher.RotationWatcher"', 
+                'jp.co.cyberagent.stf.rotationwatcher.RotationWatcher', 
                 stdout=subprocess.PIPE)
             self.sub_rotationwatcher = p
 
@@ -671,7 +671,12 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 print 'minicap already started. killing..', pid
                 _adb_call('shell', 'kill', pid)
 
-            w, h = display()
+            # w, h = display()
+            # use minicap to get display size
+            out = _adb_output('shell', 'LD_LIBRARY_PATH=/data/local/tmp', '/data/local/tmp/minicap', '-i')
+            m = re.search('"width": (\d+).*"height": (\d+)', out, re.S)
+            w, h = map(int, m.groups())
+
             params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=self._orientation*90)
             p = _adb_device_cmd('shell', 
                         'LD_LIBRARY_PATH=/data/local/tmp', 
@@ -691,8 +696,8 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             def _pull():
                 # print 'start pull', p.pid, p.poll()
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 try:
+                    assert p.poll() is None
                     s.connect(('127.0.0.1', port))
                     t = s.recv(24)
                     print 'minicap connected', struct.unpack('<2B5I2B', t)
@@ -709,7 +714,12 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 except Exception as e:
                     if not isinstance(e, struct.error):
                         traceback.print_exc()
-                    p.kill()
+                    if p.poll() is not None:
+                        print 'Process died.'
+                        print p.stdout.read()
+                    else:
+                        print 'stoping minicap ...'
+                        p.kill()
                 finally:
                     forward_remove(port)
                     s.close()
@@ -821,7 +831,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
         else:
             _mod._mini.__del__()
 
-    _mini = MiniSTF(enabletouch, on_rotation, on_screenchange)
+    _mini = MiniSTF()
     setattr(_mod, '_mini', _mini)
 
     patch_function(_mod, 'orientation', _mini.orientation)
