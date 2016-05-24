@@ -554,11 +554,16 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
     _mod = sys.modules[__name__]
     import cv2
 
-    def str2img(jpgstr):
+    def str2img(jpgstr, orientation=False):
         import numpy as np
         import cv2
         arr = np.fromstring(jpgstr, np.uint8)
         img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if orientation:
+            if orientation == 1:
+                return cv2.flip(cv2.transpose(img), 0) # counter-clockwise
+            if orientation == 3:
+                return cv2.flip(cv2.transpose(img), 1) # clockwise
         return img
 
     class MiniSTF(object):
@@ -631,6 +636,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                     line = p.stdout.readline().strip()
                     if not line:
                         if p.poll() is not None:
+                            print 'rotationwatcher stopped'
                             break
                         continue
                     queue.put(line)
@@ -676,6 +682,9 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             out = _adb_output('shell', 'LD_LIBRARY_PATH=/data/local/tmp', '/data/local/tmp/minicap', '-i')
             m = re.search('"width": (\d+).*"height": (\d+)', out, re.S)
             w, h = map(int, m.groups())
+            w, h = min(w, h), max(w, h)
+
+            sdk = getsdk()
 
             params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=self._orientation*90)
             p = _adb_device_cmd('shell', 
@@ -733,10 +742,15 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                     try:
                         time.sleep(0.005)
                         frame = queue.get_nowait()
-                        img = str2img(frame)
+                        if sdk <= 16:
+                            img = str2img(frame, self._orientation)
+                        else:
+                            img = str2img(frame)
                         listener(img)
                     except Queue.Empty:
                         if p.poll() is not None:
+                            print 'minicap died'
+                            print p.stdout.read()
                             break
                         continue
                     except:
