@@ -61,7 +61,7 @@ class Pattern(object):
         if isinstance(image, basestring):
             self._name = image
 
-        # search format name.1028x1920.png
+        # search format name.1080x1920.png
         if self._resolution is None:
             m = re.search(r'\.(\d+)x(\d+)\.png$', self._name)
             if m:
