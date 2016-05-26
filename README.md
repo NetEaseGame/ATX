@@ -8,7 +8,12 @@
 该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
 
+This project is to make mobile test automated, free people who are boring of repeated job. **AutomatorX** is a python library base on `python-opencv` and a lot of outstanding python libs.
+
 ATX is short for _AutomatorX_
+
+Only when you familiar with ATX [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest) Or it's better to read the quick start tutorial.
+
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
 2. 可是很好的支持安卓手机的测试，包括安卓模拟器
@@ -16,8 +21,8 @@ ATX is short for _AutomatorX_
 4. 对于游戏测试，可以使用图像缩放的方法适应不同分辨率的手机
 
 ## 历史起源
-以前写过一个项目 <https://github.com/netease/airtest>，atx是airtest的重构版本,。
-因为原版代码冗余太严重，维护成本太高，所以就新开了一个新的项目。
+该项目重构于过去写过一个项目 <https://github.com/netease/airtest>，
+因原有代码冗余太严重，维护成本太高，于是就用ATX取代之。
 
 新版有哪些新的功能呢？
 
@@ -57,7 +62,7 @@ ATX is short for _AutomatorX_
 	brew install python pillow opencv
 	```
 
-2. 安装ATX
+2. Install with `pip`
 
 	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
 
@@ -78,7 +83,9 @@ ATX is short for _AutomatorX_
 	```
 
 
-3. 安装ADB (Android Debug Bridge)
+3. Install `ADB` (Android Debug Bridge)
+
+	If already installed, just skip the part.
 
 	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 
@@ -129,7 +136,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 文档等下在看，先看一些例子
 
 
-* 初始化设备的连接
+* Initial device connect
 
 	```py
 	import atx
@@ -156,7 +163,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	$ python -c 'import atx; atx.connect()'
 	```
 
-* App的起停
+* App start and stop
 
 	```py
 	package_name = 'com.example.game'
@@ -166,7 +173,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.start_app(package_name)
 	```
 
-* 执行Shell命令
+* Execute shell command
 	
 	```py
 	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
@@ -223,7 +230,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.type("atx", enter=True) # perform enter after input
 	```
 
-* 常用配置
+* Common settings
 	
 	```py
 	# 配置截图图片的手机分辨率
@@ -365,7 +372,7 @@ open `index.html` with browser.
 
 5. iosdeveloper (目前仅限网易内部用户使用)
 
-	将iPhone手机设置成开发者模式，(仅在Windows测试过，依赖点东西)
+	将iPhone手机设置成开发者模式，(目前仅在Windows测试过)
 
 	依赖: iTunes, [iMobileDevice](http://quamotion.mobi/iMobileDevice/Download)
 
