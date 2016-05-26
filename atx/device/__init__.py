@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import re
 import collections
 
 import cv2
@@ -59,6 +60,12 @@ class Pattern(object):
         self._threshold = th or threshold
         if isinstance(image, basestring):
             self._name = image
+
+        # search format name.1028x1920.png
+        if self._resolution is None:
+            m = re.search(r'\.(\d+)x(\d+)\.png$', self._name)
+            if m:
+                self._resolution = map(int, (m.group(1), m.group(2)))
 
     def __str__(self):
         return 'Pattern(name: {}, offset: {})'.format(strutils.encode(self._name), self.offset)
