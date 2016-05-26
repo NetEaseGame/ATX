@@ -46,31 +46,12 @@ def load_main(module_name):
         return inject(mod.main, pargs)
     return _inner
 
-
-def _webide(args):
-    from atx.cmds import webide
-    webide.main(open_browser=(not args.no_browser), port=args.web_port, adb_host=args.host, adb_port=args.port)
-
-
 def _apk_parse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
         'package_name': pkg_name,
         'main_activity': activity,
     }, indent=4)
-
-
-def _run(args):
-    run.main(args.config_file)
-
-def _screen(args):
-    from atx.cmds import screen
-    screen.main(args.scale, args.controls)
-
-def _screenrecord(args):
-    from atx.cmds import screenrecord
-    screenrecord.main(args.output, args.scale, args.portrait, args.overwrite, args.verbose)
-
 
 def main():
     ap = argparse.ArgumentParser(
@@ -80,31 +61,6 @@ def main():
     ap.add_argument("-P", "--port", required=False, type=int, default=5037, help="Adb port")
 
     subparsers = ap.add_subparsers()
-    add_parser = functools.partial(subparsers.add_parser, 
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    # TODO: need to change to with ... as p
-    parser_web = add_parser('web')
-    parser_web.add_argument('--no-browser', dest='no_browser', action='store_true', help='Not open browser')
-    parser_web.add_argument('--port', dest='web_port', default=None, type=int, help='web listen port')
-    parser_web.set_defaults(func=_webide)
-
-    parser_run = add_parser('run')
-    parser_run.add_argument('-f', dest='config_file', default='atx.yml', help='config file')
-    parser_run.set_defaults(func=_run)
-
-    parse_scr = add_parser('screen')
-    parse_scr.add_argument('-s', '--scale', required=False, default=0.5, help='image scale, default is 0.5')
-    parse_scr.add_argument('--simple', dest='controls', action='store_false', help='disable interact controls')
-    parse_scr.set_defaults(func=_screen)
-
-    parse_scrrec = add_parser('screenrecord')
-    parse_scrrec.add_argument('-o', '--output', required=False, default='out.avi', help='video output path, default is out.avi')
-    parse_scrrec.add_argument('--overwrite', action='store_true', help='overwrite video output file.')
-    parse_scrrec.add_argument('-s', '--scale', required=False, default=0.5, help='image scale for video, default is 0.5')
-    parse_scrrec.add_argument('-q', '--quiet', dest='verbose', action='store_false', help='display screen while recording.')
-    parse_scrrec.add_argument('--portrait', action='store_true', help='set video framesize to portrait instead of landscape.')
-    parse_scrrec.set_defaults(func=_screenrecord)
 
     @contextmanager
     def add_parser(name):
@@ -139,6 +95,34 @@ def main():
         p.add_argument('path', help='<apk file path | apk url path> (only support android for now)')
         p.add_argument('--start', action='store_true', help='Start app when app success installed')
         p.set_defaults(func=load_main('install'))
+
+    with add_parser('screen') as p:
+        p.add_argument('-s', '--scale', required=False, default=0.5, help='image scale')
+        p.add_argument('--simple', action='store_true', help='disable interact controls')
+        p.set_defaults(func=load_main('screen'))
+
+    with add_parser('screencap') as p:
+        p.add_argument('-s', '--scale', required=False, default=1.0, help='image scale')
+        p.add_argument('-o', '--out', required=False, default='screenshot.png', help='output path')
+        p.add_argument('-m', '--method', required=False, default='minicap', help='screen shot method, one of (minicap, uiautomator, screencap)')
+        p.set_defaults(func=load_main('screencap'))
+
+    with add_parser('screenrecord') as p:
+        p.add_argument('-o', '--output', default='out.avi', help='video output path')
+        p.add_argument('--overwrite', action='store_true', help='overwrite video output file.')
+        p.add_argument('-s', '--scale', default=0.5, help='image scale for video')
+        p.add_argument('-q', '--quiet', dest='verbose', action='store_false', help='display screen while recording.')
+        p.add_argument('--portrait', action='store_true', help='set video framesize to portrait instead of landscape.')
+        p.set_defaults(func=load_main('screenrecord'))
+
+    with add_parser('web') as p:
+        p.add_argument('--no-browser', dest='open_browser', action='store_false', help='Not open browser')
+        p.add_argument('--web-port', required=False, type=int, help='web listen port')
+        p.set_defaults(func=load_main('webide'))
+
+    with add_parser('run') as p:
+        p.add_argument('-f', dest='config_file', default='atx.yml', help='config file')
+        p.set_defaults(func=load_main('run'))
 
     args = ap.parse_args()
     args.func(args)

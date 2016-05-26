@@ -266,7 +266,7 @@ def logcat():
     '''may need seperate functions'''
     raise NotImplementedError()
 
-def forward(local, remote, rebind=False):
+def forward(local, remote, rebind=True):
     cmd = ['forward']
     if not rebind:
         cmd.append('--no-rebind')
@@ -300,7 +300,7 @@ def forward_remove(local=None):
         pass
     _adb_call('forward', '--remove', local)
 
-def reverse(remote, local, rebind=False):
+def reverse(remote, local, rebind=True):
     cmd = ['reverse']
     if not rebind:
         cmd.append('--no-rebind')
@@ -488,18 +488,28 @@ def dumpui(filename='window_dump.xml', compressed=None, pretty=True):
     #     content = U(xml_text.toprettyxml(indent='  '))
     return content
 
-def screenshot(filename=None, format='pil', scale=1.0):
-    remote = '/data/local/tmp/screenshot.png'
-    _adb_call('shell', 'screencap', '-p', remote)
-    pull(remote, filename or 'screenshot.png')
+def image_file_reform(filename, format, scale):
     if format == 'cv2':
         import cv2
-        img = cv2.imread('screenshot.png')
+        img = cv2.imread(filename)
         h, w = img.shape[:2]
         h, w = int(scale*h), int(scale*w)
         img = cv2.resize(img, (w, h))
+        cv2.imwrite(filename, img)
         return img
-    return Image('screenshot.png')
+    else:
+        img = Image.open(filename)
+        w, h = img.size
+        h, w = int(scale*h), int(scale*w)
+        img = img.resize((w, h))
+        img.save(filename)
+        return img
+
+def screenshot(filename='screenshot.png', format='pil', scale=1.0):
+    remote = '/data/local/tmp/screenshot.png'
+    _adb_call('shell', 'screencap', '-p', remote)
+    pull(remote, filename)
+    return image_file_reform(filename, format, scale)
 
 def input(text):
     # TODO: handle %s problem
@@ -550,6 +560,21 @@ def use_uiautomator():
     patch_function(_mod, 'keyevent', _uia_keyevent)
 
 #------------------ interact functions from openstf -------------------#
+def screenshot_minicap(filename='screenshot.png', format='pil', scale=1.0):
+    binary = '/data/local/tmp/minicap'
+    if not is_file_exists(binary):
+        raise EnvironmentError('minicap not available')
+
+    out = _adb_output('shell', 'LD_LIBRARY_PATH=/data/local/tmp', binary, '-i')
+    m = re.search('"width": (\d+).*"height": (\d+).*"rotation": (\d+)', out, re.S)
+    w, h, r = map(int, m.groups())
+    w, h = min(w, h), max(w, h)
+    params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=r)
+    temp = '/data/local/tmp/minicap_screen.png'
+    _adb_call('shell', 'LD_LIBRARY_PATH=/data/local/tmp', binary, '-s', '-P', params, '>', temp)
+    pull(temp, filename)
+    return image_file_reform(filename, format, scale)
+
 def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
     _mod = sys.modules[__name__]
     import cv2
@@ -590,6 +615,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
             self.sub_rotationwatcher = None
             def _on_rotation(value):
                 self._orientation = int(value)/90
+                print 'screen orientation changed to', self._orientation
                 self.start_minicap(_on_screenchange)
                 if callable(on_rotation):
                     on_rotation(self._orientation)
@@ -656,7 +682,7 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                             break
                         continue
                     except:
-                        pass
+                        traceback.print_exc()
 
             t = threading.Thread(target=_listen)
             t.setDaemon(True)
@@ -678,15 +704,15 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 _adb_call('shell', 'kill', pid)
 
             # w, h = display()
-            # use minicap to get display size
+            # use minicap to get display size & orientation
             out = _adb_output('shell', 'LD_LIBRARY_PATH=/data/local/tmp', '/data/local/tmp/minicap', '-i')
-            m = re.search('"width": (\d+).*"height": (\d+)', out, re.S)
-            w, h = map(int, m.groups())
+            m = re.search('"width": (\d+).*"height": (\d+).*"rotation": (\d+)', out, re.S)
+            w, h, r = map(int, m.groups())
             w, h = min(w, h), max(w, h)
+            params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=r)
 
             sdk = getsdk()
 
-            params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=self._orientation*90)
             p = _adb_device_cmd('shell', 
                         'LD_LIBRARY_PATH=/data/local/tmp', 
                         '/data/local/tmp/minicap', 
@@ -826,13 +852,15 @@ def use_openstf(enabletouch=False, on_rotation=None, on_screenchange=None):
                 send('m 0 %d %d 30\nc\n' % (x, y))
             send('u 0 %d %d 30\nc\nu 0\nc\n' % (ex, ey))
 
-        def screenshot(self, format='pil', scale=1.0):
+        def screenshot(self, filename=None, format='pil', scale=1.0):
             if scale != 1.0:
                 h, w = self._screen.shape[:2]
                 h, w = int(scale*h), int(scale*w)
                 image = cv2.resize(self._screen, (w, h))
             else:
                 image = self._screen
+            if filename:
+                cv2.imwrite(filename, image)
             if format == 'cv2':
                 return image
             if self._screen is not None:

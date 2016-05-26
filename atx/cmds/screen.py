@@ -12,7 +12,7 @@ from atx import adb2 as adb
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-def gui(scale=0.5):
+def screen_with_controls(scale=0.5):
     from PIL import Image, ImageTk
     import Tkinter as tk
     import tkFileDialog
@@ -166,7 +166,7 @@ def gui(scale=0.5):
 
     s.run()
 
-def simple(scale=0.5):
+def screen_simple(scale=0.5):
     adb.use_openstf()
     img = adb.screenshot(format='cv2')
     while img is None:
@@ -193,12 +193,12 @@ def simple(scale=0.5):
 
     cv2.destroyWindow(winname)
 
-def main(scale=0.5, controls=True):
+def main(scale=0.5, simple=False):
     '''interact'''
-    if not controls:
-        simple(scale)
+    if simple:
+        screen_simple(scale)
     else:
-        gui(scale)
+        screen_with_controls(scale)
 
 if __name__ == '__main__':
     main()

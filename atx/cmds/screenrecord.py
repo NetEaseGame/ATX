@@ -20,10 +20,10 @@ def main(output='out.avi', scale=0.5, portrait=False, overwrite=True, verbose=Tr
             return
 
     adb.use_openstf()
-    img = adb.screenshot()
+    img = adb.screenshot(format='cv2')
     while img is None:
         time.sleep(1)
-        img = adb.screenshot()
+        img = adb.screenshot(format='cv2')
     if verbose:
         cv2.imshow('screen', img)
 
@@ -45,7 +45,7 @@ def main(output='out.avi', scale=0.5, portrait=False, overwrite=True, verbose=Tr
         try:
             time.sleep(1.0/fps - max(toc-tic, 0))
             tic = time.clock()
-            img = adb.screenshot()
+            img = adb.screenshot(format='cv2')
             h, w = img.shape[:2]
             if h*vw == w*vh:
                 h, w = vh, vw

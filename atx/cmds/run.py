@@ -61,7 +61,7 @@ def notify_popo(users, message):
     # print users, message
 
 
-def main(config_file):
+def main(config_file='atx.yml'):
     if not os.path.exists(config_file):
         sys.exit('config file (%s) not found.' % config_file)
 

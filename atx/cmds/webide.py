@@ -232,34 +232,31 @@ def make_app(settings={}):
     return application
 
 
-def main(**kws):
+def main(web_port=None, host=None, port=None, open_browser=True, workdir='.'):
     application = make_app({
         'static_path': os.path.join(__dir__, 'static'),
         'template_path': os.path.join(__dir__, 'static'),
         'debug': True,
     })
-    port = kws.get('port', None)
-    if not port:
-        port = get_valid_port()
+    if not web_port:
+        web_port = get_valid_port()
 
     global device
-    global workdir
-    workdir = kws.get('workdir', '.')
-    atx_settings['host'] = kws.get('adb_host')
-    atx_settings['port'] = kws.get('adb_port')
+    # global workdir
+    atx_settings['host'] = host
+    atx_settings['port'] = port
     # device = atx.connect(host=kws.get('host'), port=kws.get('port'))
     # TODO
     # filename = 'blockly.py'
     IMAGE_PATH.append('images/blockly')
 
-    open_browser = kws.get('open_browser', True)
     if open_browser:
-        url = 'http://127.0.0.1:{}'.format(port)
+        url = 'http://127.0.0.1:{}'.format(web_port)
         webbrowser.open(url, new=2) # 2: open new tab if possible
 
-    application.listen(port)
+    application.listen(web_port)
     log.info("Server started.")
-    log.info("Listening port on 127.0.0.1:{}".format(port))
+    log.info("Listening port on 127.0.0.1:{}".format(web_port))
     tornado.ioloop.IOLoop.instance().start()
 
 
