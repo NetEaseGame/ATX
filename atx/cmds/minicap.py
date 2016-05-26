@@ -51,7 +51,7 @@ def run_adb(*args, **kwargs):
         raise EnvironmentError('run cmd: {} failed. {}'.format(cmdline, e))
 
 
-def install(serialno=None, host=None, port=None):
+def main(serialno=None, host=None, port=None):
     logger.info("Minicap install started!")
     
     adb = functools.partial(run_adb, serialno=serialno, host=host, port=port)
@@ -97,4 +97,4 @@ if __name__ == "__main__":
     parser.add_argument("-H", "--host", help="host of remote device", default=None)
     parser.add_argument("-P", "--port", help="port of remote device", default=None)
     args = parser.parse_args(sys.argv[1:])
-    install(serialno=args.serialno, host=args.host, port=args.port)
+    main(serialno=args.serialno, host=args.host, port=args.port)

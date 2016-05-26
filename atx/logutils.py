@@ -40,12 +40,12 @@ class Logger(object):
         self._level = level
         return self
 
-    def _level_write(self, level, format, *args):
+    def _level_write(self, level, str_format, *args):
         if level < self._level:
             return
 
         levelname = logging.getLevelName(level)
-        message = format % args
+        message = str_format % args if args else str_format
         frame, filename, line_number, function_name, lines, index = inspect.stack()[2]
         props = dict(
             asctime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
