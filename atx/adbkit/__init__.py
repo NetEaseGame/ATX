@@ -65,5 +65,6 @@ if __name__ == '__main__':
     adb = Client()
     print adb.devices()
     print adb.version()
-    dev = adb.device('10.250.210.165:57089')
-    print dev.keyevent('HOME')
+    dev = adb.device() #'10.250.210.165:57089')
+    # print dev.keyevent('HOME')
+    print dev.display

@@ -197,9 +197,10 @@ class CropIDE(object):
         if self._bounds is None:
             return
         bounds = self._fix_bounds(self._bounds)
+        ext = '.%dx%d.png' % tuple(self._size)
         save_to = tkFileDialog.asksaveasfilename(**dict(
-            defaultextension=".png",
-            filetypes=[('PNG', '.png')],
+            defaultextension=ext,
+            filetypes=[('PNG with size', ext)],
             title='Select file'))
         if not save_to:
             return
@@ -357,7 +358,7 @@ class CropIDE(object):
         
 
 def main(serial, **kwargs):
-    log.debug("GUI Starting ...")
+    log.debug("gui starting ...")
     d = atx.connect(serial, **kwargs)
     d.wakeup()
     gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)

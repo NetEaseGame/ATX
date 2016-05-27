@@ -72,6 +72,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Raises:
             EnvironmentError
         """
+        self.__display = None
         serialno = serialno or getenv('ATX_ADB_SERIALNO', None)
         self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
         self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
@@ -130,10 +131,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             self.delay(secs)
 
     @property
-    @patch.run_once
     def display(self):
         """Virtual keyborad may get small d.info['displayHeight']
         """
+        if self.__display:
+            return self.__display
         w, h = (0, 0)
         for line in self.adb_shell('dumpsys display').splitlines():
             m = DISPLAY_RE.search(line, 0)
@@ -143,11 +145,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             h = int(m.group('height'))
             # o = int(m.group('orientation'))
             w, h = min(w, h), max(w, h)
-            return collections.namedtuple('Display', ['width', 'height'])(w, h)
+            self.__display = collections.namedtuple('Display', ['width', 'height'])(w, h)
+            return self.__display
 
         w, h = self.info['displayWidth'], self.info['displayHeight']
         w, h = min(w, h), max(w, h)
-        return collections.namedtuple('Display', ['width', 'height'])(w, h)
+        self.__display = collections.namedtuple('Display', ['width', 'height'])(w, h)
+        return self.__display
     
     @property
     def rotation(self):

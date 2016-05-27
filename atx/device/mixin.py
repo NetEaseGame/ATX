@@ -254,34 +254,6 @@ class Watcher(object):
             y = (info['bottom'] + info['top']) / 2
             return (x, y)
 
-    # def _hook(self, screen):
-    #     for evt in self._events:
-    #         pos = self._match(evt.selector, screen)
-    #         if pos is None:
-    #             continue
-
-    #         if callable(evt.action):
-    #             evt.action(Watcher.Event(evt.selector, pos))
-    #         elif evt.action == Watcher.ACTION_CLICK:
-    #             log.info('Watch match %s, click: %s', evt.selector, pos)
-    #             self._dev.click(*pos)
-    #         elif evt.action == Watcher.ACTION_QUIT:
-    #             self._run = False
-
-    # def _run_watch(self):
-    #     self._run = True
-    #     start_time = time.time()
-        
-    #     while self._run:
-    #         screen = self._dev.screenshot()
-    #         self._hook(screen)
-    #         if self.timeout is not None:
-    #             if time.time() - start_time > self.timeout:
-    #                 raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
-    #             sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
-    #             sys.stdout.flush()
-    #     sys.stdout.write('\n')
-
 
 Traceback = collections.namedtuple('Traceback', ['stack', 'exception'])
 HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth'])

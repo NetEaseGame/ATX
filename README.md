@@ -12,7 +12,7 @@ This project is to make mobile test automated, free people who are boring of rep
 
 ATX is short for _AutomatorX_
 
-Only when you familiar with ATX [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest) Or it's better to read the quick start tutorial.
+If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
