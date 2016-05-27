@@ -72,6 +72,7 @@ class Device(object):
             pass
 
     def _adb_screencap(self):
+        """ TODO(ssx): need to clean tmp file and fix rotation """
         tmp_screen = '/data/local/tmp/_tmp_screencap.png'
         self.adb_shell('screencap', '-p', tmp_screen)
         self.pull(tmp_screen, './_tmp.png')
