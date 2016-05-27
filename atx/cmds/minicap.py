@@ -83,6 +83,19 @@ def main(serialno=None, host=None, port=None):
         logger.info("Checking [dump device info] ...")
         print adb('shell', 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -i')
         logger.info("Minicap install finished !")
+
+        logger.info("Downloading minitouch ....")
+        url = "https://github.com/openstf/stf/raw/master/vendor/minitouch/"+abi+"/minitouch"
+        target_path = os.path.join(tmpdir, 'minitouch')
+        http_download(url, target_path)
+        logger.info("Push data to device ....")
+        adb('push', target_path, '/data/local/tmp')
+        adb('shell', 'chmod', '0755', '/data/local/tmp/minitouch')
+
+        logger.info("Checking [dump device info] ...")
+        print adb('shell', '/data/local/tmp/minitouch -h')
+        logger.info("Minitouch install finished !")
+
     except Exception, e:
         logger.error(e)
     finally:
