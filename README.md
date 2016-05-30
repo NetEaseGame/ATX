@@ -47,9 +47,8 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 ## Installation
 1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
 
-	windows推荐直接通过pip安装, 根据你是win32还是amd64选择合适的版本，如果pip安装不上，就需要把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)
-	安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错
-
+	windows推荐直接通过pip安装,
+	
 	```
 	# For Win32
 	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win32.whl
@@ -57,27 +56,35 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
 	```
 
+	如果pip安装遇到问题，也可以把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)，安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错。
+
+
 	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
 
 	```
 	brew install python pillow opencv
 	```
 
-2. Install with `pip`
+	Linux暂时先不写了，折腾过的人可以提个PR补充下。
+
+2. Install atx with `pip`
 
 	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
 
-	```
-	pip install --upgrade atx
-	```
-
+	因为目前代码的更新比较快，如果希望使用新功能的话，推荐安装开发版（目前也**强烈推荐**使用开发版）
 	For the develop version, (maybe not stable), Sync with github master code
 
 	```
 	pip install --upgrade --pre atx
 	```
 
-	有的时候Pypi会有点抽风, 从源码安装也是可行的
+	稳定版的发布频率大约为2周一次. Stable version updated about every two weeks.
+
+	```
+	pip install --upgrade atx
+	```
+
+	Sometime <https://pypi.python.org> may not stable, it is also passible to install from source.
 
 	```
 	pip install -U git+https://github.com/codeskyblue/AirtestX.git
@@ -86,7 +93,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 3. Install `ADB` (Android Debug Bridge)
 
-	If already installed, just skip the part.
+	If already installed, just skip the part. recommend version `1.0.32`
 
 	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 
@@ -134,7 +141,10 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 接口可以参考sphinx自动生成文档
 [Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
-文档等下在看，先看一些例子
+
+在Github也记录了部分关键的[API接口](API.md)说明
+
+文档可以等下在看，先看一些例子
 
 
 * Initial device connect
@@ -400,94 +410,6 @@ open `index.html` with browser.
 
 	使用方法如 `python -matx install utf8ime`
 
-## Configuration
-一般来说用默认的就好了，大部分都不需要改
-
-## API documentation
-其实看ReadTheDocs上的文档更好一点，这里也不打算列出来多少接口 [Documentation on ReadTheDocs](http://atx.readthedocs.org/en/latest/?badge=latest)
-
-### 连接设备
-`connect(udid, **kwargs)`
-
-对于安卓设备常见连接方法
-
-```
-connect() # only one device
-connect(None)
-connect(None, host='127.0.0.1', port=5037)
-connect('EFSXA124') # specify serialno
-```
-
-connect返回一个Device对象, 该对象下有很多方法可以用，使用举例
-
-```
-d = atx.connect(None)
-d.screenshot('screen.png')
-```
-
-## Device下的方法
-### 截图
-`screenshot(filename)`
-
-可以自动识别屏幕的旋转
-
-Parameters
-
-    Name | Type   | Description
----------|--------|------------
-filename | string | **Optional** 保存的文件名
-
-Returns
-
-PIL.Image
-
-### 坐标点击
-`click(x, y)`
-
-image support string or pillow image
-
-Parameters
-
-Name      | Type      | Description
-----------|-----------|------------
-x, y      | int       | 坐标值
-
-Example
-
-```
-click(20， 30）
-```
-
-### 其他接口
-
-
-## 批量运行脚本
-推荐用unittest, 它是python自身的一个测试框架(其他出色的也有nose, pytest) 等等，看个人喜好
-
-	```py
-	# coding: utf-8
-
-	import unittest
-	import atx
-
-	d = atx.connect()
-
-	class SimpleTestCase(unittest.TestCase):
-	    def setUp(self):
-	        name = 'com.netease.txx'
-	        d.stop_app(name).start_app(name)
-
-	    def test_login(self):
-	        d.click_image("confirm.png")
-	        d.click_image("enter-game.png")
-	        with d.watch('Enter game', 20) as w:
-	            w.on("user.png").quit()
-
-
-	if __name__ == '__main__':
-	    unittest.main()
-	```
-	
 ## FAQ
 1. 如果连接远程机器上的安卓设备
 
