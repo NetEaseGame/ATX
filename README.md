@@ -526,6 +526,8 @@ open `index.html` with browser.
 
 ## Articles
 1. [让adb install显示进度](https://testerhome.com/topics/4772)
+2. [Android 屏幕同步和录制工具](https://testerhome.com/topics/5006)
+3. [安卓手机的快速截图](https://testerhome.com/topics/5004)
 
 ## Developer dashboards
 1. Platform Versions, Screen Size, Open GL Version <http://developer.android.com/intl/zh-cn/about/dashboards/index.html>
