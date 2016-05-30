@@ -3,9 +3,15 @@
 
 from __future__ import absolute_import
 
+import atexit
+import os
 import re
 import json
 import collections
+import tempfile
+from StringIO import StringIO
+
+from PIL import Image
 
 
 _DISPLAY_RE = re.compile(
@@ -27,8 +33,11 @@ class Device(object):
         return self._client.raw_cmd(*args)
 
     def adb_cmd(self, *args):
+        """
+        Unix style output, already replace \r\n to \n
+        """
         p = self.raw_cmd(*args)
-        return p.communicate()[0]
+        return p.communicate()[0].replace('\r\n', '\n')
 
     def adb_shell(self, *args):
         args = ['shell'] + list(args)
@@ -61,7 +70,7 @@ class Device(object):
             h = int(m.group('height'))
             o = int(m.group('orientation'))
             w, h = min(w, h), max(w, h)
-            # return self.Display(w, h, o)
+            return self.Display(w, h, o)
 
         output = self.adb_shell('LD_LIBRARY_PATH=/data/local/tmp', self.__minicap, '-i')
         try:
@@ -71,39 +80,39 @@ class Device(object):
         except ValueError:
             pass
 
-    def _adb_screencap(self):
-        """ TODO(ssx): need to clean tmp file and fix rotation """
-        tmp_screen = '/data/local/tmp/_tmp_screencap.png'
-        self.adb_shell('screencap', '-p', tmp_screen)
-        self.pull(tmp_screen, './_tmp.png')
+    def rotation(self):
+        return self.display.rotation
 
-    # def _screenshot_minicap(self):
-    #     phone_tmp_file = '/data/local/tmp/_atx_screen-{}.jpg'.format(self._randid)
-    #     local_tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
-    #     command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
-    #         self._minicap_params(), phone_tmp_file)
-    #     try:
-    #         self.adb_shell(command)
-    #         self.adb_cmd(['pull', phone_tmp_file, local_tmp_file])
-    #         image = imutils.open_as_pillow(local_tmp_file)
-
-    #         # Fix rotation not rotate right.
-    #         (width, height) = image.size
-    #         if self.screen_rotation in [1, 3] and width < height:
-    #             image = image.rotate(90, Image.BILINEAR, expand=True)
-    #         return image
-    #     except IOError:
-    #         raise IOError("Screenshot use minicap failed.")
-    #     finally:
-    #         # remove_force(local_tmp_file)
-    #         self.adb_shell(['rm', phone_tmp_file])
+    def _adb_screencap(self, scale=1.0):
+        """
+        capture screen with adb shell screencap
+        """
+        remote_file = tempfile.mktemp(dir='/data/local/tmp/', prefix='screencap-', suffix='.png')
+        self.adb_shell('screencap', '-p', remote_file)
+        local_file = tempfile.mktemp(prefix='atx-screencap-', suffix='.png')
+        try:
+            self.pull(remote_file, local_file)
+            image = Image.open(local_file)
+            image.load() # because Image is a lazy load function
+            if scale is not None and scale != 1.0:
+                image = image.resize([int(scale * s) for s in image.size], Image.BICUBIC)
+            rotation = self.rotation()
+            if rotation:
+                method = getattr(Image, 'ROTATE_{}'.format(rotation*90))
+                image = image.transpose(method)
+            return image
+        finally:
+            self.remove(remote_file)
+            os.unlink(local_file)
 
     def screenshot(self, filename=None, scale=1.0):
-        pass
-
-        # w, h = self.info['displayWidth'], self.info['displayHeight']
-        # w, h = min(w, h), max(w, h)
-        # return collections.namedtuple('Display', ['width', 'height'])(w, h)
+        """
+        take device screenshot
+        """
+        image = self._adb_screencap(scale)
+        if filename:
+            image.save(filename)
+        return image
 
     # def screenshot_minicap(self, filename='screenshot.png', format='pil', scale=1.0):
     #     binary = '/data/local/tmp/minicap'

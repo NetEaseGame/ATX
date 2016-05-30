@@ -190,7 +190,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
 	d.adb_shell(['uptime'])
 	print d.forward(10080) # forward device port to localhost
-	# Expect (host, port)
+	# Expect: (host, port)
 	print d.wlan_ip # 获取手机的Wlan IP
 	```
 
@@ -198,7 +198,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	```py
 	# find image position
-	if d.exists('button.png'): # 判断截图是否在屏幕中出现
+	if d.exists('button.png'): # 判断截图是否在屏幕中出现, 反馈查找到的坐标
 		print 'founded'
 
 	# take screenshot
@@ -207,11 +207,17 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# click position
 	d.click(50, 100) # 模拟点击 x, y
 	
+	# click image
+	d.click_image("button.png")
+
+	# 文件名添加截图手机的分辨率
+	d.click_image("button.1920x1080.png")
+
 	# click offset image
 	d.click_image(atx.Pattern('button.png', offset=(100, 20))) # 带有偏移量的点击
 
 	# 指定截图时手机的分辨率是 1920x1080 以便脚本运行在其他分辨率的手机上时可以自动适应
-	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920))) 
+	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
 
 	# if image not show in 10s, ImageNotFoundError will raised
 	try:
@@ -232,6 +238,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	```py
 	# click by UI component
 	d(text='Enter').click()
+	d(text='Enter').sibling(className='android.widget.ImageView').click()
 	```
 
 * 文本的输入
@@ -409,6 +416,17 @@ open `index.html` with browser.
 	另外install支持一些默认软件的安装，目前有 utf8ime
 
 	使用方法如 `python -matx install utf8ime`
+
+7. screencap (仅限android)
+	截图功能，拥有超越`adb shell screencap`的速度以及兼容性
+
+	```sh
+	$ python -matx screencap -o screen.png
+	```
+
+8. screenrecord （仅限android）
+
+	录制视频功能，需要预先安装minicap
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备

@@ -102,9 +102,9 @@ def main():
         p.set_defaults(func=load_main('screen'))
 
     with add_parser('screencap') as p:
-        p.add_argument('-s', '--scale', required=False, default=1.0, help='image scale')
+        # p.add_argument('-s', '--scale', required=False, default=1.0, help='image scale')
         p.add_argument('-o', '--out', required=False, default='screenshot.png', help='output path')
-        p.add_argument('-m', '--method', required=False, default='minicap', help='screen shot method, one of (minicap, uiautomator, screencap)')
+        p.add_argument('-m', '--method', required=False, default='minicap', choices=('minicap', 'uiautomator'), help='screenshot method')
         p.set_defaults(func=load_main('screencap'))
 
     with add_parser('screenrecord') as p:
