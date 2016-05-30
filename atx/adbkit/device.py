@@ -41,6 +41,9 @@ class Device(object):
         return p.communicate()[0].replace('\r\n', '\n')
 
     def adb_shell(self, *args):
+        """
+        Run command `adb shell`
+        """
         args = ['shell'] + list(args)
         return self.adb_cmd(*args)
 
@@ -49,8 +52,32 @@ class Device(object):
         self.adb_shell('input', 'keyevent', key)
 
     def remove(self, filename):
-        ''' remove file '''
+        """ 
+        Remove file from device
+        """
         self.adb_shell('rm', filename)
+
+    def install(self, filename):
+        """
+        TOOD(ssx): Install apk into device
+
+        Args:
+            - filename(string): apk file path
+        """
+        pass
+
+    def uninstall(self, package_name, keep_data=False):
+        """
+        Uninstall package
+
+        Args:
+            - package_name(string): package name ex: com.example.demo
+            - keep_data(bool): keep the data and cache directories
+        """
+        if keep_data:
+            return self.adb_cmd('uninstall', '-k', package_name)
+        else:
+            return self.adb_cmd('uninstall', package_name)
 
     def pull(self, source_file, target_file=None):
         if target_file is None:
@@ -123,7 +150,15 @@ class Device(object):
 
     def screenshot(self, filename=None, scale=1.0, method=None):
         """
-        take device screenshot
+        Take device screenshot
+
+        Args:
+            - filename(string): optional, save int filename
+            - scale(float): scale size
+            - method(string): one of minicap,screencap
+
+        Return:
+            PIL.Image
         """
         image = None
         method = method or self._screenshot_method

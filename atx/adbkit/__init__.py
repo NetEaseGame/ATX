@@ -14,7 +14,7 @@ Blueprint, not finished yet.
 True
 >>> client.disconnect('10.0.0.1:5555') # DONE
 >>>
->>> dev = client.device(serial=None)
+>>> dev = client.device(serial=None) # DONE
 >>> dev.packages()
 [{'name': 'com.example.demo', 'version': 2}]
 >>> dev.forward_list()
@@ -23,7 +23,7 @@ True
 {'ro.build.brand', 'MI2', ...}
 >>> dev.install('demo.apk')
 True
->>> dev.uninstall('com.example.demo', keep_data=True)
+>>> dev.uninstall('com.example.demo', keep_data=True) # DONE
 True
 >>> dev.logcat() # TODO
 >>> dev.pull('/data/local/tmp/_screen.png', './')
@@ -42,7 +42,7 @@ None
 com.example.demo
 >>> dev.orientation()
 : one of [1-4]
->>> dev.screenshot()
+>>> dev.screenshot() # DONE
 : PIL image object
 >>> dev.keyevent('HOME')
 None
