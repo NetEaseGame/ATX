@@ -12,13 +12,13 @@ import tempfile
 from StringIO import StringIO
 
 from PIL import Image
+from atx import logutils
 
 
+logger = logutils.getLogger(__name__)
 _DISPLAY_RE = re.compile(
     r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
-
-_PROP_PATTERN = re.compile(
-    r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
+_PROP_PATTERN = re.compile(r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
 
 class Device(object):
     Display = collections.namedtuple('Display', ['width', 'height', 'rotation'])
@@ -27,6 +27,7 @@ class Device(object):
     def __init__(self, client, serial):
         self._client = client
         self._serial = serial
+        self._screenshot_method = 'minicap'
 
     def raw_cmd(self, *args):
         args = ['-s', self._serial] + list(args)
@@ -88,8 +89,8 @@ class Device(object):
         capture screen with adb shell screencap
         """
         remote_file = tempfile.mktemp(dir='/data/local/tmp/', prefix='screencap-', suffix='.png')
-        self.adb_shell('screencap', '-p', remote_file)
         local_file = tempfile.mktemp(prefix='atx-screencap-', suffix='.png')
+        self.adb_shell('screencap', '-p', remote_file)
         try:
             self.pull(remote_file, local_file)
             image = Image.open(local_file)
@@ -105,26 +106,39 @@ class Device(object):
             self.remove(remote_file)
             os.unlink(local_file)
 
-    def screenshot(self, filename=None, scale=1.0):
+    def _adb_minicap(self, scale=1.0):
+        remote_file = tempfile.mktemp(dir='/data/local/tmp/', prefix='minicap-', suffix='.jpg')
+        local_file = tempfile.mktemp(prefix='atx-minicap-', suffix='.jpg')
+        (w, h, r) = self.display
+        params = '{x}x{y}@{rx}x{ry}/{r}'.format(x=w, y=h, rx=int(w*scale), ry=int(h*scale), r=r*90)
+        try:
+            self.adb_shell('LD_LIBRARY_PATH=/data/local/tmp', self.__minicap, '-s', '-P', params, '>', remote_file)
+            self.pull(remote_file, local_file)
+            with open(local_file, 'rb') as f:
+                image = Image.open(StringIO(f.read()))
+            return image
+        finally:
+            self.remove(remote_file)
+            os.unlink(local_file)
+
+    def screenshot(self, filename=None, scale=1.0, method=None):
         """
         take device screenshot
         """
-        image = self._adb_screencap(scale)
+        image = None
+        method = method or self._screenshot_method
+        if method == 'minicap':
+            try:
+                image = self._adb_minicap(scale)
+            except Exception as e:
+                logger.warn("use minicap failed, fallback to screencap. error detail: %s", e)
+                self._screenshot_method = 'screencap'
+                return self.screenshot(filename=filename, scale=scale)
+        elif method == 'screencap':
+            image = self._adb_screencap(scale)
+        else:
+            raise RuntimeError("No such method(%s)" % method)
+
         if filename:
             image.save(filename)
         return image
-
-    # def screenshot_minicap(self, filename='screenshot.png', format='pil', scale=1.0):
-    #     binary = '/data/local/tmp/minicap'
-    #     if not is_file_exists(binary):
-    #         raise EnvironmentError('minicap not available')
-
-    #     out = _adb_output('shell', 'LD_LIBRARY_PATH=/data/local/tmp', binary, '-i')
-    #     m = re.search('"width": (\d+).*"height": (\d+).*"rotation": (\d+)', out, re.S)
-    #     w, h, r = map(int, m.groups())
-    #     w, h = min(w, h), max(w, h)
-    #     params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=r)
-    #     temp = '/data/local/tmp/minicap_screen.png'
-    #     _adb_call('shell', 'LD_LIBRARY_PATH=/data/local/tmp', binary, '-s', '-P', params, '>', temp)
-    #     pull(temp, filename)
-    #     return image_file_reform(filename, format, scale)
