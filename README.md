@@ -520,7 +520,7 @@ open `index.html` with browser.
 2. 感谢作者 <https://github.com/xiaocong> 提供的uiautomator的python封装，相关项目已经fork到了
 
 	- <https://github.com/codeskyblue/android-uiautomator-server>
-	- <https://github.com/codeskyblue/airtest-uiautomator>
+	- <https://github.com/codeskyblue/atx-uiautomator>
 3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 4. Blockly <https://github.com/codeskyblue/blockly>
 

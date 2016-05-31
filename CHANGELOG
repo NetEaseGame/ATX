@@ -1,6 +1,46 @@
 CHANGES
 =======
 
+* adbkit add minicap support
+* update docs
+* add screencap to adbkit
+* update docs
+* add gitter.im support
+* install minitouch along with minicap
+* fix connect multi device, display return wrong
+* prepare screencap
+* remove useless code
+* filename now can contains screen size, close #12
+* update deps
+* add screencap command
+* initial adbkit python wrap
+* make arg parser beautiful
+* fix minicap params on SDK<=16
+* fix rotationwatcher startup for SumSung GT-I9268
+* add STFService.apk for stf support
+* add a lame get_shell function to spare subprocess creation cost
+* rename screen window
+* add controls to screen command
+* add draft
+* add blueprint
+* fix RotationWatcher.apk file path
+* remove useless code again
+* remove useless code
+* fix PIL import error
+* add click_image hook, also finish atx report
+* add threshold support
+* watch add raise_errors
+* add web trigger
+* report generate json also
+* fix try catch
+* add screen/screenrecord commands
+* summarize all adb related functions to adb2.py
+* add surfaceflinger which collect fps in a non root way
+* release new tag
+
+1.0.10
+------
+
 * update doc, add taskqueue for ios
 * add report for atx
 * add atx.yml runner

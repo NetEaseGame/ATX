@@ -46,12 +46,19 @@ def load_main(module_name):
         return inject(mod.main, pargs)
     return _inner
 
+
 def _apk_parse(args):
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
     print json.dumps({
         'package_name': pkg_name,
         'main_activity': activity,
     }, indent=4)
+
+
+def _version(args):
+    import atx
+    print atx.version
+
 
 def main():
     ap = argparse.ArgumentParser(
@@ -123,6 +130,9 @@ def main():
     with add_parser('run') as p:
         p.add_argument('-f', dest='config_file', default='atx.yml', help='config file')
         p.set_defaults(func=load_main('run'))
+
+    with add_parser('version') as p:
+        p.set_defaults(func=_version)
 
     args = ap.parse_args()
     args.func(args)
