@@ -292,7 +292,9 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 监控事件 (这个挺好用的)
 
-	watch是一个内部循环，对于on函数中的所有出现的图片进行监控，如果发现吻合的，就执行后续的操作，知道timeout时间到
+	watch是一个内部循环，对于on函数中的所有出现的图片进行监控，如果发现吻合的，就执行后续的操作，直到timeout时间到。
+
+	下面的这个例子，效果为 当出现`notification.png`就点击`confirm.png`图片，只有检查的顺序，并没有执行的顺序。需要注意的是需要在timeout超时之前，执行`quit`函数
 
 	```py
 	# watcher, trigger when screenshot is called
@@ -300,12 +302,12 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 		print 'It happens', event
 		d.click(*event.pos)
 
-	timeout = 50 # 50s
-	with d.watch('enter game', timeout) as w:
+	timeout = 50.0 # 50s
+	with d.watch(timeout=timeout) as w:
 		w.on('enter-game.png').click()
 		w.on('notification.png').click('confirm.png')
 		w.on('inside.png').quit()
-		w.on(text='Login').quit() # UI Component, FIXME(ssx): BUG 还没修复
+		# w.on(text='Login').quit() # UI Component, FIXME(ssx): BUG 还没修复
 		w.on('outside.png').do(foo)
 
 	# will not raise errors
@@ -486,20 +488,8 @@ open `index.html` with browser.
 	minicap是[openstf](https://github.com/openstf)开源项目中的一个子项目，用于手机快速的截图. 连接手机到电脑上之后，简单的安装方法 `python -matx minicap` 
 	_注意：请不要在模拟器上尝试_
 
-5. 关于与第三方平台集成的方案
 
-	对于cloudtest, 添加下面的代码到靠上部的位置
-
-	```
-	from atx.ext import cloudtest
-
-	cloudtest.record_operation(d, logdir='cloudtest', filename='record.log')
-	# .... other operation
-	```
-
-	执行完代码后，把 `cloudtest` 这个目录发送到平台就好了。
-
-6. 遇到 IOError: RPC server not started!
+5. 遇到 IOError: RPC server not started!
 
 	卸载已有的应用，重新运行测试
 

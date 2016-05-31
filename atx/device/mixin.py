@@ -57,6 +57,12 @@ class WatcherItem(object):
     w.on('button.png').on('enter.png').click()
     w.on('button.png').click('enter.png')
     w.run()
+
+    # blueprint upgrade plan
+    - conditions
+        pattern
+    - hooks
+        functions
     """
     def __init__(self, dev, done, handler, pattern):
         self._dev = dev
@@ -70,10 +76,10 @@ class WatcherItem(object):
         self._conditions.append(_Condition(pattern, True))
         return self
 
-    def on_not(self, pattern):
-        """Trigger when pattern not exists"""
-        self._conditions.append(_Condition(pattern, False))
-        return self
+    # def on_not(self, pattern):
+    #     """Trigger when pattern not exists"""
+    #     self._conditions.append(_Condition(pattern, False))
+    #     return self
 
     def do(self, func):
         """Trigger with function call
@@ -583,7 +589,7 @@ class DeviceMixin(object):
         # FIXME(ssx): maybe this function is too complex
         return point #collections.namedtuple('X', ['pattern', 'point'])(pattern, point)
 
-    def watch(self, name, timeout=None, raise_errors=True):
+    def watch(self, name='', timeout=None, raise_errors=True):
         """Return a new watcher
         Args:
             name: string watcher name
@@ -595,6 +601,7 @@ class DeviceMixin(object):
         w = Watcher(self, name, timeout, raise_errors)
         w._dev = self
         return w
+
 
 if __name__ == '__main__':
     b = Bounds(1, 2, 3, 4)
