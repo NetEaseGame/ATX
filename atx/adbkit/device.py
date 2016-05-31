@@ -22,6 +22,7 @@ _PROP_PATTERN = re.compile(r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
 
 class Device(object):
     Display = collections.namedtuple('Display', ['width', 'height', 'rotation'])
+    Package = collections.namedtuple('Package', ['name', 'path'])
     __minicap = '/data/local/tmp/minicap'
 
     def __init__(self, client, serial):
@@ -59,12 +60,12 @@ class Device(object):
 
     def install(self, filename):
         """
-        TOOD(ssx): Install apk into device
+        TOOD(ssx): Install apk into device, show progress
 
         Args:
             - filename(string): apk file path
         """
-        pass
+        return self.adb_cmd('install', '-rt', filename)
 
     def uninstall(self, package_name, keep_data=False):
         """
@@ -111,6 +112,20 @@ class Device(object):
     def rotation(self):
         return self.display.rotation
 
+    def packages(self):
+        """
+        Show all packages
+        """
+        pattern = re.compile(r'package:(/[^=]+\.apk)=([^\s]+)')
+        packages = []
+        for line in self.adb_shell('pm', 'list', 'packages', '-f').splitlines():
+            m = pattern.match(line)
+            if not m:
+                continue
+            path, name = m.group(1), m.group(2)
+            packages.append(self.Package(name, path))
+        return packages
+
     def _adb_screencap(self, scale=1.0):
         """
         capture screen with adb shell screencap
@@ -134,6 +149,11 @@ class Device(object):
             os.unlink(local_file)
 
     def _adb_minicap(self, scale=1.0):
+        """
+        capture screen with minicap
+
+        https://github.com/openstf/minicap
+        """
         remote_file = tempfile.mktemp(dir='/data/local/tmp/', prefix='minicap-', suffix='.jpg')
         local_file = tempfile.mktemp(prefix='atx-minicap-', suffix='.jpg')
         (w, h, r) = self.display

@@ -68,4 +68,6 @@ if __name__ == '__main__':
     dev = adb.device() #'10.250.210.165:57089')
     # print dev.keyevent('HOME')
     print dev.display
-    dev.screenshot('s.png', scale=1.0)
+    for pkg in dev.packages():
+        print pkg
+    # dev.screenshot('s.png', scale=1.0)
