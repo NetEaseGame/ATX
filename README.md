@@ -418,7 +418,7 @@ open `index.html` with browser.
 	使用方法如 `python -matx install utf8ime`
 
 7. screencap (仅限android)
-	截图功能，拥有超越`adb shell screencap`的速度以及兼容性
+	截图功能，拥有超越`adb shell screencap`的速度以及兼容性，使用了PIL库，输出的格式根据文件的扩展名的自动确定
 
 	```sh
 	$ python -matx screencap -o screen.png

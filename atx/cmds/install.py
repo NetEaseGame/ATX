@@ -119,10 +119,10 @@ def main(path, serial=None, host=None, port=None, start=False):
 
     log.info("Install ..., will take a few seconds")
     adb_must_install(adb, DEFAULT_REMOTE_PATH, package_name)
-    log.info("Clean _tmp.apk")
+    log.info("Remove _tmp.apk")
     adb_remove(adb, DEFAULT_REMOTE_PATH)
 
     if start:
         log.info("Start app '%s'" % package_name)
         adb.cmd('shell', 'am', 'start', '-n', package_name+'/'+main_activity).wait()
-    log.info("Done")
+    log.info("Success")

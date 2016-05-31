@@ -109,15 +109,15 @@ def main():
         p.set_defaults(func=load_main('screen'))
 
     with add_parser('screencap') as p:
-        # p.add_argument('-s', '--scale', required=False, default=1.0, help='image scale')
+        p.add_argument('--scale', required=False, type=float, default=1.0, help='image scale')
         p.add_argument('-o', '--out', required=False, default='screenshot.png', help='output path')
-        p.add_argument('-m', '--method', required=False, default='minicap', choices=('minicap', 'uiautomator'), help='screenshot method')
+        p.add_argument('-m', '--method', required=False, default='minicap', choices=('minicap', 'screencap'), help='screenshot method')
         p.set_defaults(func=load_main('screencap'))
 
     with add_parser('screenrecord') as p:
         p.add_argument('-o', '--output', default='out.avi', help='video output path')
         p.add_argument('--overwrite', action='store_true', help='overwrite video output file.')
-        p.add_argument('-s', '--scale', default=0.5, help='image scale for video')
+        p.add_argument('--scale', type=float, default=0.5, help='image scale for video')
         p.add_argument('-q', '--quiet', dest='verbose', action='store_false', help='display screen while recording.')
         p.add_argument('--portrait', action='store_true', help='set video framesize to portrait instead of landscape.')
         p.set_defaults(func=load_main('screenrecord'))
