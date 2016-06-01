@@ -328,6 +328,9 @@ def keyboard(char, holdtime=None):
             return
     elif char in 'abcdefghijklmnopqrstuvwxyz1234567890':
         code = getattr(keycode, 'KEYCODE_%s' % char.upper())
+    elif char in 'ABCDEFGHIJLKMNOPQRSTUVWXYZ':
+        code = getattr(keycode, 'KEYCODE_%s' % char)
+        shift = True
     elif char in keycode.SHIFTED_KEYS:
         code = keycode.SHIFTED_KEYS[char]
         shift = True

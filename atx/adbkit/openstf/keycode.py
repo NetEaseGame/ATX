@@ -244,6 +244,10 @@ KEYBOARD_KEYS = {
     '/'     : KEYCODE_SLASH,
 }
 
+import sys
+if sys.platform == 'win32':
+    KEYBOARD_KEYS['\x08'] = KEYCODE_DEL # Oh No!
+
 SHIFTED_KEYS = {
     '!' : KEYCODE_1,    
     '@' : KEYCODE_2,
@@ -267,9 +271,6 @@ SHIFTED_KEYS = {
     '>' : KEYCODE_PERIOD,
     '?' : KEYCODE_SLASH,
 }
-
-for c in 'ABCDEFGHIJLKMNOPQRSTUVWXYZ':
-    SHIFTED_KEYS[c] = 'KEYCODE_%s' % c
 
 CTRLED_KEYS = {
     '\x01' : KEYCODE_A,
