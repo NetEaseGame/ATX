@@ -9,7 +9,7 @@ def on_battery(info):
 def on_rotation(rot):
     print 'on rotation', rot
 
-def test():
+def test_service():
     serial = "DU2SSE1467010532"; #hwH60
 
     from random import randint
@@ -37,10 +37,13 @@ def test():
     ]
 
     total = len(reqs)
-
     idx = 0
     queue = service.service_queue
     pack = service.pack
+
+    service.start_stf_service()
+    service.listen_service()
+
     while True:
 
         if randint(1, 10) < 3 and idx < total:
@@ -50,13 +53,12 @@ def test():
             idx += 1
         time.sleep(1)
 
-def test_type():
+def getchar():
     import sys
     import tty
     import termios
-    import locale
 
-    def getchar():
+    def _getchar():
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -66,6 +68,10 @@ def test_type():
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
+    return _getchar()
+
+def test_type():
+    import locale
     _, encoding = locale.getdefaultlocale()
     buf = ''
     while True:
@@ -84,28 +90,58 @@ def test_type():
             else:
                 service.type(text)
             buf = ''
+
+def test_agent():
+    service.start_stf_agent(restart=True)
+    service.listen_agent()
+
+    print 'KEYCODE_HOME'
+    service.keyevent('KEYCODE_HOME')
+    #service.wake()
+
+    print 'test ascii_type Ctrl+C to stop'
+    while True:
+        ch = getchar()
+        print 'try to input', repr(ch)
+        if ch == '\x03': # Ctrl+C
+            break
+        service.ascii_type(ch)
+
+    print 'test keyboard Ctrl+C to stop'
+    while True:
+        ch = getchar()
+        print 'try to input', repr(ch)
+        if ch == '\x03': # Ctrl+C
+            break
+        service.keyboard(ch)
+
+    #service.stop()
     
-if __name__ == '__main__':
+def testall():
     service.start()
 
     service.on_battery_event(on_battery)
     service.on_rotation_event(on_rotation)
 
     service.identify()
-    time.sleep(1)
+    time.sleep(2)
     service.keyevent('KEYCODE_HOME')
-    time.sleep(1)
+    time.sleep(2)
 
-    print service.get_wifi_status()
+    print 'wifi is', service.get_wifi_status()
     print 'disable', service.set_wifi_enabled(False)
-    print service.get_wifi_status()
+    print 'wifi is', service.get_wifi_status()
     print 'enable', service.set_wifi_enabled(True)
-    print service.get_wifi_status()
+    print 'wifi is', service.get_wifi_status()
     time.sleep(1)
 
+    print 'set rotation'
     print service.set_rotation(1)
+    time.sleep(1)
     print service.set_rotation(2)
+    time.sleep(1)
     print service.set_rotation(3)
+    time.sleep(1)
     print service.set_rotation(0)
     time.sleep(1)
 
@@ -116,3 +152,8 @@ if __name__ == '__main__':
     test_type()
 
     service.stop()
+
+if __name__ == '__main__':
+    #test_service()
+    test_agent()
+    #testall()
