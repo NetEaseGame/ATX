@@ -23,12 +23,10 @@ ATX is short for _AutomatorX_
 
 If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
 
-## Discuss(讨论群)
+## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
-And 群里几乎没有多少人，从另一个方面来说，现在加入进来的以后都是老用户了。
 
-- 外部用户 [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-- 网易员工POPO群: _1313514_
+- Chat room [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 PS: 并没有QQ, 因为我们公司上不了QQ
 
