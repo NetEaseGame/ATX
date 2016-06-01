@@ -102,6 +102,12 @@ def _id_generator():
 get_request_id = _id_generator()
 
 eventhooks = {}     # called when events arrived
+# initialize eventhooks
+for mtype, (req_class, _) in messages.iteritems():
+    if req_class is None:
+        eventhooks[mtype] = []
+del mtype, req_class
+
 responses = {}      # save service call response, for synchronize
 service_response_lock = threading.Lock()
 
@@ -121,7 +127,7 @@ def route(envelope):
         return
     # handle events
     hooks = eventhooks.get(envelope.type)
-    if hooks:
+    if hooks is not None:
         for func in hooks:
             try:
                 func(resp)
@@ -147,7 +153,6 @@ def wait_response(rid, timeout=1):
 
 def register_eventhook(mtype, callback):
     global eventhooks
-    eventhooks.setdefault(mtype, [])
     eventhooks[mtype].append(callback)
 
 def start_stf_service(adbprefix=None, port=1100):
@@ -386,6 +391,7 @@ def wake():
     agent_queue.put(msg)
 
 # use both agent & service to input unicode characters
+# TODO make it atomic, maybe use another queue?
 def type(text):
     rid = get_request_id()
     msg = pack(wire.SET_CLIPBOARD, wire.SetClipboardRequest(type=wire.TEXT, text=text), rid)
