@@ -218,7 +218,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 		print 'founded'
 
 	# take screenshot
-	d.screenshot('screen.png') # 保存屏幕截图
+	d.screenshot('screen.1920x1080.png') # 保存屏幕截图
 
 	# click position
 	d.click(50, 100) # 模拟点击 x, y
