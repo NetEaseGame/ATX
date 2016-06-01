@@ -1,3 +1,11 @@
+```
+    _           _                            _              __  __
+   / \   _   _ | |_  ___   _ __ ___    __ _ | |_  ___   _ __\ \/ /
+  / _ \ | | | || __|/ _ \ | '_ ` _ \  / _` || __|/ _ \ | '__|\  / 
+ / ___ \| |_| || |_| (_) || | | | | || (_| || |_| (_) || |   /  \ 
+/_/   \_\\__,_| \__|\___/ |_| |_| |_| \__,_| \__|\___/ |_|  /_/\_\
+```
+
 # AutomatorX (atx) (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
