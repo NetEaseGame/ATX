@@ -97,6 +97,14 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
 
+4. Show atx version
+
+	```
+	python -matx version
+	```
+
+	Remember the atx version in case if you want to rollback.
+	
 ## Quick start
 1. 连接一台安卓手机 (4.1+)
 
@@ -305,12 +313,13 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	timeout = 50.0 # 50s
 	with d.watch(timeout=timeout) as w:
 		w.on('enter-game.png').click()
-		w.on('notification.png').click('confirm.png')
-		w.on('inside.png').quit()
-		# w.on(text='Login').quit() # UI Component, FIXME(ssx): BUG 还没修复
+		w.on('notification.png').on('npc.png').click('confirm.png')
+		w.on('inside.png').quit().quit()
+		w.on_ui(text='Login').quit() # UI Component
 		w.on('outside.png').do(foo)
 
-	# will not raise errors
+	# will not raise errors(TODO: not working in latest version)
+	# 'enter game' is just a name which will seen in debug log
 	with d.watch('enter game', timeout, raise_errors=False) as w:
 		w.on('output.png').click()
 	```	

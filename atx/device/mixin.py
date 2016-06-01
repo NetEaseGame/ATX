@@ -32,6 +32,7 @@ from atx import errors
 from atx import patch
 from atx import base
 from atx import logutils
+from atx import strutils
 from atx import imutils
 from atx import adb
 from atx.device import Pattern, Bounds, FindPoint
@@ -64,16 +65,13 @@ class WatcherItem(object):
     - hooks
         functions
     """
-    def __init__(self, dev, done, handler, pattern):
-        self._dev = dev
-        self._done = done # list
-        self._handler = handler
-        self._hooks = handler['hooks'] = []
-        self._conditions = handler['conditions'] = [_Condition(pattern, True)]
+    def __init__(self, watcher, rule):
+        self._w = watcher
+        self._r = rule
 
     def on(self, pattern):
         """Trigger when pattern exists"""
-        self._conditions.append(_Condition(pattern, True))
+        self._r['conditions'].append(_Condition(pattern, True))
         return self
 
     # def on_not(self, pattern):
@@ -99,145 +97,103 @@ class WatcherItem(object):
         """
         if not callable(func):
             raise SyntaxError("%s should be a function" % func)
-        self._hooks.append(func)
+        self._r['actions'].append(func)
         return self
 
     def click(self, *args, **kwargs):
         def _inner(event):
             if len(args) or len(kwargs):
-                self._dev.click(*args, **kwargs)
+                self._w._dev.click(*args, **kwargs)
             else:
-                self._dev.click(*event.pos)
+                self._w._dev.click(*event.pos)
         return self.do(_inner)
 
     def click_image(self, *args, **kwargs):
         """ async trigger click_image """
         def _inner(event):
-            return self._dev.click_image(*args, **kwargs)
+            return self._w._dev.click_image(*args, **kwargs)
 
         return self.do(_inner)
 
     def quit(self):
         def _inner(event):
-            self._done[0] = True
-            # raise RuntimeError("Not finished yet.")
+            self._w._done = True
         return self.do(_inner)
 
 class Watcher(object):
-    ACTION_CLICK = 1 <<0
-    ACTION_TOUCH = 1 <<0
-    ACTION_QUIT = 1 <<1
-
     Handler = collections.namedtuple('Handler', ['selector', 'action'])
     Event = collections.namedtuple('Event', ['selector', 'pos'])
 
     def __init__(self, device, name=None, timeout=None, raise_errors=True):
-        self._events = []
-        self._dev = device
-        self._run = False
-        self._stored_selector = None
-
-        self._wids = [] # store orders
-        self._handlers = {}
-        self._done = [False]
-
         self.name = name
-        self.touched = {}
         self.timeout = timeout
         self.raise_errors = raise_errors
+        
+        self._dev = device
+        self._done = False
+        self._watches = []
 
     def on(self, pattern):
-        # TODO(ssx): maybe an array is just enough
-        watch_id = str(uuid.uuid1())
-        self._wids.append(watch_id)
-        handler = self._handlers[watch_id] = {}
-        return WatcherItem(self._dev, self._done, handler, pattern)
+        w = dict(
+            conditions=[_Condition(pattern, True)],
+            actions=[],
+        )
+        self._watches.append(w)
+        return WatcherItem(self, w)
+
+    def on_ui(self, text):
+        w = dict(
+            conditions=[_Condition(self._dev(text=text), True)],
+            actions=[],
+        )
+        self._watches.append(w)
+        return WatcherItem(self, w)
 
     def _do_hook(self, screen):
-        patterns = set()
-        for handler in self._handlers.values():
-            for c in handler['conditions']:
-                patterns.add(c.pattern)
+        # patterns = set()
+        for rule in self._watches:
+            conditions = rule['conditions']
+            actions = rule['actions']
 
-        # TODO(ssx): here can have a better optimized way.
-        # no need to match all pattern all the time
-        matches = {}
-        for pattern in patterns:
-            matches[pattern] = self._match(pattern, screen)
+            if not actions:
+                continue
 
-        for wid in self._wids:
-            hdlr = self._handlers[wid]
-            # pos = self._match(handler.pattern)
-            # if pos is None:
-            #     continue
-
-            last_pos = None
             ok = True
-            for c in hdlr['conditions']:
-                last_pos = matches[c.pattern]
-                exists = last_pos is not None
-                if exists != c.exists:
+            last_pos = None
+            for condition in conditions:
+                pos = self._match(condition.pattern, screen)
+                if pos:
+                    log.info("watch match: %s", condition)
+                if bool(pos) != condition.exists:
                     ok = False
                     break
+                if condition.exists:
+                    last_pos = pos
             if ok:
-                for fn in hdlr['hooks']:
-                    fn(Watcher.Event(None, last_pos))
-                break # quick and dirty fix
+                for fn in actions:
+                    fn(self.Event(None, last_pos))
+                break # FIXME(ssx): maybe need fallthrough, but for now, just simplfy it
 
     def run(self):
         # self._run = True
         start_time = time.time()
-        while not self._done[0]:
+        while not self._done:
             screen = self._dev.screenshot()
             self._do_hook(screen)
 
             if self.timeout is not None:
                 if time.time() - start_time > self.timeout:
                     if self.raise_errors:
-                        raise errors.WatchTimeoutError("Watcher(%s) timeout %s" % (self.name, self.timeout,))
+                        raise errors.WatchTimeoutError("[%s] watch timeout %s" % (self.name, self.timeout,))
                     break
-                sys.stdout.write("Watching %4.1fs left: %4.1fs\r" %(self.timeout, self.timeout-time.time()+start_time))
+                sys.stdout.write("[%s] watching %4.1fs left: %4.1fs\r" %(self.name, self.timeout, self.timeout-time.time()+start_time))
                 sys.stdout.flush()
-            sys.stdout.write('\n')
-
-    def touch(self):
-        return self.click()
-
-    def click(self):
-        """Touch"""
-        self._events.append(Watcher.Handler(self._stored_selector, Watcher.ACTION_CLICK))
-        return self
-
-    def quit(self):
-        self._events.append(Watcher.Handler(self._stored_selector, Watcher.ACTION_QUIT))
-
-    def do(self, func):
-        """Trigger with function call
-        Args:
-            func: function which will called when object found. For example.
-
-            def foo(event):
-                print event.pos # (x, y) position
-            
-            w.on('kitty.png').do(foo)
-        
-        Returns:
-            Watcher object
-
-        Raises:
-            SyntaxError
-        """
-        if not callable(func):
-            raise SyntaxError("%s should be a function" % func)
-        self._events.append(Watcher.Handler(self._stored_selector, func))
-        return self
+        sys.stdout.write('\n')
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        # print self._handlers
-        # self._run_watch()
         self.run()
 
     def _match(self, selector, screen):
@@ -248,9 +204,11 @@ class Watcher(object):
         '''
         if isinstance(selector, Pattern) or isinstance(selector, basestring):
             ret = self._dev.match(selector, screen=screen)
-            log.debug('watch match: %s, confidence: %s', selector, ret)
             if ret is None:
-                return None
+                return
+            log.debug('watch match: %s, confidence: %s', selector, ret)
+            if not ret.matched:
+                return
             return ret.pos
         elif isinstance(selector, AutomatorDeviceObject):
             if not selector.exists:
