@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
 
+import sys
 import time
 import service
 
@@ -53,12 +54,15 @@ def test_service():
             idx += 1
         time.sleep(1)
 
-def getchar():
-    import sys
+if sys.platform == 'win32':
+    import msvcrt
+    def getchar():
+        return msvcrt.getch()
+else:
     import tty
     import termios
 
-    def _getchar():
+    def getchar():
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -67,8 +71,6 @@ def getchar():
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
-
-    return _getchar()
 
 def test_type():
     import locale
@@ -105,6 +107,7 @@ def test_agent():
         print 'try to input', repr(ch)
         if ch == '\x03': # Ctrl+C
             break
+        continue
         service.ascii_type(ch)
 
     print 'test keyboard Ctrl+C to stop'
@@ -113,6 +116,7 @@ def test_agent():
         print 'try to input', repr(ch)
         if ch == '\x03': # Ctrl+C
             break
+        continue
         service.keyboard(ch)
 
     #service.stop()
@@ -155,5 +159,5 @@ def testall():
 
 if __name__ == '__main__':
     #test_service()
-    test_agent()
-    #testall()
+    #test_agent()
+    testall()

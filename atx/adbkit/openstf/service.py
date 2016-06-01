@@ -102,6 +102,12 @@ def _id_generator():
 get_request_id = _id_generator()
 
 eventhooks = {}     # called when events arrived
+# initialize eventhooks
+for mtype, (req_class, _) in messages.iteritems():
+    if req_class is None:
+        eventhooks[mtype] = []
+del mtype, req_class
+
 responses = {}      # save service call response, for synchronize
 service_response_lock = threading.Lock()
 
@@ -112,11 +118,16 @@ def route(envelope):
     # service calls should have id
     if envelope.id:
         with service_response_lock:
-            responses[envelope.id] = resp
+            rid = envelope.id
+            # remove placeholder if the response is not needed
+            if rid in responses:
+                del responses[rid]
+            else:
+                responses[rid] = resp
         return
     # handle events
     hooks = eventhooks.get(envelope.type)
-    if hooks:
+    if hooks is not None:
         for func in hooks:
             try:
                 func(resp)
@@ -133,10 +144,15 @@ def wait_response(rid, timeout=1):
             if rid in responses:
                 return responses.pop(rid)
         time.sleep(0.1)
+    # cleanup timeouted response, avoid memory leak by add a placeholder!
+    with service_response_lock:
+        if rid in responses:
+            del responses[rid]
+        else:
+            responses[rid] = None
 
 def register_eventhook(mtype, callback):
     global eventhooks
-    eventhooks.setdefault(mtype, [])
     eventhooks[mtype].append(callback)
 
 def start_stf_service(adbprefix=None, port=1100):
@@ -328,6 +344,9 @@ def keyboard(char, holdtime=None):
             return
     elif char in 'abcdefghijklmnopqrstuvwxyz1234567890':
         code = getattr(keycode, 'KEYCODE_%s' % char.upper())
+    elif char in 'ABCDEFGHIJLKMNOPQRSTUVWXYZ':
+        code = getattr(keycode, 'KEYCODE_%s' % char)
+        shift = True
     elif char in keycode.SHIFTED_KEYS:
         code = keycode.SHIFTED_KEYS[char]
         shift = True
@@ -372,6 +391,7 @@ def wake():
     agent_queue.put(msg)
 
 # use both agent & service to input unicode characters
+# TODO make it atomic, maybe use another queue?
 def type(text):
     rid = get_request_id()
     msg = pack(wire.SET_CLIPBOARD, wire.SetClipboardRequest(type=wire.TEXT, text=text), rid)
