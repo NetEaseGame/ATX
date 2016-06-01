@@ -112,7 +112,12 @@ def route(envelope):
     # service calls should have id
     if envelope.id:
         with service_response_lock:
-            responses[envelope.id] = resp
+            rid = envelope.id
+            # remove placeholder if the response is not needed
+            if rid in responses:
+                del responses[rid]
+            else:
+                responses[rid] = resp
         return
     # handle events
     hooks = eventhooks.get(envelope.type)
@@ -133,6 +138,12 @@ def wait_response(rid, timeout=1):
             if rid in responses:
                 return responses.pop(rid)
         time.sleep(0.1)
+    # cleanup timeouted response, avoid memory leak by add a placeholder!
+    with service_response_lock:
+        if rid in responses:
+            del responses[rid]
+        else:
+            responses[rid] = None
 
 def register_eventhook(mtype, callback):
     global eventhooks
