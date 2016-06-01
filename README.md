@@ -12,8 +12,8 @@
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/dm/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
-[![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+## 简介
 该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
 
@@ -22,6 +22,13 @@ This project is to make mobile test automated, free people who are boring of rep
 ATX is short for _AutomatorX_
 
 If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
+
+## Discuss (讨论群)
+面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
+
+- Chat room [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
+PS: 并没有QQ, 因为我们公司上不了QQ
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式

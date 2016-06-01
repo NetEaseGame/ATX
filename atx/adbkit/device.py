@@ -16,9 +16,11 @@ from atx import logutils
 
 
 logger = logutils.getLogger(__name__)
+
 _DISPLAY_RE = re.compile(
     r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 _PROP_PATTERN = re.compile(r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
+
 
 class Device(object):
     Display = collections.namedtuple('Display', ['width', 'height', 'rotation'])
@@ -110,7 +112,28 @@ class Device(object):
             pass
 
     def rotation(self):
+        """
+        Android rotation
+        Return:
+            - int [0-4]
+        """
         return self.display.rotation
+    
+    def properties(self):
+        '''
+        Android Properties, extracted from `adb shell getprop`
+
+        Returns:
+            dict of props, for
+            example:
+                {'ro.bluetooth.dun': 'true'}
+        '''
+        props = {}
+        for line in self.adb_shell(['getprop']).splitlines():
+            m = _PROP_PATTERN.match(line)
+            if m:
+                props[m.group('key')] = m.group('value')
+        return props
 
     def packages(self):
         """
@@ -197,3 +220,64 @@ class Device(object):
         if filename:
             image.save(filename)
         return image
+
+    def click(self, x, y):
+        '''
+        same as adb -s ${SERIALNO} shell input tap x y
+        FIXME(ssx): not tested on horizontal screen
+        '''
+        self.adb_shell('input', 'tap', str(x), str(y))
+
+    def is_locked(self):
+        """
+        Returns:
+            - lock state(bool)
+        Raises:
+            RuntimeError
+        """
+        _lockScreenRE = re.compile('mShowingLockscreen=(true|false)')
+        m = _lockScreenRE.search(self.adb_shell('dumpsys', 'window', 'policy'))
+        if m:
+            return (m.group(1) == 'true')
+        raise RuntimeError("Couldn't determine screen lock state")
+
+    def is_screen_on(self):
+        '''
+        Checks if the screen is ON.
+        Returns:
+            True if the device screen is ON
+        Raises:
+            RuntimeError
+        '''
+
+        _screenOnRE = re.compile('mScreenOnFully=(true|false)')
+        m = _screenOnRE.search(self.adb_shell('dumpsys', 'window', 'policy'))
+        if m:
+            return (m.group(1) == 'true')
+        raise RuntimeError("Couldn't determine screen ON state")
+
+    def wake(self):
+        """
+        Wake up device if device locked
+        """
+        if not self.is_screen_on():
+            self.keyevent('POWER')
+
+    def is_keyboard_shown(self):
+        dim = self.adb_shell('dumpsys', 'input_method')
+        if dim:
+            # FIXME: API >= 15 ?
+            return "mInputShown=true" in dim
+        return False
+
+    def current_app(self):
+        """
+        Return: (package_name, activity)
+        Raises:
+            RuntimeError
+        """
+        _focusedRE = re.compile('mFocusedApp=.*ActivityRecord{\w+ \w+ (?P<package>.*)/(?P<activity>.*) .*')
+        m = _focusedRE.search(self.adb_shell('dumpsys', 'window', 'windows'))
+        if m:
+            return m.group('package'), m.group('activity')
+        raise RuntimeError("Couldn't get focused app")
