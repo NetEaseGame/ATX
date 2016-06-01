@@ -65,7 +65,9 @@ class Pattern(object):
         if self._resolution is None:
             m = re.search(r'\.(\d+)x(\d+)\.png$', self._name)
             if m:
-                self._resolution = map(int, (m.group(1), m.group(2)))
+                (w, h) = sorted(map(int, (m.group(1), m.group(2))))
+                # TODO(ssx): gcd(w, h), make sure the biggest < 20
+                self._resolution = (w, h)
 
     def __str__(self):
         return 'Pattern(name: {}, offset: {})'.format(strutils.encode(self._name), self.offset)
