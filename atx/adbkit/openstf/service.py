@@ -5,13 +5,13 @@
 #   start(adbprefix=None, service_port=1100, agent_port=1090)
 #   stop(adbprefix=None, service_port=1100, agent_port=1090)
 #
-#   identify()          # return None
 #   wake()              # return None
 #   type(text)          # return None
 #   ascii_type(text)                    # return None
 #   keyevent(key, event='PRESS')        # return None
 #   keyboard(char, holdtime=None)       # return None
 #
+#   identify()                          # return bool(success or not)
 #   set_rotation(rotation, lock=False)  # return bool(success or not)
 #   set_wifi_enabled(True)              # return bool(success or not)
 #   get_wifi_status()                   # return a dict
@@ -110,7 +110,6 @@ def route(envelope):
     resp = resp_class()
     resp.ParseFromString(envelope.message)
     # service calls should have id
-    print 111, envelope.id, resp_class.DESCRIPTOR.name
     if envelope.id:
         with service_response_lock:
             responses[envelope.id] = resp
@@ -127,7 +126,7 @@ def route(envelope):
     # no handler found
     warnings.warn('No handler found for %s(%s)' % (resp_class.DESCRIPTOR.name, envelope.type))
 
-def wait_response(rid, timeout=2):
+def wait_response(rid, timeout=1):
     timeout = time.time() + timeout
     while timeout > time.time():
         with service_response_lock:
@@ -178,7 +177,7 @@ def check_stf_agent(adbprefix=None, kill=False):
         for line in out:
             if 'stf.agent' in line:
                 pid = line.split()[idx]
-                print 'stf.agent already running, pid is', pid
+                print 'stf.agent is running, pid is', pid
                 break
         if pid is not None:
             if kill:
@@ -202,7 +201,9 @@ def start_stf_agent(adbprefix=None, restart=False, port=1090):
     
     command = adbprefix + ['shell', 'CLASSPATH="%s"' % path, 
             'app_process', '/system/bin', 'jp.co.cyberagent.stf.Agent']
-    subprocess.Popen(command)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE)
+    # IMPORTANT! wait for agent to start listening.
+    p.stdout.readline()
 
     command = adbprefix + ['forward', 'tcp:%s' % port, 'tcp:1090'] # remote port is 1090, cannot change
     subprocess.call(command)
@@ -219,7 +220,7 @@ service_queue = Queue.Queue()
 agent_queue = Queue.Queue()
 stop_event = threading.Event()
 
-def listen(service_port, agent_port):
+def listen_service(service_port=1100): 
     # service, send & recv, use timeout
     def _service():
         try:
@@ -248,11 +249,13 @@ def listen(service_port, agent_port):
             traceback.print_exc()
         finally:
             s.close()
+            print 'Service socket closed'
 
     t = threading.Thread(target=_service)
     t.setDaemon(True)
     t.start()
 
+def listen_agent(agent_port=1090):
     # just send, no recv
     def _agent():
         try:
@@ -265,6 +268,7 @@ def listen(service_port, agent_port):
             traceback.print_exc()
         finally:
             s.close()
+            print 'Agent socket closed.'
 
     t = threading.Thread(target=_agent)
     t.setDaemon(True)
@@ -276,7 +280,8 @@ def start(adbprefix=None, service_port=1100, agent_port=1090):
     start_stf_service(adbprefix, port=service_port)
     start_stf_agent(adbprefix, port=agent_port)
     stop_event.clear()
-    listen(service_port, agent_port)
+    listen_service(service_port)
+    listen_agent(agent_port)
 
 def stop(adbprefix=None, service_port=1100, agent_port=1090):
     stop_event.set()
@@ -398,7 +403,7 @@ def set_wifi_enabled(enabled):
     rid = get_request_id()
     msg = pack(wire.SET_WIFI_ENABLED, wire.SetWifiEnabledRequest(enabled=bool(enabled)), rid)
     service_queue.put(msg)
-    resp = wait_response(rid, timeout=10)
+    resp = wait_response(rid, timeout=5) # may ask for user permission
     return resp and resp.success
 
 def get_display(deviceid=0):
@@ -406,14 +411,23 @@ def get_display(deviceid=0):
     msg = pack(wire.GET_DISPLAY, wire.GetDisplayRequest(id=deviceid), rid)
     service_queue.put(msg)
     resp = wait_response(rid)
-    return resp and resp.success
+    if not resp or not resp.success:
+        return {}
+    fields = [f.name for f in wire.GetDisplayResponse.DESCRIPTOR.fields]
+    data = dict([(f, getattr(resp, f)) for f in fields])
+    return data
 
 def get_properties(*args):
     rid = get_request_id()
     msg = pack(wire.GET_PROPERTIES, wire.GetPropertiesRequest(properties=["ro.product.device"]))
     service_queue.put(msg)
     resp = wait_response(rid)
-    return resp and resp.success
+    res = {}
+    if not resp or not resp.success:
+        return res
+    for prop in resp.properties:
+        res[prop.name] = prop.value
+    return res
 
 def on_battery_event(callback):
     fields = [f.name for f in wire.BatteryEvent.DESCRIPTOR.fields]
