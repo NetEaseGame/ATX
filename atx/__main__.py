@@ -67,11 +67,11 @@ def main():
     ap.add_argument("-H", "--host", required=False, default='127.0.0.1', help="Adb host")
     ap.add_argument("-P", "--port", required=False, type=int, default=5037, help="Adb port")
 
-    subparsers = ap.add_subparsers()
+    subp = ap.add_subparsers()
 
     @contextmanager
     def add_parser(name):
-        yield subparsers.add_parser(name, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        yield subp.add_parser(name, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     with add_parser('tcpproxy') as p:
         p.add_argument('-l', '--listen', default=5555, type=int, help='Listen port')
@@ -93,10 +93,6 @@ def main():
 
     with add_parser('monkey') as p:
         p.set_defaults(func=load_main('monkey'))
-
-    with add_parser('iosdeveloper') as p:
-        p.add_argument('-u', '--udid', required=False, help='iOS udid')
-        p.set_defaults(func=load_main('iosdeveloper'))
 
     with add_parser('install') as p:
         p.add_argument('path', help='<apk file path | apk url path> (only support android for now)')

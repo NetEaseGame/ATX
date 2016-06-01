@@ -375,9 +375,35 @@ open `index.html` with browser.
 ![report](docs/report.png)
 
 ## Command line tools
-为了方便测试以及开发，atx封装了很多的命令行工具
+为了方便测试以及开发，atx封装了很多的命令行工具，功能包含端口转发，包解析，安装，截图等等。
 
-如启动gui的命令是 `python -matx gui`, 命令有很多可以通过 `python -matx --help` 查看
+### 针对iOS的命令行工具
+需要加上前缀 `python -m atx.ios`
+
+1. developer （因为部分链接还在内网，所以目前只能在网易内部用）
+
+	将iOS设置成开发者模式，需要手机连接上电脑。（仅在windows测试过）
+
+	依赖: iTunes, [iMobileDevice](http://quamotion.mobi/iMobileDevice/Download)
+
+	```
+	python -m atx.ios developer
+	```
+
+2. screencap
+
+	截图功能
+
+	```
+	python -m atx.ios screencap -o screen.png
+	```
+
+### 针对Android的命令行工具
+运行命令行需要加上`python -m atx` 前缀，如启动gui的命令是`python -m atx gui`，命令行的帮助查看方法
+
+```
+python -m atx --help
+```
 
 1. gui
 
@@ -407,14 +433,6 @@ open `index.html` with browser.
 	}
 	```
 
-5. iosdeveloper (目前仅限网易内部用户使用)
-
-	将iPhone手机设置成开发者模式，(目前仅在Windows测试过)
-
-	依赖: iTunes, [iMobileDevice](http://quamotion.mobi/iMobileDevice/Download)
-
-	使用: 苹果手机连接上电脑，然后运行 `python -matx iosdeveloper` 即可
-
 6. install (仅限apk)
 
 	支持从URL,以及本地路径安装应用，支持文件推送到手机时显示进度
@@ -436,11 +454,11 @@ open `index.html` with browser.
 
 	使用方法如 `python -matx install utf8ime`
 
-7. screencap (仅限android)
-	截图功能，拥有超越`adb shell screencap`的速度以及兼容性，使用了PIL库，输出的格式根据文件的扩展名的自动确定
+7. screencap
+	拥有超越`adb shell screencap`的速度以及兼容性，使用了PIL库，输出的格式根据文件的扩展名的自动确定
 
 	```sh
-	$ python -matx screencap -o screen.png
+	$ python -m atx screencap -o screen.png
 	```
 
 8. screenrecord （仅限android）
