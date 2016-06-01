@@ -6,6 +6,7 @@ import sys
 import inspect
 from contextlib import contextmanager
 
+from PIL import Image
 from atx import ioskit
 
 
@@ -29,7 +30,11 @@ def load_main(module_name):
 
 def _screencap(args):
     dev = ioskit.Device(args.udid)
-    dev.screenshot(args.output)
+    image = dev.screenshot()
+    if args.rotate:
+        method = getattr(Image, 'ROTATE_{}'.format(args.rotate))
+        image = image.transpose(method)
+    image.save(args.output)
     print 'Screenshot saved to "%s"' % args.output
 
 
@@ -49,6 +54,7 @@ def main():
 
     with add_parser('screencap') as p:
         p.add_argument('-o', '--output', default='screenshot.png', help='take iPhone screenshot')
+        p.add_argument('-r', '--rotate', type=int, choices=[0, 90, 180, 270], default=0, help='screen rotation')
         p.set_defaults(func=_screencap)
 
     args = ap.parse_args()
