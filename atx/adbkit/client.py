@@ -63,12 +63,12 @@ class Client(object):
             args += ['-P', str(self._port)]
         return args
 
-    def raw_cmd(self, *args):
+    def raw_cmd(self, *args, **kwargs):
         '''adb command. return the subprocess.Popen object.'''
         cmds = [self.adb_path()] + self._host_port_args + list(args)
         # if os.name != "nt":
         #     cmd_line = [" ".join(cmd_line)]
-        return subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=kwargs.get('stderr', subprocess.STDOUT))
 
     def version(self):
         '''
@@ -112,6 +112,31 @@ class Client(object):
     def disconnect(self, addr):
         ''' disconnect device '''
         return self.raw_cmd('disconnect', addr).wait()
+
+    def forward_list(self):
+        '''
+        adb forward --list
+        TODO: not tested
+        '''
+        version = self.version()
+        if int(version[1]) <= 1 and int(version[2]) <= 0 and int(version[3]) < 31:
+            raise EnvironmentError("Low adb version.")
+        lines = self.raw_cmd("forward", "--list").communicate()[0].decode("utf-8").strip().splitlines()
+        return [line.strip().split() for line in lines]
+
+    def forward(self, device_port, local_port=None):
+        '''
+        adb port forward. return local_port
+        TODO: not tested
+        '''
+        if local_port is None:
+            for s, lp, rp in self.forward_list():
+                if s == self.device_serial() and rp == 'tcp:%d' % device_port:
+                    return int(lp[4:])
+            return self.forward(device_port, next_local_port(self.server_host))
+        else:
+            self.raw_cmd("forward", "tcp:%d" % local_port, "tcp:%d" % device_port).wait()
+            return local_port
 
 
 if __name__ == '__main__':

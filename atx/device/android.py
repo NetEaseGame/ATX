@@ -56,9 +56,9 @@ def getenv(name, default_value=None, type=str):
     value = os.getenv(name)
     return type(value) if value else default_value
 
-class AndroidMixin(object):
-    def __init__(self, serialno=None):
-        pass
+# class AndroidMixin(object):
+#     def __init__(self, serialno=None):
+#         pass
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -201,7 +201,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         except IOError:
             raise IOError("Screenshot use minicap failed.")
         finally:
-            # remove_force(local_tmp_file)
+            if os.path.exists(local_tmp_file):
+                os.unlink(local_tmp_file)
             self.adb_shell(['rm', phone_tmp_file])
 
     def _screenshot_uiauto(self):

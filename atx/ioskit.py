@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess32 as subprocess
 import tempfile
+import inspect
 
 from PIL import Image
 from atx import logutils
@@ -82,14 +83,22 @@ def devices():
     udids = [udid.strip() for udid in idevice('_id', '-l').splitlines() if udid.strip()]
     return {udid: idevice('name', '-u', udid).decode('utf-8').strip() for udid in udids}
 
-def device_product_version(udid):
-    return idevice('info', '-u', udid, '-k', 'ProductVersion').strip()
+# def device_product_version(udid):
+#     return idevice('info', '-u', udid, '-k', 'ProductVersion').strip()
 
 
 def memory_last(fn):
     @functools.wraps(fn)
     def inner(*args, **kwargs):
-        return fn(*args, **kwargs)
+        func_args = inspect.getcallargs(fn, *args, **kwargs)
+        self = func_args.get('self')
+        store_name = '__'+fn.__name__
+        
+        if hasattr(self, store_name):
+            return getattr(self, store_name)
+        ret = fn(*args, **kwargs)
+        setattr(self, store_name, ret)
+        return ret
     return inner
 
 
@@ -98,9 +107,9 @@ class Device(object):
         if not udid:
             devs = devices()
             if len(devs) == 0:
-                raise EnvironmentError("No ios devices connected to PC.")
+                raise EnvironmentError("No ios devices connected.")
             elif len(devs) > 1:
-                raise EnvironmentError("More than one device connect to PC, need to specify udid")
+                raise EnvironmentError("More than one device connected, need to specify udid")
             else:
                 udid = devs.keys()[0]
         self._udid = udid
@@ -143,10 +152,20 @@ class Device(object):
             if os.path.exists(tmpfile):
                 os.unlink(tmpfile)
 
+    def click(self, x, y):
+        '''
+        TODO: need taskqueue here
+        '''
+        raise NotImplementError()
+
+    def install(self, filepath):
+        raise NotImplementError()
+
 
 if __name__ == '__main__':
     devices()
     dev = Device()
     print dev.screenshot('i.png')
+    print dev.product_version
     print dev.product_version
     print dev.name

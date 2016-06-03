@@ -12,6 +12,20 @@ from atx import errors
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
+class Report(object):
+    """
+    Example usage:
+    from atx.ext.report import Report
+
+    Report(d)
+
+    # TODO(ssx): move listen to class Report
+    """
+    def __init__(self, d, save_dir='report'):
+        self.d = d
+        listen(d, save_dir)
+
+
 def listen(d, save_dir='report'):
     image_dir = os.path.join(save_dir, 'images')
     if not os.path.exists(image_dir):
