@@ -76,6 +76,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         serialno = serialno or getenv('ATX_ADB_SERIALNO', None)
         self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
         self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
+
         self._adb = adb.Adb(serialno, self._host, self._port)
         serialno = self._adb.device_serial()
 

@@ -94,11 +94,11 @@ class Adb(object):
         self.server_host = str(server_host if server_host else '127.0.0.1')
         self.server_port = str(server_port if server_port else '5037')
         self.adb_host_port_options = []
-        self.serial = serial or self.device_serial()
         if self.server_host not in ['localhost', '127.0.0.1']:
             self.adb_host_port_options += ["-H", self.server_host]
         if self.server_port != '5037':
             self.adb_host_port_options += ["-P", self.server_port]
+        self.serial = serial or self.device_serial()
 
     @classmethod
     def adb(cls):
@@ -122,10 +122,9 @@ class Adb(object):
             cls.__adb_cmd = adb_cmd
         return cls.__adb_cmd
 
-    @classmethod
-    def devices(cls):
+    def devices(self):
         '''get a dict of attached devices. key is the device serial, value is device name.'''
-        out = subprocess.check_output([cls.adb(), 'devices']).decode("utf-8")
+        out = self.raw_cmd('devices').communicate()[0].decode("utf-8")
         match = "List of devices attached"
         index = out.find(match)
         if index < 0:
