@@ -45,7 +45,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 * 截图客户端从网页服务器变成了python-Tkinter写的客户端 使用python -matx gui启动
 * 支持dir(dev) 查看元素已有的方法（-_-! 之前代码写的不好，并不支持）
 * 更稳定的依赖库控制，与travis持续集成，可在代码更新后自动发布到pypi
-* 移除性能监控功能，暂时移除iOS支持
+* 移除性能监控功能，暂时移除iOS支持 (目前性能测试使用第三方App集成)
 * 图像匹配默认使用模版匹配，将SIFT匹配改为可选
 
 ## Dependency
@@ -466,34 +466,38 @@ python -m atx --help
 
 	录制视频功能，需要预先安装minicap
 
-## 性能测试(For Android)
+## Performance record (For Android)
+性能测试 for android
+
 刚写好没多久，你只能在最新的开发版中看到。有可能以后还会修改。
 
 性能测试直接使用了腾讯开源的[GT](http://gt.qq.com/)
 
 ### 使用方法
-首先需要去腾讯GT的主页上，将GT安装到手机上
+1. 首先需要去腾讯GT的主页上，将GT安装到手机上
 
-代码中引入GT扩展
+	<http://gt.qq.com>
 
-```python
-import atx
-from atx.ext.gt import GT
+2. 代码中引入GT扩展
+
+	```python
+	import atx
+	from atx.ext.gt import GT
 
 
-d = atx.connect()
+	d = atx.connect()
 
-gt = GT(d)
-gt.start_test('com.netease.my') # start test
-# ... do click touch test ...
-gt.stop_and_save()
-```
+	gt = GT(d)
+	gt.start_test('com.netease.my') # start test
+	# ... do click touch test ...
+	gt.stop_and_save()
+	```
 
-运行完测试后，代码会保存到`/sdcard/GT/GW/`+`包名(com.netease.my)`目录下，直接使用`adb pull`下载下来并解析
+3. 运行完测试后，代码会保存到`/sdcard/GT/GW/`+`包名(com.netease.my)`目录下，直接使用`adb pull`下载下来并解析
 
-```
-$ adb pull /sdcard/GT/GW/com.netease.my/
-```
+	```
+	$ adb pull /sdcard/GT/GW/com.netease.my/
+	```
 
 该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
