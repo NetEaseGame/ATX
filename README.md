@@ -96,7 +96,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	Sometime <https://pypi.python.org> may not stable, it is also passible to install from source.
 
 	```
-	pip install -U git+https://github.com/codeskyblue/AirtestX.git
+	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
 	```
 
 
@@ -249,7 +249,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 原生UI操作
 
-	如何点击UI元素请直接看 <https://github.com/codeskyblue/airtest-uiautomator>
+	如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
 	里面的API是直接通过继承的方式支持的。
 
 	```py
