@@ -66,16 +66,6 @@ class Client(object):
             cls.__adb_cmd = adb_cmd
         return cls.__adb_cmd
 
-    def devices(self):
-        '''get a dict of attached devices. key is the device serial, value is device name.'''
-        out = subprocess.check_output([self.adb_path(), 'devices']).decode("utf-8")
-        match = "List of devices attached"
-        index = out.find(match)
-        if index < 0:
-            raise EnvironmentError("adb is not working.")
-        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() 
-                if s.strip() and not s.strip().startswith('*')])
-
     @property    
     def _host_port_args(self):
         args = []
@@ -92,6 +82,20 @@ class Client(object):
         #     cmd_line = [" ".join(cmd_line)]
         return subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=kwargs.get('stderr', subprocess.STDOUT))
 
+    def run_cmd(self, *args, **kwargs):
+        p = self.raw_cmd(*args, **kwargs)
+        return p.communicate()[0].decode('utf-8').replace('\r\n', '\n')
+
+    def devices(self):
+        '''get a dict of attached devices. key is the device serial, value is device name.'''
+        out = self.run_cmd('devices') #subprocess.check_output([self.adb_path(), 'devices']).decode("utf-8")
+        match = "List of devices attached"
+        index = out.find(match)
+        if index < 0:
+            raise EnvironmentError("adb is not working.")
+        return dict([s.split("\t") for s in out[index + len(match):].strip().splitlines() 
+                if s.strip() and not s.strip().startswith('*')])
+
     def version(self):
         '''
         Get version of current adb
@@ -99,7 +103,7 @@ class Client(object):
             [u'1.0.32', u'1', u'0', u'32']
         '''
         '''adb version'''
-        match = re.search(r"(\d+)\.(\d+)\.(\d+)", self.raw_cmd("version").communicate()[0].decode("utf-8"))
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", self.run_cmd("version"))
         return [match.group(i) for i in range(4)]
 
     def device(self, serial=None):
@@ -128,7 +132,7 @@ class Client(object):
         '''
         if addr.find(':') == -1:
             addr += ':5555'
-        output, _ = self.raw_cmd('connect', addr).communicate()
+        output = self.run_cmd('connect', addr)
         return 'unable to connect' not in output
 
     def disconnect(self, addr):
@@ -143,7 +147,7 @@ class Client(object):
         version = self.version()
         if int(version[1]) <= 1 and int(version[2]) <= 0 and int(version[3]) < 31:
             raise EnvironmentError("Low adb version.")
-        lines = self.raw_cmd("forward", "--list").communicate()[0].decode("utf-8").strip().splitlines()
+        lines = self.run_cmd("forward", "--list").strip().splitlines()
         return [line.strip().split() for line in lines]
 
     def forward(self, serial, device_port, local_port=None):

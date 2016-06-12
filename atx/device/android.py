@@ -26,7 +26,6 @@ from atx import errors
 from atx import patch
 from atx import base
 from atx import imutils
-from atx import adb
 from atx import strutils
 from atx.device import Bounds
 from atx import logutils
@@ -75,11 +74,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
         self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
 
-        # self._adb = adb.Adb(serialno, self._host, self._port)
-        # serialno = self._adb.device_serial()
-
         self._adb_client = adbkit.Client(self._host, self._port)
-        self._adb = self._adb_device = self._adb_client.device(serialno)
+        self._adb_device = self._adb_client.device(serialno)
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
@@ -289,18 +285,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Returns:
             command output
         '''
-        cmds = ['adb']
-        if self._serial:
-            cmds.extend(['-s', self._serial])
-        cmds.extend(['-H', self._host, '-P', str(self._port)])
-
         if isinstance(command, list) or isinstance(command, tuple):
-            cmds.extend(list(command))
-        else:
-            cmds.append(command)
-        # print cmds
-        output = subprocess.check_output(cmds, stderr=subprocess.STDOUT)
-        return output.replace('\r\n', '\n')
+            return self.adb_device.run_cmd(*list(command))
+        return self.adb_device.run_cmd(command)
 
     def adb_shell(self, command):
         '''
