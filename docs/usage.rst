@@ -5,7 +5,7 @@ Public class
     :members:
 
 
-Method for Android and Windows
+Common methods
 --------------------------
 
 .. autoclass:: atx.device.mixin.DeviceMixin
