@@ -7,13 +7,13 @@ instruments与外部的交互
 3. put
 
 ```
-$ python -matx.taskqueue --room ${UDID} put '{id: "12", result: true, action: "target.click(10, 20)"}'
+$ python -m atx.taskqueue --room ${UDID} put '{id: "12", result: true, action: "target.click(10, 20)"}'
 Success
 
-$ python -matx.taskqueue --room ${UDID} get
+$ python -m atx.taskqueue --room ${UDID} get
 {id: "12", result: true, action: "target.click(10, 20)"}
 
-$ python -matx.taskqueue --room ${UDID} done '{id: "12", result: "1234551"}'
+$ python -m atx.taskqueue --room ${UDID} done '{id: "12", result: "1234551"}'
 Success
 ```
 

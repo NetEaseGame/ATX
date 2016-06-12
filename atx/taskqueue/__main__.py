@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import argparse
 import uuid
+import inspect
+from contextlib import contextmanager
 
 import tornado.web
 import tornado.escape
@@ -73,7 +76,51 @@ def make_app(**settings):
     ], **settings)
 
 
-if __name__ == '__main__':
+def cmd_web():
     app = make_app(debug=True)
     app.listen(10020)
     IOLoop.current().start() #run_sync(main)
+
+def cmd_put(room, data):
+    # FIXME(ssx): maybe need to use requests
+    print room, data
+
+def _inject(func, kwargs):
+    args = []
+    for name in inspect.getargspec(func).args:
+        args.append(kwargs.get(name))
+    return func(*args)
+
+def wrap(fn):
+    def inner(parser_args):
+        return _inject(fn, vars(parser_args))
+    return inner
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    ap.add_argument("--room", required=False, help="udid or something")
+    subp = ap.add_subparsers()
+
+    @contextmanager
+    def add_parser(name):
+        yield subp.add_parser(name, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    with add_parser('web') as p:
+        p.set_defaults(func=wrap(cmd_web))
+
+    with add_parser('put') as p:
+        p.add_argument('data')
+        p.set_defaults(func=wrap(cmd_put))
+
+    # TODO: get, done
+
+    args = ap.parse_args()
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()
+
+    
