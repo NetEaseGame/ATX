@@ -466,6 +466,37 @@ python -m atx --help
 
 	录制视频功能，需要预先安装minicap
 
+## 性能测试(For Android)
+刚写好没多久，你只能在最新的开发版中看到。有可能以后还会修改。
+
+性能测试直接使用了腾讯开源的[GT](http://gt.qq.com/)
+
+### 使用方法
+首先需要去腾讯GT的主页上，将GT安装到手机上
+
+代码中引入GT扩展
+
+```python
+import atx
+from atx.ext.gt import GT
+
+
+d = atx.connect()
+
+gt = GT(d)
+gt.start_test('com.netease.my') # start test
+# ... do click touch test ...
+gt.stop_and_save()
+```
+
+运行完测试后，代码会保存到`/sdcard/GT/GW/`+`包名(com.netease.my)`目录下，直接使用`adb pull`下载下来并解析
+
+```
+$ adb pull /sdcard/GT/GW/com.netease.my/
+```
+
+该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
+
 ## FAQ
 1. 如果连接远程机器上的安卓设备
 

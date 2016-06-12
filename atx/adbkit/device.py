@@ -32,6 +32,10 @@ class Device(object):
         self._serial = serial
         self._screenshot_method = 'minicap'
 
+    @property
+    def serial(self):
+        return self._serial
+    
     def raw_cmd(self, *args):
         args = ['-s', self._serial] + list(args)
         return self._client.raw_cmd(*args)
@@ -227,6 +231,13 @@ class Device(object):
         FIXME(ssx): not tested on horizontal screen
         '''
         self.adb_shell('input', 'tap', str(x), str(y))
+
+    def forward(self, device_port, local_port=None):
+        '''
+        adb port forward. return local_port
+        TODO: not tested
+        '''
+        return self._client.forward(self.serial, device_port, local_port)
 
     def is_locked(self):
         """

@@ -31,6 +31,7 @@ from atx import strutils
 from atx.device import Bounds
 from atx import logutils
 from atx.device.mixin import DeviceMixin, hook_wrap
+from atx import adbkit
 
 
 DISPLAY_RE = re.compile(
@@ -56,9 +57,6 @@ def getenv(name, default_value=None, type=str):
     value = os.getenv(name)
     return type(value) if value else default_value
 
-# class AndroidMixin(object):
-#     def __init__(self, serialno=None):
-#         pass
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -77,8 +75,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
         self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
 
-        self._adb = adb.Adb(serialno, self._host, self._port)
-        serialno = self._adb.device_serial()
+        # self._adb = adb.Adb(serialno, self._host, self._port)
+        # serialno = self._adb.device_serial()
+
+        self._adb_client = adbkit.Client(self._host, self._port)
+        self._adb = self._adb_device = self._adb_client.device(serialno)
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
@@ -97,6 +98,18 @@ class AndroidDevice(DeviceMixin, UiaDevice):
     def serial(self):
         """ Android Device Serial Number """
         return self._serial
+
+    @property
+    def adb_server_host(self):
+        return self._host
+
+    @property
+    def adb_server_port(self):
+        return self._port
+
+    @property
+    def adb_device(self):
+        return self._adb_device
     
     @property
     def wlan_ip(self):
@@ -112,7 +125,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Returns:
             tuple, (host, local_port)
         """
-        port = self._adb.forward(device_port, local_port)
+        port = self._adb_device.forward(device_port, local_port)
         return (self._host, port)
 
     @property
@@ -322,7 +335,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
                 props[m.group('key')] = m.group('value')
         return props
 
-    def start_app(self, package_name):
+    def start_app(self, package_name, activity=None):
         '''
         Start application
 
@@ -332,7 +345,10 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Returns:
             None
         '''
-        self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
+        if activity is None:
+            self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
+        else:
+            self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
         return self
 
     def stop_app(self, package_name, clear=False):

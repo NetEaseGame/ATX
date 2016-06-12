@@ -10,6 +10,24 @@ import subprocess32 as subprocess
 
 from atx.adbkit.device import Device
 
+
+LOCAL_PORT = 10300
+_init_local_port = LOCAL_PORT - 1
+
+def next_local_port(adb_host=None):
+    """ find avaliable free port """
+    def is_port_listening(port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = s.connect_ex((str(adb_host) if adb_host else '127.0.0.1', port))
+        s.close()
+        return result == 0
+    global _init_local_port
+    _init_local_port = _init_local_port + 1 if _init_local_port < 32764 else LOCAL_PORT
+    while is_port_listening(_init_local_port):
+        _init_local_port += 1
+    return _init_local_port
+
+
 class Client(object):
     __adb_cmd = None
 
@@ -22,6 +40,10 @@ class Client(object):
         self._host = host or '127.0.0.1'
         self._port = port or 5037
 
+    @property
+    def server_host(self):
+        return self._host
+    
     @classmethod
     def adb_path(cls):
         """return adb binary full path"""
@@ -124,18 +146,19 @@ class Client(object):
         lines = self.raw_cmd("forward", "--list").communicate()[0].decode("utf-8").strip().splitlines()
         return [line.strip().split() for line in lines]
 
-    def forward(self, device_port, local_port=None):
+    def forward(self, serial, device_port, local_port=None):
         '''
         adb port forward. return local_port
         TODO: not tested
         '''
         if local_port is None:
             for s, lp, rp in self.forward_list():
-                if s == self.device_serial() and rp == 'tcp:%d' % device_port:
+                if s == serial and rp == 'tcp:%d' % device_port:
                     return int(lp[4:])
-            return self.forward(device_port, next_local_port(self.server_host))
+            return self.forward(serial, device_port, next_local_port(self.server_host))
         else:
-            self.raw_cmd("forward", "tcp:%d" % local_port, "tcp:%d" % device_port).wait()
+            print serial, device_port, local_port
+            self.raw_cmd("-s", serial, "forward", "tcp:%d" % local_port, "tcp:%d" % device_port).wait()
             return local_port
 
 
