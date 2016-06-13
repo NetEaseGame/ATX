@@ -223,9 +223,15 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	# click position
 	d.click(50, 100) # 模拟点击 x, y
+
+	# long click
+	d.long_click(50, 100) # only works on android for now
 	
 	# click image
 	d.click_image("button.png")
+
+	# click image with long click
+	d.click_image("button.png", action='long_click')
 
 	# 文件名添加截图手机的分辨率
 	d.click_image("button.1920x1080.png")

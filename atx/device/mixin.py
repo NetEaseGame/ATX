@@ -499,7 +499,7 @@ class DeviceMixin(object):
             raise errors.AssertExistsError('image not found %s' %(pattern,))
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0):
+    def click_image(self, pattern, timeout=20.0, action='click'):
         """Simulate click according image position
 
         Args:
@@ -534,9 +534,10 @@ class DeviceMixin(object):
                 if not point.matched:
                     log.info('Ignore confidence: %s', point.confidence)
                     continue
-                    
-            self.touch(*point.pos)
-            # self._trigger_event(consts.EVENT_UIAUTO_CLICK, point)
+            
+            func = getattr(self, action)
+            func(*point.pos)
+
             found = True
             break
         sys.stdout.write('\n')
