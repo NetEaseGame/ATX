@@ -3,8 +3,12 @@
 
 import argparse
 import uuid
+import json
 import inspect
+import sys
 from contextlib import contextmanager
+from collections import defaultdict
+from functools import partial
 
 import tornado.web
 import tornado.escape
@@ -12,6 +16,7 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 
+import requests
 
 # @gen.coroutine
 # def consumer():
@@ -39,26 +44,25 @@ from tornado.queues import Queue
 
 
 class MainHandler(tornado.web.RequestHandler):
-    que = Queue(maxsize=2)
+    ques = defaultdict(partial(Queue, maxsize=2))
     results = {}
 
     @gen.coroutine
     def get(self, udid):
         ''' get new task '''
-        item = yield self.que.get()
-        print udid, item
-        self.que.task_done()
+        que = self.ques[udid]
+        item = yield que.get()
+        que.task_done()  
         self.write(item)
         self.finish()
 
     @gen.coroutine
     def post(self, udid):
         ''' add new task '''
-        # print self.request.body
+        que = self.ques[udid]
         data = tornado.escape.json_decode(self.request.body)
         data['id'] = str(uuid.uuid1())
-        print data
-        yield self.que.put(data)
+        yield que.put(data)
         self.write({'id': data['id']})
         self.finish()
 
@@ -79,11 +83,21 @@ def make_app(**settings):
 def cmd_web():
     app = make_app(debug=True)
     app.listen(10020)
-    IOLoop.current().start() #run_sync(main)
+    IOLoop.current().start()
 
 def cmd_put(room, data):
-    # FIXME(ssx): maybe need to use requests
     print room, data
+
+def cmd_get(room, port):
+    r = requests.get('http://localhost:%d/rooms/%s' % (port, room))
+    print r.text
+
+def cmd_post(room, port, data):
+    jsondata = json.loads(data)
+    if not isinstance(jsondata, dict):
+        sys.exit('data must be dict, for example: {"name": "kitty"}')
+    r = requests.post('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    print r.text
 
 def _inject(func, kwargs):
     args = []
@@ -101,6 +115,7 @@ def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument("--room", required=False, help="udid or something")
+    ap.add_argument("--port", required=False, default=10020, type=int, help="sever listen port")
     subp = ap.add_subparsers()
 
     @contextmanager
@@ -114,7 +129,13 @@ def main():
         p.add_argument('data')
         p.set_defaults(func=wrap(cmd_put))
 
-    # TODO: get, done
+    with add_parser('get') as p:
+        p.set_defaults(func=wrap(cmd_get))
+
+    with add_parser('post') as p:
+        p.add_argument('data')
+        p.set_defaults(func=wrap(cmd_post))
+    # TODO: done
 
     args = ap.parse_args()
     args.func(args)

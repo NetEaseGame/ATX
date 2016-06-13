@@ -28,6 +28,13 @@ class Device(object):
     __minicap = '/data/local/tmp/minicap'
 
     def __init__(self, client, serial):
+        ''' TODO: client change to host, port '''
+        self._client = client
+        self._serial = serial
+        self._screenshot_method = 'minicap'
+
+    @staticmethod
+    def new(self, client, serial):
         self._client = client
         self._serial = serial
         self._screenshot_method = 'minicap'
