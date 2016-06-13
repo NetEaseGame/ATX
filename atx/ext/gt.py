@@ -13,7 +13,7 @@ import functools
 class GT(object):
     def __init__(self, d):
         self.d = d
-        self._broadcast = functools.partial(self.d.adb_device.adb_shell, 'am', 'broadcast', '-a')
+        self._broadcast = functools.partial(self.d.adb_device.shell, 'am', 'broadcast', '-a')
         self._package_name = None
 
     def start_test(self, package_name, cpu=True, net=True, pss=True):
