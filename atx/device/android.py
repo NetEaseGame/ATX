@@ -83,7 +83,6 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         DeviceMixin.__init__(self)
 
         self._randid = base.id_generator(5)
-        self._serial = serialno
         self._uiauto = super(AndroidDevice, self)
 
         self.screen_rotation = None
@@ -93,7 +92,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
     @property
     def serial(self):
         """ Android Device Serial Number """
-        return self._serial
+        return self._adb_device.serial
 
     @property
     def adb_server_host(self):
