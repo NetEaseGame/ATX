@@ -24,6 +24,8 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 PS: 并没有QQ, 因为我们公司上不了QQ
 
+- 网易内部用户暂时请直接联系 hzsunshx
+
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
 2. 可是很好的支持安卓手机的测试，包括安卓模拟器
@@ -586,8 +588,6 @@ python -m atx --help
 由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。但是如果不提交Issue，说不定我真的会忘掉。
 
 BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
-
-网易内部用户暂时请直接联系 hzsunshx
 
 ## License
 This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
