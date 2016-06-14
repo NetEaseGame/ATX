@@ -48,6 +48,8 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 * 移除性能监控功能，暂时移除iOS支持 (目前性能测试使用第三方App集成)
 * 图像匹配默认使用模版匹配，将SIFT匹配改为可选
 
+[更多More](CHANGELOG)
+
 ## Dependency
 1. python2.7
 2. opencv2.4
@@ -352,40 +354,49 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# out: HookEvent(flag=8, args=(), kwargs={})
 	```
 
-## Generate HTML report
-注：该功能还不完善，因为部分URL没有改掉，所有外网用户还不能使用
+## ATX Extentions
+该部分属于atx的扩展插件实现的功能，参考了flask.ext的实现
 
-该部分属于atx的扩展插件实现的功能，文档部分估计以后会转移到其他地方
+插件说明
 
-### Usage
-```py
-import atx
-from atx.ext.report import Report # report lib
+* [HTML Report](atx/ext/report/README.md)
+	
+	利用次插件可以在ATX自动化跑完之后，自动生成可以HTML报告，详细记录每一步的执行情况
+
+* Performance record (For Android)
+	
+	性能测试直接使用了腾讯开源的[GT](http://gt.qq.com/)
+
+	PS: 刚写好没多久，你只能在最新的开发版中看到。有可能以后还会修改。
+
+	使用方法
+
+	1. 首先需要去腾讯GT的主页上，将GT安装到手机上
+
+		<http://gt.qq.com>
+
+	2. 代码中引入GT扩展
+
+		```python
+		import atx
+		from atx.ext.gt import GT
 
 
-d = d.connect()
-rp = Report(d, save_dir='report')
-rp.info("Test started")
+		d = atx.connect()
 
-d.click(200, 200)
+		gt = GT(d)
+		gt.start_test('com.netease.my') # start test
+		# ... do click touch test ...
+		gt.stop_and_save()
+		```
 
-# keep screenshot when test fails
-rp.error("Oh no.", screenshot=d.screenshot())
-```
+	3. 运行完测试后，代码会保存到`/sdcard/GT/GW/`+`包名(com.netease.my)`目录下，直接使用`adb pull`下载下来并解析
 
-After done, HTML report will be saved to report dir. with such directory
+		```
+		$ adb pull /sdcard/GT/GW/com.netease.my/
+		```
 
-```
-report/
-  |-- index.html
-  `-- images/
-      |-- before_123123123123.png
-      |-- ...
-```
-
-open `index.html` with browser.
-
-![report](docs/report.png)
+	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
 ## Command line tools
 为了方便测试以及开发，atx封装了很多的命令行工具，功能包含端口转发，包解析，安装，截图等等。
@@ -477,41 +488,6 @@ python -m atx --help
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
-
-## Performance record (For Android)
-性能测试 for android
-
-刚写好没多久，你只能在最新的开发版中看到。有可能以后还会修改。
-
-性能测试直接使用了腾讯开源的[GT](http://gt.qq.com/)
-
-### 使用方法
-1. 首先需要去腾讯GT的主页上，将GT安装到手机上
-
-	<http://gt.qq.com>
-
-2. 代码中引入GT扩展
-
-	```python
-	import atx
-	from atx.ext.gt import GT
-
-
-	d = atx.connect()
-
-	gt = GT(d)
-	gt.start_test('com.netease.my') # start test
-	# ... do click touch test ...
-	gt.stop_and_save()
-	```
-
-3. 运行完测试后，代码会保存到`/sdcard/GT/GW/`+`包名(com.netease.my)`目录下，直接使用`adb pull`下载下来并解析
-
-	```
-	$ adb pull /sdcard/GT/GW/com.netease.my/
-	```
-
-该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备
