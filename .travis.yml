@@ -21,3 +21,10 @@ deploy:
       tags: true
 after_deploy:
   - "curl -X POST https://readthedocs.org/build/atx"
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/8b03bdd6acb150af0088
+    on_success: change  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always
