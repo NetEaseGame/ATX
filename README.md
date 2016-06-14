@@ -355,16 +355,22 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 ## Generate HTML report
 注：该功能还不完善，因为部分URL没有改掉，所有外网用户还不能使用
 
+该部分属于atx的扩展插件实现的功能，文档部分估计以后会转移到其他地方
+
 ### Usage
 ```py
 import atx
-from atx.ext import report # report lib
+from atx.ext.report import Report # report lib
 
 
 d = d.connect()
-report.listen(d, save_dir='report')
-d.screenshot()
+rp = Report(d, save_dir='report')
+rp.info("Test started")
+
 d.click(200, 200)
+
+# keep screenshot when test fails
+rp.error("Oh no.", screenshot=d.screenshot())
 ```
 
 After done, HTML report will be saved to report dir. with such directory
