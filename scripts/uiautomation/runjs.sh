@@ -4,4 +4,4 @@
 set -eu
 
 sh write_pipe.sh "$@"
-head -n1 testpipe
+head -n1 test.pipe

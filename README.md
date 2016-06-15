@@ -24,7 +24,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 PS: 并没有QQ, 因为我们公司上不了QQ
 
-- 网易内部用户暂时请直接联系 hzsunshx
+- 网易内部用户目前请直接联系 hzsunshx
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
@@ -490,6 +490,9 @@ python -m atx --help
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
+
+## 实现性质的功能
+点击查看[iOS自动化](README_IOS.md)
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备
