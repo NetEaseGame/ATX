@@ -19,7 +19,7 @@ $ brew install homebrew/fuse/ifuse
 $ pip install pyipa
 ```
 
-## Common issues
+## FAQ
 - How to keep iPhone screen on ?
 
 	1. 显示与亮度 调到最低

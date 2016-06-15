@@ -42,6 +42,9 @@ def connect(*args, **kwargs):
     elif platform == 'windows':
         devcls = __import__('atx.device.windows')
         cls = devcls.device.windows.WindowsDevice
+    elif platform == 'ios':
+        devcls = __import__('atx.device.ios')
+        cls = devcls.device.ios.IOSDevice
     elif platform == 'dummy': # for py.test use
         devcls = __import__('atx.device.dummy')
         cls = devcls.device.dummy.DummyDevice
