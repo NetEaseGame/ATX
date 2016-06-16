@@ -10,6 +10,9 @@ iOS因为其管理的严格以及文档的困乏，使得其自动化实施起�
 ```
 $ brew install libmobiledevice
 $ brew install homebrew/fuse/ifuse
+
+$ brew install node # skip if you already have node or nvm installed.
+$ npm i -g ios-deploy
 ```
 
 
@@ -22,17 +25,17 @@ $ pip install pyipa
 ## Common issues
 - How to keep iPhone screen on ?
 
+	1. 通用/自动锁定 改成**永不**
 	1. 显示与亮度 调到最低
-	2. 通用/自动锁定 改成**永不**
 
 - 其他90%的问题
 
-	1. 更新XCode
+	1. 重启iPhone
 	1. 重启Mac
-	1. 重启iPhone都可以解决
+	1. 更新XCode
 
 ## Articles
-- [2012年的文章关于UIAutomation, 4年的时间也不会让它褪色](http://blog.manbolo.com/2012/04/08/ios-automated-tests-with-uiautomation)
+- [2012年的文章关于UIAutomation, 4年的时间也没有让它褪色](http://blog.manbolo.com/2012/04/08/ios-automated-tests-with-uiautomation)
 
 ## Authors
 codeskyblue@gmail.com 2016.06

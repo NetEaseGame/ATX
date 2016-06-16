@@ -400,6 +400,11 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
+## 实现性质的功能
+该部分灵活性比较大，根据需要API随时都可能变。
+
+- [iOS自动化相关](README_IOS.md)
+
 ## Command line tools
 为了方便测试以及开发，atx封装了很多的命令行工具，功能包含端口转发，包解析，安装，截图等等。
 
@@ -490,9 +495,6 @@ python -m atx --help
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
-
-## 实现性质的功能
-点击查看[iOS自动化](README_IOS.md)
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备

@@ -45,3 +45,5 @@ __cache__
 .eggs
 .cache
 AUTHORS
+*.trace/
+*.tiff
