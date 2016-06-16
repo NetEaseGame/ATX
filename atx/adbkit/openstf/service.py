@@ -38,7 +38,7 @@ import stfwire_pb2 as wire
 import keycode
 
 
-__all__ = ['start', 'stop', 'identify', 'type', 'keyevent', 'get_wifi_status', 'set_wifi_enabled', 
+__all__ = ['start', 'stop', 'isalive', 'identify', 'type', 'keyevent', 'get_wifi_status', 'set_wifi_enabled', 
     'set_rotation', 'get_display', 'get_properties', 'on_battery_event', 'on_rotation_event']
 
 messages = {
@@ -236,6 +236,9 @@ service_queue = Queue.Queue()
 agent_queue = Queue.Queue()
 stop_event = threading.Event()
 
+def isalive():
+    return stop_event.isSet()
+
 def listen_service(service_port=1100): 
     # service, send & recv, use timeout
     def _service():
@@ -266,6 +269,7 @@ def listen_service(service_port=1100):
         finally:
             s.close()
             print 'Service socket closed'
+            stop_event.set()
 
     t = threading.Thread(target=_service)
     t.setDaemon(True)
@@ -285,6 +289,7 @@ def listen_agent(agent_port=1090):
         finally:
             s.close()
             print 'Agent socket closed.'
+            stop_event.set()
 
     t = threading.Thread(target=_agent)
     t.setDaemon(True)
@@ -398,7 +403,7 @@ def type(text):
     service_queue.put(msg)
     # wait for clipboard result
     resp = wait_response(rid)
-    if resp.success:
+    if resp and resp.success:
         keyevent(keycode.KEYCODE_V, wire.PRESS, ctrl=True)
         return True
     return False

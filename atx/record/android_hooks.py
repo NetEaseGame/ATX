@@ -133,6 +133,7 @@ class InputParser(object):
     _move_radius = 10
 
     def __init__(self, queue):
+        self.timediff = None
         self.queue = queue
         # the 'standard' status temp_status is compared to. 
         # if changes are great enough, new event are emitted.
@@ -154,6 +155,9 @@ class InputParser(object):
             return
         _time, _device, _type, _code, _value = m.groups()
         _time = float(_time)
+        if self.timediff is None:
+            self.timediff = time.time() - _time
+        _time = self.timediff + _time
         try:
             _value = int(_value, 16)
         except:
