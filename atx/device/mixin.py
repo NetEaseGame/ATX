@@ -229,6 +229,9 @@ def hook_wrap(event_type):
             func_args = inspect.getcallargs(fn, *args, **kwargs)
             self = func_args.get('self')
             
+            if not hasattr(self, '_depth'):
+                self._depth = 0
+
             _traceback = None
             _retval = None
             try:

@@ -7,6 +7,8 @@
 from __future__ import absolute_import
 
 import os
+import json
+import time
 
 import subprocess32 as subprocess
 from PIL import Image
@@ -17,7 +19,7 @@ from atx import patch
 from atx import base
 from atx import imutils
 from atx import strutils
-from atx.device import Bounds
+from atx.device import Bounds, Display
 from atx import logutils
 from atx.device.mixin import DeviceMixin, hook_wrap
 from atx import ioskit
@@ -28,17 +30,43 @@ log = logutils.getLogger(__name__)
 
 class IOSDevice(DeviceMixin):
     def __init__(self, bundle_id=None, udid=None):
-        self._proc = None
+        DeviceMixin.__init__(self)
 
-        self.screen_rotation = 0
+        self._proc = None
+        self._display = Display(2208, 1242)
+
+        self.screen_rotation = 1
         self.d = ioskit.Device(udid)
-        # self.bundle_id = bundle_id
+        self.udid = self.d.udid
+
         if not bundle_id:
             print 'WARNING [ios.py]: bundle_id is not set, only limited functions can be used.'
+        else:
+            self._init_instruments(bundle_id)
 
+    @property
+    def display(self):
+        return self.screen_rotation
+
+    @property
+    def rotation(self):
+        return self._rotation
+    
     def _init_instruments(self, bundle_id):
+        self._bootstrap = os.path.join(__dir__, 'bootstrap.sh')
         self._bundle_id = bundle_id
-        self._proc = subprocess.Popen(['sleep', '500'])
+        self._env = {'UDID': self.udid, 'BUNDLE_ID': self._bundle_id}
+        # 1. remove pipe
+        subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
+        # 2. start instruments
+        self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
+
+    def _runjs(self, code):
+        print code
+        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
+        print output
+        return output
+        return json.loads(output)
 
     def _close(self):
         print 'Terminate sleep'
@@ -65,7 +93,10 @@ class IOSDevice(DeviceMixin):
         return image
 
     def click(self, x, y):
-        raise NotImplementedError()
+        self._runjs('target.tap({x: %d, y: %d})' % (x/3, y/3))
 
     def install(self, filepath):
         raise NotImplementedError()
+
+    def sleep(self, sec):
+        time.sleep(sec)
