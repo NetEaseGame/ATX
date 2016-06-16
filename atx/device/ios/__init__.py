@@ -62,9 +62,9 @@ class IOSDevice(DeviceMixin):
         self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
 
     def _runjs(self, code):
-        print code
+        # print code
         output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
-        print output
+        # print output
         return output
         return json.loads(output)
 
