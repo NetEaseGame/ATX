@@ -156,10 +156,10 @@ class Device(object):
         '''
         TODO: need taskqueue here
         '''
-        raise NotImplementError()
+        raise NotImplementedError()
 
     def install(self, filepath):
-        raise NotImplementError()
+        raise NotImplementedError()
 
 
 if __name__ == '__main__':

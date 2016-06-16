@@ -62,6 +62,7 @@ var $ = $ || mechanic;
 
 (function($) {
   var target = UIATarget.localTarget();
+  var app = target.frontMostApp();
 
   $.extend($, {
     debug: UIALogger.logMessage,
@@ -97,18 +98,21 @@ var $ = $ || mechanic;
   })
 })(mechanic);
 
-// var app = target.frontMostApp();
 // var window = app.mainWindow();
 // //target.logElementTree();
 // var host = target.host();
 var target = UIATarget.localTarget();
+var app = target.frontMostApp();
 
 // $.debug("Hello" + JSON.stringify(target.rect()))
 $.message("Hello message")
 
 while (true) {
   $.message("Wait for command")
-  var result = $.cmd('/usr/bin/head', ['-n1', 'test.pipe'], 10);
+  var result = $.cmd('./bootstrap.sh', ['get'], 10);
+  if (result.exitCode == 15) {
+    continue;
+  }
   $.debug("exitCode: " + result.exitCode);
   $.debug("stdout: " + result.stdout);
   $.debug("stderr: " + result.stderr);
@@ -118,7 +122,7 @@ while (true) {
   if (result.exitCode == 0) {
     var rawRes = eval(result.stdout);
     var res = JSON.stringify(rawRes);
-    $.cmd('./write_pipe.sh', [res], 5);
+    $.cmd('./bootstrap.sh', ['put', res], 5);
   }
 }
 // $.delay(10)
