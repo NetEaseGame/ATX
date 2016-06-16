@@ -22,7 +22,7 @@ $ npm i -g ios-deploy
 $ pip install pyipa
 ```
 
-## Common issues
+## FAQ
 - How to keep iPhone screen on ?
 
 	1. 通用/自动锁定 改成**永不**
