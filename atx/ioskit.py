@@ -152,11 +152,23 @@ class Device(object):
             if os.path.exists(tmpfile):
                 os.unlink(tmpfile)
 
-    def click(self, x, y):
+    def start_app(self, bundle_id):
         '''
-        TODO: need taskqueue here
+        Start app by bundle_id
+        Args:
+            - bundle_id(string): ex com.netease.my
+        Returns:
+            idevicedebug subprocess instance
         '''
-        raise NotImplementedError()
+        idevicedebug = look_exec('idevicedebug')
+        if not idevicedebug:
+            raise EnvironmentError("No idevicedebug found.")
+
+        # run in background
+        kwargs = {'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
+        if sys.platform != 'darwin':
+            kwargs['close_fds'] = True
+        return subprocess.Popen([idevicedebug, "--udid", self.udid, 'run', bundle_id], **kwargs)
 
     def install(self, filepath):
         raise NotImplementedError()

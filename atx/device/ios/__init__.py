@@ -69,7 +69,7 @@ class IOSDevice(DeviceMixin):
         return json.loads(output)
 
     def _close(self):
-        print 'Terminate sleep'
+        print 'Terminate instruments'
         if self._proc:
             self._proc.terminate()
         # 1. remove pipe
