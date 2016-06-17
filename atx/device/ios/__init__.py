@@ -72,6 +72,8 @@ class IOSDevice(DeviceMixin):
         print 'Terminate sleep'
         if self._proc:
             self._proc.terminate()
+        # 1. remove pipe
+        subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
 
     def __del__(self):
         self._close()
@@ -100,3 +102,10 @@ class IOSDevice(DeviceMixin):
 
     def sleep(self, sec):
         time.sleep(sec)
+
+    def type(self, text):
+        self._runjs('$.typeString(%s)' % json.dumps(text))
+
+    def current_app(self):
+        ''' todo, maybe return dict is a better way '''
+        return self._runjs('target.frontMostApp().bundleID()').strip().strip('"')

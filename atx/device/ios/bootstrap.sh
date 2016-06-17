@@ -13,16 +13,14 @@ TRACETEMPLATE="/Applications/Xcode.app/Contents/Applications/Instruments.app/Con
 #echo "UDID: $UDID"
 test -p "$PIPE" || mkfifo "$PIPE"
 
-function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
-
 case "$1" in
 	instruments)
-		instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST
+		exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST
 		;;
 	run)
 		shift
 		/bin/echo "$@" >> $PIPE
-		/usr/bin/head -n1 $PIPE
+		exec /usr/bin/head -n1 $PIPE
 		;;
 	get)
 		shift
