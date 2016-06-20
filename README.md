@@ -293,7 +293,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	# d.image_match_threshold = 0.8 # 默认(模版匹配相似度)
 
-	d.screen_rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
+	d.rotation = None # default auto detect, 这个配置一下比较好，自动识别有时候识别不出来
 	# 0: home key bottom(normal)
 	# 1: home key right
 	# 2: home key top

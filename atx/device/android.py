@@ -175,6 +175,12 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         if self.screen_rotation in range(4):
             return self.screen_rotation
         return self.adb_device.rotation() or self.info['displayRotation']
+
+    @rotation.setter
+    def rotation(self, r):
+        if not isinstance(r, int):
+            raise TypeError("r must be int")
+        self.screen_rotation = r
     
     def _minicap_params(self):
         """

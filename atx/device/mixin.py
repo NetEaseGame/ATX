@@ -382,7 +382,7 @@ class DeviceMixin(object):
                 interpolation=cv2.INTER_CUBIC)
         
         screen = screen or self.region_screenshot()
-        threshold = threshold or self.image_match_threshold
+        threshold = threshold or pattern.threshold or self.image_match_threshold
 
         dx, dy = pattern.offset
         dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
@@ -505,8 +505,7 @@ class DeviceMixin(object):
         Args:
             - pattern (str or Pattern): filename or an opencv image object.
             - timeout (float): if image not found during this time, ImageNotFoundError will raise.
-            - wait_change (bool): Depreciated, wait until background image changed.
-
+            - action (str): click or long_click
         Returns:
             None
 
@@ -526,14 +525,9 @@ class DeviceMixin(object):
                 continue
 
             log.debug('confidence: %s', point.confidence)
-            if pattern.threshold:
-                if point.confidence < pattern.threshold:
-                    log.info('confidence %f below threshold %f', point.confidence, pattern.threshold)
-                    continue
-            else:
-                if not point.matched:
-                    log.info('Ignore confidence: %s', point.confidence)
-                    continue
+            if not point.matched:
+                log.info('Ignore confidence: %s', point.confidence)
+                continue
             
             func = getattr(self, action)
             func(*point.pos)
