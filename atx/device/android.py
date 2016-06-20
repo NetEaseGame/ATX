@@ -174,16 +174,14 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         if self.screen_rotation in range(4):
             return self.screen_rotation
-        return self.info['displayRotation']
+        return self.adb_device.rotation() or self.info['displayRotation']
     
     def _minicap_params(self):
         """
         Used about 0.1s
         uiautomator d.info is now well working with device which has virtual menu.
         """
-        rotation = self.screen_rotation 
-        if self.screen_rotation is None:
-            rotation = self.rotation
+        rotation = self.rotation 
 
         # rotation not working on SumSUNG 9502
         return '{x}x{y}@{x}x{y}/{r}'.format(
