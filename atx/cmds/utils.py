@@ -31,20 +31,3 @@ def http_download(url, target_path):
     with open(target_path, 'wb') as f:
         shutil.copyfileobj(resp, f)
     return target_path
-
-
-# def run_cmd(*args, **kwargs):
-#     """Run command and send stdout,stderr to console
-#     Args:
-#         ...command: ex   adb, devices
-#         success_text(string): expect output must contains
-
-#     Return:
-#         exit code
-#     """
-#     output = subprocess.check_output(list(args))
-
-#     success_text = kwargs.pop('success_text', None)
-#     if success_text and output.find(success_text) == -1:
-#         return 3
-#     return 0

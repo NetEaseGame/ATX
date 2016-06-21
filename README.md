@@ -429,7 +429,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 2. screencap
 
-	截图功能
+	截图功能（使用前设备需要设置成开发者模式）
 
 	```
 	python -m atx.ios screencap -o screen.png
@@ -501,6 +501,14 @@ python -m atx --help
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
+
+9. info
+
+	显示手机重用信息，输出格式是JSON
+
+	```sh
+	$ python -m atx info
+	```
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备

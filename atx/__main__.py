@@ -131,6 +131,9 @@ def main():
     with add_parser('version') as p:
         p.set_defaults(func=_version)
 
+    with add_parser('info') as p:
+        p.set_defaults(func=load_main('info'))
+
     args = ap.parse_args()
     args.func(args)
 
