@@ -64,9 +64,9 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	
 	```
 	# For Win32
-	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win32.whl
+	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win32.whl
 	# For AMD64
-	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
 	```
 
 	如果pip安装遇到问题，也可以把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)，安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错。
