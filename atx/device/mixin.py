@@ -34,7 +34,6 @@ from atx import base
 from atx import logutils
 from atx import strutils
 from atx import imutils
-from atx import adb
 from atx.device import Pattern, Bounds, FindPoint
 
 

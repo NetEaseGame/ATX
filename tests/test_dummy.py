@@ -6,7 +6,6 @@ import time
 
 import pytest
 import atx
-from atx.ext import cloudtest
 
 d = atx.connect(platform='dummy')
 
@@ -46,9 +45,9 @@ def test_hook_screenshot():
     d.screenshot()
     assert called[0] == True
 
-def test_cloudtest_hook():
-    cloudtest.record_operation(d)
-    d.screenshot()
+#def test_cloudtest_hook():
+#    cloudtest.record_operation(d)
+#    d.screenshot()
 
 def test_region_screenshot():
     nd = d.region(atx.Bounds(100, 100, 600, 300))

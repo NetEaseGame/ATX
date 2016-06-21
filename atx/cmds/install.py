@@ -15,7 +15,7 @@ import tqdm
 import atx.androaxml as apkparse
 
 from atx import logutils
-from atx import adb as adbutils
+from atx import adbkit
 from atx.cmds import utils
 
 
@@ -33,7 +33,7 @@ def clean(tmpdir):
 def adb_pushfile(adb, filepath, remote_path):
     filesize = os.path.getsize(filepath)
     pb = tqdm.tqdm(unit='B', unit_scale=True, total=filesize)
-    p = adb.cmd('push', filepath, remote_path)
+    p = adb.raw_cmd('push', filepath, remote_path)
 
     while True:
         try:
@@ -68,15 +68,15 @@ def get_file_size(adb, remote_path):
 
 
 def adb_remove(adb, path):
-    p = adb.cmd('shell', 'rm', path)
+    p = adb.raw_cmd('shell', 'rm', path)
     stdout, stderr = p.communicate()
     if stdout or stderr:
         log.warn('%s\n%s', stdout, stderr)
 
 
 def adb_install(adb, remote_path):
-    p = adb.cmd('shell', 'pm', 'install', '-rt', remote_path)
-    stdout, _ = p.communicate()
+    stdout = adb.run_cmd('shell', 'pm', 'install', '-rt', remote_path)
+    # stdout, _ = p.communicate()
     if stdout.find('Success') == -1:
         raise IOError("Adb install failed: %s" % stdout)
 
@@ -91,7 +91,7 @@ def adb_must_install(adb, remote_path, package_name):
 
 
 def main(path, serial=None, host=None, port=None, start=False):
-    adb = adbutils.Adb(serial, host, port)
+    adb = adbkit.Client(host, port).device(serial) #adbutils.Adb(serial, host, port)
     
     # use qiniu paths
     if __apks.get(path):
@@ -124,5 +124,5 @@ def main(path, serial=None, host=None, port=None, start=False):
 
     if start:
         log.info("Start app '%s'" % package_name)
-        adb.cmd('shell', 'am', 'start', '-n', package_name+'/'+main_activity).wait()
+        adb.raw_cmd('shell', 'am', 'start', '-n', package_name+'/'+main_activity).wait()
     log.info("Success")

@@ -210,8 +210,13 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	```py
 	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
 	d.adb_shell(['uptime'])
-	print d.forward(10080) # forward device port to localhost
+	
+	# forward device port to localhost
+	# same as 
+	# adb forward tcp:$(randomPort) tcp:10080
 	# Expect: (host, port)
+	print d.forward(10080)
+
 	print d.wlan_ip # 获取手机的Wlan IP
 	```
 

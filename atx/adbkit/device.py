@@ -33,12 +33,6 @@ class Device(object):
         self._serial = serial
         self._screenshot_method = 'minicap'
 
-    @staticmethod
-    def new(self, client, serial):
-        self._client = client
-        self._serial = serial
-        self._screenshot_method = 'minicap'
-
     @property
     def serial(self):
         return self._serial
@@ -69,7 +63,9 @@ class Device(object):
         """ 
         Remove file from device
         """
-        self.shell('rm', filename)
+        output = self.shell('rm', filename)
+        # any output means rm failed.
+        return False if output else True
 
     def install(self, filename):
         """
@@ -239,12 +235,12 @@ class Device(object):
         '''
         self.shell('input', 'tap', str(x), str(y))
 
-    def forward(self, device_port, local_port=None):
+    def forward(self, local_port, remote_port):
         '''
         adb port forward. return local_port
         TODO: not tested
         '''
-        return self._client.forward(self.serial, device_port, local_port)
+        return self._client.forward(self.serial, local_port, remote_port)
 
     def is_locked(self):
         """

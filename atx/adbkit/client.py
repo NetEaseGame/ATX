@@ -69,7 +69,7 @@ class Client(object):
     @property    
     def _host_port_args(self):
         args = []
-        if self._host:
+        if self._host and self._host != '127.0.0.1':
             args += ['-H', self._host]
         if self._port:
             args += ['-P', str(self._port)]
@@ -150,19 +150,22 @@ class Client(object):
         lines = self.run_cmd("forward", "--list").strip().splitlines()
         return [line.strip().split() for line in lines]
 
-    def forward(self, serial, device_port, local_port=None):
+    def forward(self, serial, local_port, remote_port=None):
         '''
         adb port forward. return local_port
         TODO: not tested
         '''
-        if local_port is None:
+        # Shift args, because remote_port is required while local_port is optional
+        if remote_port is None:
+            remote_port, local_port = local_port, None
+        if not local_port:
             for s, lp, rp in self.forward_list():
-                if s == serial and rp == 'tcp:%d' % device_port:
+                if s == serial and rp == 'tcp:%d' % remote_port:
                     return int(lp[4:])
-            return self.forward(serial, device_port, next_local_port(self.server_host))
+            return self.forward(serial, next_local_port(self.server_host), remote_port)
         else:
-            print serial, device_port, local_port
-            self.raw_cmd("-s", serial, "forward", "tcp:%d" % local_port, "tcp:%d" % device_port).wait()
+            print serial, remote_port, local_port
+            self.raw_cmd("-s", serial, "forward", "tcp:%d" % local_port, "tcp:%d" % remote_port).wait()
             return local_port
 
 

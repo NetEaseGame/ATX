@@ -3,7 +3,6 @@
 """
 Blueprint, not finished yet.
 
->>> from atx import adb
 >>>
 >>> client = adb.Client(host='127.0.0.1', port=5037)
 >>> client.devices()
