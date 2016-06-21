@@ -79,6 +79,7 @@ def main():
         p.set_defaults(func=load_main('tcpproxy'))
 
     with add_parser('gui') as p:
+        p.add_argument('-p', '--platform', default='android', choices=('android', 'ios'), help='platform')
         p.set_defaults(func=load_main('tkgui'))
 
     with add_parser('record') as p:

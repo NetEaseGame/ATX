@@ -133,7 +133,8 @@ class CropIDE(object):
 
     def _init_vars(self):
         self.draw_image(self._device.screenshot())
-        self._uinodes = self._device.dump_nodes()
+        if self._uiauto_detect_var.get():
+            self._uinodes = self._device.dump_nodes()
 
     def _worker(self):
         que = self._queue
@@ -250,7 +251,8 @@ class CropIDE(object):
 
             self._draw_lines()
             self._running = False
-            self._uinodes = self._device.dump_nodes()
+            if self._uiauto_detect_var.get():
+                self._uinodes = self._device.dump_nodes()
 
         self._run_async(foo)
         self._refresh_text.set("Refreshing ...")
@@ -362,11 +364,15 @@ class CropIDE(object):
         self._root.mainloop()
         
 
-def main(serial, **kwargs):
+def main(serial, host='127.0.0.1', port=5037, platform='android'):
     log.debug("gui starting ...")
-    d = atx.connect(serial, **kwargs)
-    d.wakeup()
-    gui = CropIDE('AirtestX IDE SN: %s' % d.serial, device=d)
+    if platform == 'android':
+        d = atx.connect(serial, host=host, port=port)
+        serial = d.serial
+    elif platform == 'ios':
+        d = atx.connect(udid=serial, platform='ios')
+        serial = d.udid
+    gui = CropIDE('ATX GUI SN: %s' % serial, device=d)
     gui.mainloop()
 
 def test():
@@ -379,7 +385,7 @@ def test():
 
 
 if __name__ == '__main__':
+    main(None, platform='ios')
     # main()
     # atx.connect().screenshot().save('screen.png')
-    main(None)
     # test()
