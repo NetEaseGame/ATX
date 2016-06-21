@@ -5,7 +5,6 @@ from __future__ import absolute_import
 import re
 import collections
 
-import cv2
 from atx import imutils
 from atx import strutils
 
@@ -74,6 +73,7 @@ class Pattern(object):
 
     def save(self, path):
         """ save image to path """
+        import cv2
         cv2.imwrite(path, self._image)
     
     @property
