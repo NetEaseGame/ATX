@@ -82,6 +82,7 @@ class CropIDE(object):
         self._uinodes = [] # ui dump
         self._selected_node = None
         self._hovered_node = None
+        self._save_parent_dir = None
 
         self._init_vars()
 
@@ -103,9 +104,9 @@ class CropIDE(object):
         self._btn_refresh = tk.Button(frm_screenshot, textvariable=self._refresh_text, command=self._refresh_screen)
         self._btn_refresh.grid(column=0, row=0, sticky=tk.W)
         # tk.Button(frm_screenshot, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
-        tk.Button(frm_screenshot, text="Save cropped", command=self._save_crop).grid(column=0, row=2, sticky=tk.W)
+        tk.Button(frm_screenshot, text=u"保存区域", command=self._save_crop).grid(column=0, row=1, sticky=tk.W)
         
-        tk.Button(frm_screenshot, text="Save screenshot", command=self._save_screenshot).grid(column=0, row=3, sticky=tk.W)
+        tk.Button(frm_screenshot, text="保存截屏", command=self._save_screenshot).grid(column=0, row=2, sticky=tk.W)
         frm_checkbtns = tk.Frame(frm_screenshot)
         frm_checkbtns.grid(column=0, row=3, sticky=(tk.W, tk.E))
         tk.Checkbutton(frm_checkbtns, text="Auto refresh", variable=self._auto_refresh_var, command=self._run_check_refresh).grid(column=0, row=0, sticky=tk.W)
@@ -198,13 +199,17 @@ class CropIDE(object):
             return
         bounds = self._fix_bounds(self._bounds)
         ext = '.%dx%d.png' % tuple(self._size)
+        # tkFileDialog doc: http://tkinter.unpythonic.net/wiki/tkFileDialog
         save_to = tkFileDialog.asksaveasfilename(**dict(
+            initialdir=self._save_parent_dir,
             defaultextension=ext,
             filetypes=[('PNG with size', ext)],
             title='Select file'))
         if not save_to:
             return
         save_to = self._fix_path(save_to)
+        self._save_parent_dir = os.path.dirname(save_to)
+
         log.info('Crop save to: %s', save_to)
         self._image.crop(bounds).save(save_to)
         if self._offset == (0, 0):
@@ -361,7 +366,7 @@ def main(serial, **kwargs):
     log.debug("gui starting ...")
     d = atx.connect(serial, **kwargs)
     d.wakeup()
-    gui = CropIDE('AirtestX IDE SN: %s' % serial, device=d)
+    gui = CropIDE('AirtestX IDE SN: %s' % d.serial, device=d)
     gui.mainloop()
 
 def test():
