@@ -3,25 +3,27 @@
 import threading
 
 from atx.device.android import AndroidDevice
-from atx.record.base import BaseRecorder
+from atx.adbkit.mixins import RotationWatcherMixin, MinicapStreamMixin
+
+from atx.record.base import BaseRecorder, ScreenAddon, UixmlAddon
 from atx.record.android_hooks import HookManager, HookConstants
 from atx.record.android_layout import AndroidLayout
 from atx.imutils import from_pillow
 
-class RecordDevice(AndroidDevice):
+class RecordDevice(AndroidDevice, RotationWatcherMixin, MinicapStreamMixin):
+
+    def __init__(self, *args, **kwargs):
+        super(RecordDevice, self).__init__(*args, **kwargs)
+        self.open_rotation_watcher(on_rotation_change=self.open_minicap_stream)
 
     def dumpui(self):
         xmldata = self._uiauto.dump(pretty=False)
         return xmldata
 
-    def screenshot_cv2(self):
-        img = self._screenshot_minicap()
-        return from_pillow(img)
-
-class AndroidRecorder(BaseRecorder):
-    def __init__(self, device=None):
+class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon):
+    def __init__(self, device=None, workdir='.'):
         self.hm = HookManager()
-        super(AndroidRecorder, self).__init__(device)
+        super(AndroidRecorder, self).__init__(device, workdir)
 
         self.hm.register(HookConstants.TOUCH_UP, self._on_click)
         # self.hm.register(HookConstants.GST_DRAG, self._on_drag)
@@ -49,7 +51,7 @@ class AndroidRecorder(BaseRecorder):
     def _on_click(self, event):
         pos = (event.x, event.y)
         print 'touch on', pos
-        self.on_input_event(event)
+        self.input_event(event)
 
     def analyze(self, idx, event, img, uixml):
         pass
@@ -57,4 +59,4 @@ class AndroidRecorder(BaseRecorder):
 if __name__ == '__main__':
     d = RecordDevice()
     rec = AndroidRecorder(d)
-    rec.run()
+    rec.start()
