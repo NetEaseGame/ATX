@@ -120,7 +120,7 @@ def main():
         p.set_defaults(func=load_main('screenrecord'))
 
     with add_parser('web') as p:
-        p.add_argument('--no-browser', dest='open_browser', action='store_false', help='Not open browser')
+        p.add_argument('-b', '--no-browser', dest='open_browser', action='store_false', help='Not open browser')
         p.add_argument('--web-port', required=False, type=int, help='web listen port')
         p.set_defaults(func=load_main('webide'))
 

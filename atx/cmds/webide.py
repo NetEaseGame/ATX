@@ -18,8 +18,8 @@ from concurrent.futures import ThreadPoolExecutor   # `pip install futures` for 
 
 import atx
 from atx import logutils
-from atx import base
 from atx import imutils
+from atx import base
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -50,7 +50,6 @@ def get_valid_port():
         sock.close()
         if result != 0:
             return port
-
     raise SystemError("Can not find a unused port, amazing!")
 
 
@@ -90,7 +89,7 @@ class MainHandler(tornado.web.RequestHandler):
         self.write("Good")
 
 
-class EchoWebSocket(tornado.websocket.WebSocketHandler):
+class DebugWebSocket(tornado.websocket.WebSocketHandler):
     executor = ThreadPoolExecutor(max_workers=1)
 
     def open(self):
@@ -179,7 +178,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 class WorkspaceHandler(tornado.web.RequestHandler):
     def get(self):
         ret = {}
-        ret['xml_text'] = read_file('blockly.xml', '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>')
+        ret['xml_text'] = read_file('blockly.xml', default='<xml xmlns="http://www.w3.org/1999/xhtml"></xml>')
         ret['python_text'] = read_file('blockly.py')
         self.write(ret)
 
@@ -223,11 +222,11 @@ def make_app(settings={}):
     static_path = os.getcwd()
     application = tornado.web.Application([
         (r"/", MainHandler),
-        (r"/workspace", WorkspaceHandler),
+        (r'/ws', DebugWebSocket), # code debug
+        (r"/workspace", WorkspaceHandler), # save and write workspace
         (r"/images/screenshot", ScreenshotHandler),
-        (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
         (r'/api/images', ImageHandler),
-        (r'/ws', EchoWebSocket),
+        (r'/static_imgs/(.*)', StaticFileHandler, {'path': static_path}),
     ], **settings)
     return application
 
