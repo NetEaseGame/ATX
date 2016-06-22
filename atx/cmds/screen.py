@@ -8,14 +8,37 @@ import time
 import traceback
 import cv2
 from functools import partial
-from atx import adb2 as adb
+
+from atx.adbkit.client import Client
+from atx.adbkit.device import Device
+from atx.adbkit.mixins import MinicapStreamMixin, RotationWatcherMixin, MinitouchStreamMixin
+
+class AdbWrapper(RotationWatcherMixin, MinicapStreamMixin, MinitouchStreamMixin, Device):
+    def __init__(self, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+        self.open_rotation_watcher(on_rotation_change=lambda v: self.open_minicap_stream())
+        self.open_minitouch_stream()
+
+    def send_touch(self, cmd):
+        self._MinitouchStreamMixin__touch_queue.put(cmd)
+
+    def input(self, char):
+        self.shell('input', 'text', char)
+
+def get_adb(host, port, serial):
+    client = Client(host, port)
+    if serial is None:
+        serial = list(client.devices().keys())[0]
+    return AdbWrapper(client, serial)
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-def screen_with_controls(scale=0.5):
+def screen_with_controls(host, port, serial, scale=0.5):
     from PIL import Image, ImageTk
     import Tkinter as tk
     import tkFileDialog
+
+    adb = get_adb(host, port, serial)
 
     class Screen(object):
         def __init__(self):
@@ -45,6 +68,7 @@ def screen_with_controls(scale=0.5):
                     d += '.png'
                 print 'Save to', d
                 self.image.save(d)
+
             icon = ImageTk.PhotoImage(file=os.path.join(__dir__, 'static', 'icons', 'save.ico'))
             tk.Button(toolbar, image=icon, command=capture).pack(side=tk.LEFT, padx=2, pady=2)
             self.icons.append(icon)
@@ -68,35 +92,34 @@ def screen_with_controls(scale=0.5):
             self.canvas = tk.Canvas(self.root, bg='black', bd=0, highlightthickness=0)
             self.canvas.pack()
 
-            def _screen2touch(w, h, x, y):
+            def _screen2touch(w, h, o, x, y):
                 '''convert touch position'''
-                ori = adb.orientation()
-                if ori == 0:
+                if o == 0:
                     return x, y
-                elif ori == 1: # landscape-right
+                elif o == 1: # landscape-right
                     return w-y, x
-                elif ori == 2: # upsidedown
+                elif o == 2: # upsidedown
                     return w-x, h-y
-                elif ori == 3: # landscape-left
+                elif o == 3: # landscape-left
                     return h-x, y
                 return x, y
             
-            w, h = adb.display()
-            screen2touch = partial(_screen2touch, w, h)
+            w, h, o = adb.display
+            screen2touch = partial(_screen2touch, w, h, o)
 
             def on_mouse_down(event):
                 self.canvas.focus_set()
                 x, y = int(event.x/scale), int(event.y/scale)
                 x, y = screen2touch(x, y)
-                adb._mini.touchqueue.put('d 0 %d %d 30\nc\n' % (x, y))
+                adb.send_touch('d 0 %d %d 30\nc\n' % (x, y))
 
             def on_mouse_up(event):
-                adb._mini.touchqueue.put('u 0\nc\n')
+                adb.send_touch('u 0\nc\n')
 
             def on_mouse_drag(event):
                 x, y = int(event.x/scale), int(event.y/scale)
                 x, y = screen2touch(x, y)
-                adb._mini.touchqueue.put('m 0 %d %d 30\nc\n' % (x, y))
+                adb.send_touch('m 0 %d %d 30\nc\n' % (x, y))
 
             self.canvas.bind('<ButtonPress-1>', on_mouse_down)
             self.canvas.bind('<ButtonRelease-1>', on_mouse_up)
@@ -116,32 +139,14 @@ def screen_with_controls(scale=0.5):
 
             self.canvas.bind('<Key>', on_key)
 
-        # def refresh_screen(self, screen):
-        #     # refresh rate is about 0.03 second, cause flickering
-        #     if screen is None:
-        #         return
-        #     t0 = time.time()
-        #     h, w = screen.shape[:2]
-        #     w, h = int(w*scale), int(h*scale)
-        #     screen = cv2.resize(screen, (w, h))
-        #     self.image = Image.fromarray(screen[:, :, ::-1])
-        #     self.tkimage = ImageTk.PhotoImage(self.image)
-            
-        #     # # thumbnail is slow... around 0.16 second
-        #     # w, h = self.image.size
-        #     # image = self.image.copy()
-        #     # image.thumbnail((w, h), Image.ANTIALIAS)
-        #     # self.tkimage = ImageTk.PhotoImage(image)
-
-        #     self.canvas.config(width=w, height=h)
-        #     if self.canvas_image is None:
-        #         self.canvas_image = self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tkimage)
-        #     else:
-        #         self.canvas.itemconfig(self.canvas_image, image=self.tkimage)
-        #     print time.time() - t0
-
         def _refresh_screen(self):
-            self.image = adb.screenshot(scale=scale)
+            img = adb.screenshot_cv2()
+            if scale != 1.0:
+                h, w = img.shape[:2]
+                h, w = int(scale*h), int(scale*w)
+                img = cv2.resize(img, (w, h))
+
+            self.image = Image.fromarray(img[:, :, ::-1])
             self.tkimage = ImageTk.PhotoImage(self.image)
             w, h = self.image.size
             self.canvas.config(width=w, height=h)
@@ -158,20 +163,20 @@ def screen_with_controls(scale=0.5):
 
     s = Screen()
 
-    adb.use_openstf(enabletouch=True)#, on_screenchange=s.refresh_screen)
-    img = adb.screenshot()
+    img = adb.screenshot_cv2()
     while img is None:
         time.sleep(1)
-        img = adb.screenshot()
+        img = adb.screenshot_cv2()
 
     s.run()
 
-def screen_simple(scale=0.5):
-    adb.use_openstf()
-    img = adb.screenshot(format='cv2')
+def screen_simple(host, port, serial, scale=0.5):
+    adb = get_adb(host, port, serial)
+
+    img = adb.screenshot_cv2()
     while img is None:
         time.sleep(1)
-        img = adb.screenshot(format='cv2')
+        img = adb.screenshot_cv2()
 
     print 'Press Ctrl-C or Esc to quit.'
 
@@ -179,7 +184,11 @@ def screen_simple(scale=0.5):
     cv2.namedWindow(winname)
     while True:
         try:
-            img = adb.screenshot(format='cv2', scale=scale)
+            img = adb.screenshot_cv2()
+            if scale != 1.0:
+                h, w = img.shape[:2]
+                h, w = int(scale*h), int(scale*w)
+                img = cv2.resize(img, (w, h))
             cv2.imshow(winname, img)
             key = cv2.waitKey(10)
             if key == 27: # Escape
@@ -193,12 +202,12 @@ def screen_simple(scale=0.5):
 
     cv2.destroyWindow(winname)
 
-def main(scale=0.5, simple=False):
+def main(serial=None, host=None, port=None, scale=0.5, simple=False):
     '''interact'''
     if simple:
-        screen_simple(scale)
+        screen_simple(host, port, serial, scale)
     else:
-        screen_with_controls(scale)
+        screen_with_controls(host, port, serial, scale)
 
 if __name__ == '__main__':
     main()
