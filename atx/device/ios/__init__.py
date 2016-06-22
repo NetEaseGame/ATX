@@ -76,7 +76,8 @@ class IOSDevice(DeviceMixin):
         subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
 
     def __del__(self):
-        self._close()
+        if hasattr(self, '_bootstrap'):
+            self._close()
 
     def screenshot(self, filename=None):
         '''

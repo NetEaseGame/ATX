@@ -4,12 +4,15 @@ iOS因为其管理的严格以及文档的困乏，使得其自动化实施起�
 
 ## 相关工具安装
 毕竟iPhone是苹果的产品，所以搞iOS测试还是得有台苹果电脑的好。
+推荐MacMini
+
+![macmini](images/macmini.jpg)
 
 先安装 brew, 如何安装参考 <http://brew.sh>
 
 ```
-$ brew install libmobiledevice
-$ brew install homebrew/fuse/ifuse
+$ brew install libmobiledevice # required
+$ brew install homebrew/fuse/ifuse # optional
 
 $ brew install node # skip if you already have node or nvm installed.
 $ npm i -g ios-deploy

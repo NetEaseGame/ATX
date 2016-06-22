@@ -1,4 +1,4 @@
-![logo](docs/logo.png)
+![logo](images/logo.png)
 
 # AutomatorX (atx) (中文版)
 [![Build Status](https://travis-ci.org/codeskyblue/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
@@ -47,7 +47,8 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 * 截图客户端从网页服务器变成了python-Tkinter写的客户端 使用python -matx gui启动
 * 支持dir(dev) 查看元素已有的方法（-_-! 之前代码写的不好，并不支持）
 * 更稳定的依赖库控制，与travis持续集成，可在代码更新后自动发布到pypi
-* 移除性能监控功能，暂时移除iOS支持 (目前性能测试使用第三方App集成)
+* 移除性能监控功能(目前性能测试使用第三方工具 腾讯GT)
+* 暂时移除iOS支持(in progress ...) 
 * 图像匹配默认使用模版匹配，将SIFT匹配改为可选
 
 [更多More](CHANGELOG)
@@ -64,9 +65,9 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	
 	```
 	# For Win32
-	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win32.whl
+	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win32.whl
 	# For AMD64
-	pip install http://7rfh09.com2.z0.glb.qiniucdn.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
+	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
 	```
 
 	如果pip安装遇到问题，也可以把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)，安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错。
@@ -145,7 +146,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	命令行运行 `python -matx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存推出. (按下`Refresh`可以重新刷新屏幕)
 
-	![tkide](docs/tkide.png)
+	![tkide](images/tkide.png)
 
 	_PS: 这里其实有个好的IDE截图的最好了，现在是用Tkinter做的，比较简洁，但是可以跨平台，效果也还可以_
 
@@ -156,6 +157,12 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 4. 更多
 
 	可以使用的接口还有很多，请接着往下看
+
+
+## 实验室
+该部分记录的内容灵活性比较大，有可能会有大的改动，也有可以会删掉。第一次看的人，可以直接跳过
+
+- [iOS自动化相关](README_IOS.md)
 
 ## Examples
 ATX毕竟是一个python库，给出代码的例子可能更好理解一些
@@ -405,11 +412,6 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
-## 实现性质的功能
-该部分灵活性比较大，根据需要API随时都可能变。
-
-- [iOS自动化相关](README_IOS.md)
-
 ## Command line tools
 为了方便测试以及开发，atx封装了很多的命令行工具，功能包含端口转发，包解析，安装，截图等等。
 
@@ -428,7 +430,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 2. screencap
 
-	截图功能
+	截图功能（使用前设备需要设置成开发者模式）
 
 	```
 	python -m atx.ios screencap -o screen.png
@@ -500,6 +502,14 @@ python -m atx --help
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
+
+9. info
+
+	显示手机重用信息，输出格式是JSON
+
+	```sh
+	$ python -m atx info
+	```
 
 ## FAQ
 1. 如果连接远程机器上的安卓设备
