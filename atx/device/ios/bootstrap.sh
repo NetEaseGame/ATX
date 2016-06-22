@@ -10,28 +10,36 @@ PIPE=${PIPE:-"/tmp/atx.instruments.$UDID.pipe"}
 
 TRACETEMPLATE="/Applications/Xcode.app/Contents/Applications/Instruments.app/Contents/PlugIns/AutomationInstrument.xrplugin/Contents/Resources/Automation.tracetemplate"
 
+QUEUE="python -m atx.taskqueue --room $UDID"
 #echo "UDID: $UDID"
-test -p "$PIPE" || mkfifo "$PIPE"
+# test -p "$PIPE" || mkfifo "$PIPE"
 
 case "$1" in
 	instruments)
+		# python -m atx.taskqueue web &>/tmp/atx.taskqueue.log &
 		exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST
 		;;
 	run)
 		shift
-		/bin/echo "$@" >> $PIPE
-		exec /usr/bin/head -n1 $PIPE
+		TASK_ID=$($QUEUE post "$1")
+		exec $QUEUE delete "$TASK_ID"
+		# /bin/echo "$@" >> $PIPE
+		# exec /usr/bin/head -n1 $PIPE
 		;;
 	get)
 		shift
-		/usr/bin/head -n1 $PIPE
+		$QUEUE get
+		# /usr/bin/head -n1 $PIPE
 		;;
 	put)
 		shift
-		/bin/echo "$@" >> $PIPE
+		# $1: task_id, $2: data
+		$QUEUE put "$1" "$2"
+		# /bin/echo "$@" >> $PIPE
 		;;
 	reset)
-		/bin/rm -f $PIPE
+		# todo, maybe quit too much
+		$QUEUE quit
 		;;
 	*)
 		/bin/echo "Usage: $0 <instruments|run|get|put|reset> [ARGS]"

@@ -6,6 +6,8 @@ import uuid
 import json
 import inspect
 import sys
+import os
+import time
 from contextlib import contextmanager
 from collections import defaultdict
 from functools import partial
@@ -14,59 +16,61 @@ import tornado.web
 import tornado.escape
 from tornado import gen
 from tornado.ioloop import IOLoop
-from tornado.queues import Queue
+from tornado.queues import Queue, QueueEmpty
 
 import requests
 
-# @gen.coroutine
-# def consumer():
-#     while True:
-#         item = yield que.get()
-#         try:
-#             print('Doing work on %s' % item)
-#             yield gen.sleep(0.5)
-#         finally:
-#             que.task_done()
 
-# @gen.coroutine
-# def producer():
-#     for item in range(5):
-#         yield que.put(item)
-#         print('Put %s' % item)
+class IndexHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write('Homepage')
 
-# @gen.coroutine
-# def main():
-#     # Start consumer without waiting (since it never finishes).
-#     IOLoop.current().spawn_callback(consumer)
-#     yield producer()     # Wait for producer to put all tasks.
-#     yield que.join()       # Wait for consumer to finish all tasks.
-#     print('Done')
+    def delete(self):
+        self.write('Quit')
+        IOLoop.instance().stop()
 
 
-class MainHandler(tornado.web.RequestHandler):
+class TaskQueueHandler(tornado.web.RequestHandler):
     ques = defaultdict(partial(Queue, maxsize=2))
     results = {}
 
     @gen.coroutine
     def get(self, udid):
         ''' get new task '''
+        timeout = self.get_argument('timeout', 10.0)
+        if timeout is not None:
+            timeout = float(timeout)
+        print timeout
         que = self.ques[udid]
-        item = yield que.get()
-        que.task_done()
-        self.write(item)
+        finish_time = time.time() + timeout
+        while time.time() < finish_time: # I think may be there is a bug. que.get(timeout is not working at all)
+            try:
+                item = yield que.get(timeout=12) #(timeout=1.0)#timeout)
+                print 'get from queue:', item
+                self.write(item)
+                break
+            except gen.TimeoutError:
+                yield gen.sleep(0.1)
+        else:
+            self.write('')
         self.finish()
+        # except gen.TimeoutError:
+        # self.write('')
+        # finally:
+        # que.task_done()
 
     @gen.coroutine
     def post(self, udid):
         ''' add new task '''
         que = self.ques[udid]
         data = tornado.escape.json_decode(self.request.body)
-        data['id'] = str(uuid.uuid1())
+        data = {'id': str(uuid.uuid1()), 'data': data}
         yield que.put(data)
-        print que.qsize()
+        print 'post, queue size:', que.qsize()
         self.write({'id': data['id']})
         self.finish()
 
+    @gen.coroutine
     def put(self, udid):
         ''' finish task '''
         data = tornado.escape.json_decode(self.request.body)
@@ -78,19 +82,18 @@ class MainHandler(tornado.web.RequestHandler):
             that = self.results[id]
             that.write(json.dumps(result))
             that.finish()
-            del(self.results[id])
+            self.results.pop(id, None)
         self.write('Success')
+        self.finish()
 
     @gen.coroutine
     def delete(self, udid):
-        # TODO: get and wait loop, until find the result
         data = tornado.escape.json_decode(self.request.body)
         id = data['id']
         timeout = float(data.get('timeout', 10.0))
         print 'Timeout:', timeout
         result = self.results.get(id)
         if result is None:
-
             self.results[id] = self
             yield gen.sleep(timeout)
             if self.results.get(id) == self:
@@ -99,20 +102,22 @@ class MainHandler(tornado.web.RequestHandler):
                 self.finish()
         else:
             self.write(json.dumps(result))
-            del(self.results[id])
+            self.results.pop(id, None)
 
 
 def make_app(**settings):
     print settings
     return tornado.web.Application([
-        (r"/rooms/([^/]*)", MainHandler),
+        (r"/", IndexHandler),
+        (r"/rooms/([^/]*)", TaskQueueHandler),
     ], **settings)
 
 
-def cmd_web():
-    app = make_app(debug=True)
-    app.listen(10020)
+def cmd_web(port, debug):
+    app = make_app(debug=debug)
+    app.listen(port)
     IOLoop.current().start()
+    
 
 def cmd_put(room, port, task_id, data):
     data = json.loads(data)
@@ -120,8 +125,8 @@ def cmd_put(room, port, task_id, data):
     r = requests.put('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
     print r.text
 
-def cmd_get(room, port):
-    r = requests.get('http://localhost:%d/rooms/%s' % (port, room))
+def cmd_get(room, port, timeout):
+    r = requests.get('http://localhost:%d/rooms/%s' % (port, room), params={'timeout': timeout})
     print r.text
 
 def cmd_post(room, port, data):
@@ -134,6 +139,10 @@ def cmd_post(room, port, data):
 def cmd_delete(room, port, task_id):
     jsondata = {'id': task_id}
     r = requests.delete('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    print r.text
+
+def cmd_quit(room, port):
+    r = requests.delete('http://localhost:%d/' % (port))
     print r.text
 
 def _inject(func, kwargs):
@@ -160,6 +169,8 @@ def main():
         yield subp.add_parser(name, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     with add_parser('web') as p:
+        # p.add_argument('--daemon', action='store_true', dest='is_daemon', help='Run is background')
+        p.add_argument('--debug', action='store_true', help='Run in debug mode')
         p.set_defaults(func=wrap(cmd_web))
 
     with add_parser('put') as p:
@@ -168,6 +179,7 @@ def main():
         p.set_defaults(func=wrap(cmd_put))
 
     with add_parser('get') as p:
+        p.add_argument('--timeout', type=float, default=10.0)
         p.set_defaults(func=wrap(cmd_get))
 
     with add_parser('post') as p:
@@ -177,6 +189,9 @@ def main():
     with add_parser('delete') as p:
         p.add_argument('task_id')
         p.set_defaults(func=wrap(cmd_delete))
+
+    with add_parser('quit') as p:
+        p.set_defaults(func=wrap(cmd_quit))
 
     args = ap.parse_args()
     args.func(args)

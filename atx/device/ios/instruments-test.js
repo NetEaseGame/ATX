@@ -54,8 +54,8 @@ $.message("Hello message")
 
 while (true) {
   $.message("Wait for command")
-  var result = $.cmd('./bootstrap.sh', ['get'], 10);
-  if (result.exitCode == 15) {
+  var result = $.cmd('./bootstrap.sh', ['get'], 50);
+  if (! result.stdout) { // == 15) {
     continue;
   }
   $.debug("exitCode: " + result.exitCode);
@@ -66,11 +66,15 @@ while (true) {
 
   if (result.exitCode == 0) {
     try {
-      var rawRes = eval(result.stdout);
+      var req = JSON.parse(result.stdout);
+      var rawRes = eval(req.data.command);
+      // var rawRes = eval(result.stdout);
       var res = JSON.stringify(rawRes);
-      $.cmd('./bootstrap.sh', ['put', res], 5);
+      $.debug("Result: " + res);
+      $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
     } catch (err) {
-      $.cmd('./bootstrap.sh', ['put', "error:" + err.message], 5);
+      $.debug("Error: " + err.message);
+      $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
     }
   }
 }
