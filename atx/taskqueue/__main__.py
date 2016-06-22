@@ -52,7 +52,7 @@ class MainHandler(tornado.web.RequestHandler):
         ''' get new task '''
         que = self.ques[udid]
         item = yield que.get()
-        que.task_done()  
+        que.task_done()
         self.write(item)
         self.finish()
 
@@ -63,14 +63,43 @@ class MainHandler(tornado.web.RequestHandler):
         data = tornado.escape.json_decode(self.request.body)
         data['id'] = str(uuid.uuid1())
         yield que.put(data)
+        print que.qsize()
         self.write({'id': data['id']})
         self.finish()
 
     def put(self, udid):
         ''' finish task '''
         data = tornado.escape.json_decode(self.request.body)
-        print data['id']
-        print data['result']
+        id = data['id']
+        result = data['result']
+        if self.results.get(id) is None:
+            self.results[id] = result
+        else:
+            that = self.results[id]
+            that.write(json.dumps(result))
+            that.finish()
+            del(self.results[id])
+        self.write('Success')
+
+    @gen.coroutine
+    def delete(self, udid):
+        # TODO: get and wait loop, until find the result
+        data = tornado.escape.json_decode(self.request.body)
+        id = data['id']
+        timeout = float(data.get('timeout', 10.0))
+        print 'Timeout:', timeout
+        result = self.results.get(id)
+        if result is None:
+
+            self.results[id] = self
+            yield gen.sleep(timeout)
+            if self.results.get(id) == self:
+                del(self.results[id])
+                self.write('null')
+                self.finish()
+        else:
+            self.write(json.dumps(result))
+            del(self.results[id])
 
 
 def make_app(**settings):
@@ -85,8 +114,11 @@ def cmd_web():
     app.listen(10020)
     IOLoop.current().start()
 
-def cmd_put(room, data):
-    print room, data
+def cmd_put(room, port, task_id, data):
+    data = json.loads(data)
+    jsondata = {'id': task_id, 'result': data}
+    r = requests.put('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    print r.text
 
 def cmd_get(room, port):
     r = requests.get('http://localhost:%d/rooms/%s' % (port, room))
@@ -97,6 +129,11 @@ def cmd_post(room, port, data):
     if not isinstance(jsondata, dict):
         sys.exit('data must be dict, for example: {"name": "kitty"}')
     r = requests.post('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    print r.json()['id']
+
+def cmd_delete(room, port, task_id):
+    jsondata = {'id': task_id}
+    r = requests.delete('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
     print r.text
 
 def _inject(func, kwargs):
@@ -126,6 +163,7 @@ def main():
         p.set_defaults(func=wrap(cmd_web))
 
     with add_parser('put') as p:
+        p.add_argument('task_id')
         p.add_argument('data')
         p.set_defaults(func=wrap(cmd_put))
 
@@ -135,7 +173,10 @@ def main():
     with add_parser('post') as p:
         p.add_argument('data')
         p.set_defaults(func=wrap(cmd_post))
-    # TODO: done
+
+    with add_parser('delete') as p:
+        p.add_argument('task_id')
+        p.set_defaults(func=wrap(cmd_delete))
 
     args = ap.parse_args()
     args.func(args)
@@ -143,5 +184,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    
