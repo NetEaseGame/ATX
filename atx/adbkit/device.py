@@ -37,7 +37,7 @@ class Device(object):
     def serial(self):
         return self._serial
     
-    def raw_cmd(self, *args):
+    def raw_cmd(self, *args, **kwargs):
         args = ['-s', self._serial] + list(args)
         return self._client.raw_cmd(*args)
 
