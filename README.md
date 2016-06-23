@@ -579,6 +579,16 @@ python -m atx --help
 	adb uninstall com.github.uiautomator.test
 	```
 
+6. 卸载
+
+	```
+	adb uninstall com.github.uiautomator
+	adb uninstall com.github.uiautomator.test
+
+	adb shell rm /data/local/tmp/minicap
+	adb shell rm /data/local/tmp/minicap.so
+	```
+
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
 

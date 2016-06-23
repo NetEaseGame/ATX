@@ -50,10 +50,11 @@ class Client(object):
         if cls.__adb_cmd is None:
             if "ANDROID_HOME" in os.environ:
                 filename = "adb.exe" if os.name == 'nt' else "adb"
-                adb_cmd = os.path.join(os.environ["ANDROID_HOME"], "platform-tools", filename)
+                adb_dir = os.path.join(os.environ["ANDROID_HOME"], "platform-tools")
+                adb_cmd = os.path.join(adb_dir, filename)
                 if not os.path.exists(adb_cmd):
                     raise EnvironmentError(
-                        "Adb not found in $ANDROID_HOME path: %s." % os.environ["ANDROID_HOME"])
+                        "Adb not found in $ANDROID_HOME/platform-tools path: %s." % adb_dir)
             else:
                 import distutils
                 if "spawn" not in dir(distutils):

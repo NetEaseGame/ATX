@@ -1,6 +1,82 @@
 CHANGES
 =======
 
+* fix dir
+* remove uesless comment
+* update license from mit to apache2
+* fix taskqueue get timeout
+* use task.queue instead of pipe
+* finish atx.taskqueue
+* refator record using addon-components
+* remove adb2.py & device/android_minicap.py, add mixins for adbkit
+* update web all use local js source in order to speed up browser load
+* update doc
+* add command python -matx info
+* python -m atx gui add iOS support
+* remember last save path for tkgui, close #35
+* update opencv of qiniu address
+* remove adb.py deps
+* close #34
+* fix rotation, close #33
+* add start app support
+* little fix
+* add timeout
+* remove uesless code
+* refactoring. record screen + ui-hierarchy + user-input
+* change layout for later analyze
+* init ios click function
+* fix type when wait_response returns None
+* update desc
+* add ios device for connect
+* add ios automation doc
+* ios support prepare script
+* add gitter-travis integration
+* fix spell error
+* update doc of report
+* add google analytics for report, fix d.serial return None bug, change report js to jsdeliver cdn
+* remove useless files again
+* remove useless files
+* report add two api, info, error
+* use flask ext method to extend atx ext
+* update report.py but not yet tested, maybe caught something wrong
+* fix gt
+* click_image support long_click, close #29
+* finish part of taskqueue
+* update title
+* follow DESIGN.md to finish taskqueue
+* update name
+* fix adbkit devices() bug, remove adb.py dependency from android.py
+* remove useless print
+* update doc
+* fix forward, add performance collect use tencentGT
+* add clean after minicap capture and some other correct
+* fix ATX_ADB_HOST not working bug
+* add a remote input gui
+* add missing file
+* update logo
+* initialize eventhooks
+* add placeholder to avoid memeory leak
+* fix keycodes on windows
+* remove popo
+* add discuss group to readme
+* fix #27
+* add more functions
+* fix agent broken pipe
+* ios screenshot add rotate support
+* close #22
+* add ios screencap support
+* add openstf service
+* add logo
+* update watch function
+* update watch document
+* add screenshot method to ioskit
+* add packages function
+* add python -matx version, close #25
+* add uninstall command to adbkit, also with lot of comment
+
+1.0.11
+------
+
 * adbkit add minicap support
 * update docs
 * add screencap to adbkit
