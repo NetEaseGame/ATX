@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* update document
 * fix dir
 * remove uesless comment
 * update license from mit to apache2
@@ -203,7 +204,7 @@ CHANGES
 * generate py scripts
 * handle touch event, find clicked object
 * windows add screen_cv2 & make window foreground before capturing
-* windows capture entire screen to avoid failing on opengl programs
+*  windows capture entire screen to avoid failing on opengl programs
 * redirect output to webide
 * use images before & after the click to find out the step
 * handle touch input in background

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 #
-# Licensed under MIT
+# Licensed under Apache 2.0
 #
 
 import setuptools
