@@ -46,12 +46,12 @@ class TaskQueueHandler(tornado.web.RequestHandler):
             item = yield que.get(timeout=time.time()+timeout) # timeout is a timestamp, strange
             print 'get from queue:', item
             self.write(item)
+            que.task_done()
         except gen.TimeoutError:
             print 'timeout'
             self.write('')
         finally:
             self.finish()
-            que.task_done()
 
     @gen.coroutine
     def post(self, udid):

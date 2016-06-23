@@ -1,11 +1,12 @@
 #!/bin/bash -
 #
 set -e
-CWD=$(cd $(dirname $0); pwd)
+WORKDIR=$PWD
+cd $(dirname $0)
 
 BUNDLE_ID=${BUNDLE_ID:?}
 UDID=${UDID:-$(idevice_id -l)}
-TEST="$CWD/instruments-test.js"
+TEST="./instruments-test.js"
 
 TRACETEMPLATE="/Applications/Xcode.app/Contents/Applications/Instruments.app/Contents/PlugIns/AutomationInstrument.xrplugin/Contents/Resources/Automation.tracetemplate"
 
@@ -16,7 +17,7 @@ test -d $RESULTPATH || mkdir $RESULTPATH
 case "$1" in
 	instruments)
 		# python -m atx.taskqueue web &>/tmp/atx.taskqueue.log &
-		exec instruments -w ${UDID:?} -t "Automation" -D cli.trace $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
+		exec instruments -w ${UDID:?} -t "Automation" -D $WORKDIR/cli.trace $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
 		#exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
 		;;
 	run)
