@@ -43,6 +43,18 @@ var $ = $ || mechanic;
   })
 })(mechanic);
 
+String.prototype.trim = function(char, type) {
+  if (char) {
+    if (type == 'left') {
+      return this.replace(new RegExp('^\\' + char + '+', 'g'), '');
+    } else if (type == 'right') {
+      return this.replace(new RegExp('\\' + char + '+$', 'g'), '');
+    }
+    return this.replace(new RegExp('^\\' + char + '+|\\' + char + '+$', 'g'), '');
+  }
+  return this.replace(/^\s+|\s+$/g, '');
+};
+
 // var window = app.mainWindow();
 // //target.logElementTree();
 // var host = target.host();
@@ -55,7 +67,7 @@ $.message("Hello message")
 while (true) {
   $.message("Wait for command")
   var result = $.cmd('./bootstrap.sh', ['get'], 50);
-  if (! result.stdout) { // == 15) {
+  if (!result.stdout.trim()) { // == 15) {
     continue;
   }
   $.debug("exitCode: " + result.exitCode);
@@ -67,12 +79,16 @@ while (true) {
   if (result.exitCode == 0) {
     try {
       var req = JSON.parse(result.stdout);
+      if (!req.id){
+        $.warn("Reqest need ID");
+        continue
+      }
       var rawRes = eval(req.data.command);
       var res = JSON.stringify(rawRes);
       $.debug("Result: " + res);
       $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
     } catch (err) {
-      $.debug("Error: " + err.message);
+      $.error("Error: " + err.message);
       $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
     }
   }

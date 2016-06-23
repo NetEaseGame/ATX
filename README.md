@@ -34,7 +34,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 ## 历史起源
 该项目重构于过去写过一个项目 <https://github.com/netease/airtest>，
-因原有代码冗余太严重，维护成本太高，于是就用ATX取代之。
+因原有代码冗余太严重，维护成本太高，于是就用ATX取代之(Develop from 2016-02-25)。
 
 新版有哪些新的功能呢？
 
@@ -610,5 +610,5 @@ python -m atx --help
 BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
 
 ## License
-This project is under the MIT License. See the [LICENSE](LICENSE) file for the full license text.
+This project is under the Apache 2.0 License. See the [LICENSE](LICENSE) file for the full license text.
 

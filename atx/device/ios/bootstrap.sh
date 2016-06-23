@@ -14,10 +14,12 @@ QUEUE="python -m atx.taskqueue --room $UDID"
 #echo "UDID: $UDID"
 # test -p "$PIPE" || mkfifo "$PIPE"
 
+#RESULTPATH=results-$UDID
+test -d $RESULTPATH || mkdir $RESULTPATH
 case "$1" in
 	instruments)
 		# python -m atx.taskqueue web &>/tmp/atx.taskqueue.log &
-		exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST
+		exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
 		;;
 	run)
 		shift
