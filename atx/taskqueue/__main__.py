@@ -42,22 +42,16 @@ class TaskQueueHandler(tornado.web.RequestHandler):
             timeout = float(timeout)
         print timeout
         que = self.ques[udid]
-        finish_time = time.time() + timeout
-        while time.time() < finish_time: # I think may be there is a bug. que.get(timeout is not working at all)
-            try:
-                item = yield que.get(timeout=12) #(timeout=1.0)#timeout)
-                print 'get from queue:', item
-                self.write(item)
-                break
-            except gen.TimeoutError:
-                yield gen.sleep(0.1)
-        else:
+        try:
+            item = yield que.get(timeout=time.time()+timeout) # timeout is a timestamp, strange
+            print 'get from queue:', item
+            self.write(item)
+        except gen.TimeoutError:
+            print 'timeout'
             self.write('')
-        self.finish()
-        # except gen.TimeoutError:
-        # self.write('')
-        # finally:
-        # que.task_done()
+        finally:
+            self.finish()
+            que.task_done()
 
     @gen.coroutine
     def post(self, udid):

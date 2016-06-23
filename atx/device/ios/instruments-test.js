@@ -68,7 +68,6 @@ while (true) {
     try {
       var req = JSON.parse(result.stdout);
       var rawRes = eval(req.data.command);
-      // var rawRes = eval(result.stdout);
       var res = JSON.stringify(rawRes);
       $.debug("Result: " + res);
       $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
@@ -78,6 +77,3 @@ while (true) {
     }
   }
 }
-// $.delay(10)
-// target.tap({x: 357, y: 350})
-// $.delay(10)
