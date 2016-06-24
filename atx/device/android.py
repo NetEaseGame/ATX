@@ -278,6 +278,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self.last_screenshot = screen
         return screen
 
+    def raw_cmd(self, *args, **kwargs):
+        return self.adb_device.raw_cmd(*args, **kwargs)
+
     def adb_cmd(self, command):
         '''
         Run adb command, for example: adb(['pull', '/data/local/tmp/a.png'])

@@ -165,7 +165,10 @@ class InputParser(object):
 
         if _type == 'EV_SYN':
             if _code in ('SYN_REPORT', 'SYN_MT_REPORT'):
-                self._process_touch_batch()
+                try:
+                    self._process_touch_batch()
+                except IndexError: # there might be a 6th finger, ignore that.
+                    self._touch_batch = []
             elif _code == 'SYN_DROPPED':
                 self._touch_batch = []
             else:
@@ -443,6 +446,7 @@ class AndroidInputHookManager(object):
 
     def __init__(self, serial=None):
         self._serial = serial
+        self.running = False
         self._queue = Queue.Queue()
         self._listener = None
         self._parser = InputParser(self._queue)
@@ -457,35 +461,47 @@ class AndroidInputHookManager(object):
 
     def hook(self):
         '''input should be a filelike object.'''
+        self._processor.start()
+        self.running = True
+        t = threading.Thread(target=self._run_hook)
+        t.setDaemon(True)
+        t.start()
+
+    def _run_hook(self):
         cmd = ['adb']
         if self._serial:
             cmd.extend(['-s', self._serial])
         cmd.extend(['shell', 'getevent', '-lt'])
-        self._listener = p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self._processor.start()
 
-        def listen():
+        while True:
+            # start listener
+            self._listener = p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             while True:
                 try:
                     line = p.stdout.readline().strip()
                     if not line:
                         if p.poll() is not None:
-                            print 'adb terminated.'
-                            self._processor.stop()
                             break
                         continue
                     self._parser.feed(line)
                 except KeyboardInterrupt:
                     p.kill()
-                except Exception as e:
+                except:
                     p.kill()
-                    print type(e), str(e)
-
-        t = threading.Thread(target=listen)
-        t.setDaemon(True)
-        t.start()
+                    traceback.print_exc()
+            
+            if not self.running:
+                break
+            state = subprocess.check_output(['adb', '-s', self._serial, 'get-state']).strip()
+            if state != 'device':
+                print 'adb status(%s) wrong! stop hook.' % (state,)
+                break
+            print 'adb getevent died, reconnecting...'
+            time.sleep(1)
 
     def unhook(self):
+        self.running = False
+        self._processor.stop()        
         if self._listener:
             self._listener.kill()
 

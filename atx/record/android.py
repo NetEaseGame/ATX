@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
 
+import time
 import threading
 
 from atx.device.android import AndroidDevice
@@ -10,20 +11,20 @@ from atx.record.android_hooks import HookManager, HookConstants
 from atx.record.android_layout import AndroidLayout
 from atx.imutils import from_pillow
 
-class RecordDevice(AndroidDevice, RotationWatcherMixin, MinicapStreamMixin):
+class RecordDevice(RotationWatcherMixin, MinicapStreamMixin, AndroidDevice):
 
     def __init__(self, *args, **kwargs):
         super(RecordDevice, self).__init__(*args, **kwargs)
-        self.open_rotation_watcher(on_rotation_change=self.open_minicap_stream)
+        self.open_rotation_watcher(on_rotation_change=lambda v: self.open_minicap_stream())
 
     def dumpui(self):
         xmldata = self._uiauto.dump(pretty=False)
         return xmldata
 
 class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon):
-    def __init__(self, device=None, workdir='.'):
+    def __init__(self, *args, **kwargs):
         self.hm = HookManager()
-        super(AndroidRecorder, self).__init__(device, workdir)
+        super(AndroidRecorder, self).__init__(*args, **kwargs)
 
         self.hm.register(HookConstants.TOUCH_UP, self._on_click)
         # self.hm.register(HookConstants.GST_DRAG, self._on_drag)
@@ -53,10 +54,16 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon):
         print 'touch on', pos
         self.input_event(event)
 
-    def analyze(self, idx, event, img, uixml):
+    def analyze_frame(self, idx, event, status):
         pass
 
 if __name__ == '__main__':
     d = RecordDevice()
-    rec = AndroidRecorder(d)
+    rec = AndroidRecorder(d, 'testcase')
     rec.start()
+    while True:
+        try:
+            time.sleep(1)
+        except:
+            break
+    rec.stop()

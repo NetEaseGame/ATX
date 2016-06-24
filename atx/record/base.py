@@ -1,16 +1,4 @@
 #-*- encoding: utf-8 -*-
-#
-# BaseRecorder class
-# >>> class Recorder(BaseRecorder, xxx): 
-# ...     ........
-# >>> rec = Recorder()
-# >>> rec.attach(SomeDevice())
-# >>> rec.set_workdir("~/workdir/record")
-# >>> def callback(info):
-# ...     print info # dict
-# >>> rec.on_process_event_done(callback)
-# >>> rec.start(threaded=True)
-# >>> rec.stop()
 
 import bisect
 import cv2
@@ -21,6 +9,7 @@ import shutil
 import threading
 import time
 import traceback
+import yaml
 
 from collections import namedtuple
 
@@ -28,15 +17,18 @@ class BaseRecorder(object):
 
     monitor_period = 3 # seconds
 
-    def __init__(self, device=None, workdir="."):
+    def __init__(self, device=None, workdir=".", realtime_analyze=False):
         self.device = None
+        self.device_info = {}
         self.running = False
         if device is not None:
             self.attach(device)
         self.setup_workdir(workdir)
+        self.realtime_analyze = realtime_analyze
 
         self.thread = None
-        self.frames = []
+        self.frames = []  # for backup
+        self.case_draft = []  # for analyze draft
         self.input_queue = Queue.Queue()
         self.input_index = 0
 
@@ -47,64 +39,68 @@ class BaseRecorder(object):
             if name is not None:
                 gfun = getattr(self, 'get_%s' % (name,))
                 sfun = getattr(self, 'save_%s' % (name,))
-                self.addons[name] = (gfun, sfun)
+                lfun = getattr(self, 'load_%s' % (name,))
+                self.addons[name] = (gfun, sfun, lfun)
 
     def setup_workdir(self, workdir):
         # setup direcoties
         self.workdir = workdir
+
         self.draftdir = os.path.join(workdir, 'draft')
         if os.path.exists(self.draftdir):
             shutil.rmtree(self.draftdir)
         os.makedirs(self.draftdir)
-        self.backupdir = os.path.join(workdir, 'backup')
-        if os.path.exists(self.backupdir):
-            shutil.rmtree(self.backupdir)
-        os.makedirs(self.backupdir)
 
-    def start(self, threaded=False):
-        # start addons.
-        self.get_device_status(0)
+        self.framedir = os.path.join(workdir, 'frames')
+        if os.path.exists(self.framedir):
+            shutil.rmtree(self.framedir)
+        os.makedirs(self.framedir)
 
-        self.running = True
+    def update_device_info(self):
+        if self.device is None:
+            return
+        # TODO: define general device info
+        self.device_info = {}
+
+    def start(self):
+        '''start running in background.'''
+        self.update_device_info()
+        self.get_device_status(0) # start addons.
         self.hook()
-        if threaded:
-            self.thread = threading.Thread(target=self._run)
-            self.thread.start()
-        else:
-            self.thread = None
-            self._run()
-            self.unhook()
+        self.thread = threading.Thread(target=self._run)
+        self.thread.start()
+        self.running = True
 
     def stop(self):
+        self.unhook()
         self.running = False
-        if self.thread:
-            self.thread.join()
-            self.unhook()
+        self.thread.join()
 
     def get_device_status(self, t):
         '''get device status at a given time t (within self.monitor_period)'''
         data = {}
-        for name, (func, _) in self.addons.iteritems():
+        for name, (func, _, _) in self.addons.iteritems():
             data[name] = func(t)
-            print name, data[name]
         return data
 
     def _run(self):
         while True:
             try:
-                time.sleep(0.001)
-                idx, event, status = self.input_queue.get_nowait()
-                # back up
-                self.backup_frame(idx, event, status)
-                # analyze
-                self.analyze(idx, event, status)
+                time.sleep(0.1)
+                frame = self.input_queue.get_nowait()
+                self.handle_frame(frame)
             except Queue.Empty:
                 if not self.running:
                     break
-            except KeyboardInterrupt:
-                self.running = False
             except:
                 traceback.print_exc()
+                self.running = False
+
+        # save meta info for backup & draft.
+        if not self.realtime_analyze:
+            self.analyze_all()
+        self.save()
+        print 'stopped.'
 
     def input_event(self, event):
         '''should be called when user input events happens (from hook)'''
@@ -115,19 +111,95 @@ class BaseRecorder(object):
         self.input_index += 1
         self.input_queue.put((self.input_index, event, status))
 
-    def backup_frame(self, idx, event, status):
-        data = {'index':idx}
-        data['event'] = {}
-        eventpath = os.path.join(self.backupdir, '%d-event.pkl' % idx)
+    def handle_frame(self, frame):
+        print 'handle frame'
+        idx, event, status = frame
+        meta = {'index':idx}
+        meta['event'] = {}
+
+        # save frames.
+        print 'saving...'
+        eventpath = os.path.join(self.framedir, '%d-event.pkl' % idx)
         pickle.dump(event, file(eventpath, 'w'))
-        
-        data['status'] = {}
+        meta['status'] = {}
         for name, obj in status.iteritems():
             func = self.addons[name][1]
-            filename = func(obj, self.backupdir, idx)
-            data['status'][name] = filename
+            data = func(obj, self.framedir, idx)
+            meta['status'][name] = data
 
-        self.frames.append(data)
+        # analyze
+        if self.realtime_analyze:
+            self.analyze_frame(idx, event, status)
+        self.frames.append(meta)
+
+    def analyze_frame(self, idx, event, status):
+        '''analyze status and generate draft code'''
+        # Example:
+        #
+        # d = {
+        #     'action' : 'click',
+        #     'args' : (100, 100),
+        #     'status' : {
+        #          'screen' : ('xxxx.png', 'xxx.png'),
+        #          'screen_orientation' : 0,
+        #          'uixml' : {'package': 'com.netease.txx', 'class_name' : 'android.widget.EditText', ...}
+        #     }, 
+        #     'pyscript' : 'd.click(100, 100)',
+        # }
+        #
+        # self.case_draft.append(d)
+        pass
+
+    def analyze_all(self):
+        print 'total frames:', len(self.frames)
+        print 'analying, please wait ...'
+        for meta in self.frames:
+            idx = meta['index']
+            event = pickle.load(file(os.path.join(self.framedir, '%d-event.pkl' % idx)))
+            status = meta['status']
+            status = {}
+            for name, data in meta['status'].iteritems():
+                if data is None:
+                    status[name] = None
+                    continue
+                func = self.addons[name][2]
+                status[name] = func(self.framedir, data)
+            self.analyze_frame(idx, event, status)
+
+    @classmethod
+    def analyze_frames(cls, workdir):
+        '''generate draft from recorded frames'''
+        record = cls(None, workdir)
+        obj = yaml.load(os.path.join(workdir, 'frames', 'info.yml'))
+        record.device_info = obj['info']
+        record.frames = obj['frames']
+        record.analyze_all()
+        record.save()
+
+    def save(self):
+        # save frames info, do not overwrite.
+        filepath = os.path.join(self.framedir, 'info.yml')
+        if not os.path.exists(filepath):
+            obj = {
+                'ctime' : time.ctime(),
+                'device' : self.device_info,
+                'frames' : self.frames,
+            }
+            with open(filepath, 'w') as f:
+                f.write(yaml.dump(obj, default_flow_style=False))
+
+        # save draft info
+        filepath = os.path.join(self.draftdir, 'info.yml')
+        obj = {}
+        with open(filepath, 'w') as f:
+            f.write(yaml.dump(obj, default_flow_style=False))
+        # save draft pyscript
+        filepath = os.path.join(self.draftdir, 'script.py')
+        content = ['#-*- encoding: utf-8 -*-', '# Generated by recorder.', '']
+        for row in self.case_draft:
+            content.append(row['pyscript'])
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(content))
 
     def attach(self, device):
         '''Attach to device, if current device is not None, should
@@ -179,10 +251,19 @@ class ScreenAddon(object):
                 return self.__capture_cache[idx-1][1]
 
     def save_screen(self, screen, dirpath, idx):
+        if screen is None:
+            return
         filename = '%d.png' % idx
         filepath = os.path.join(dirpath, filename)
         cv2.imwrite(filepath, screen)
         return filename
+
+    def load_screen(self, dirpath, filename):
+        filepath = os.path.join(dirpath, filename)
+        try:
+            return cv2.imread(filepath)
+        except:
+            return
 
     def __start(self):
         print 'start', self.__addon_name
@@ -204,7 +285,7 @@ class ScreenAddon(object):
                     continue
                 tic = time.time()
                 img = self.device.screenshot_cv2()
-                print '--capturing.. cost', time.time() - tic
+                # print '--capturing.. cost', time.time() - tic
                 self.__capture_cache.append(CaptureRecord(time.time(), img))
                 self.__capture_cache = self.__capture_cache[-capture_maxnum:]
             finally:
@@ -227,11 +308,20 @@ class UixmlAddon(object):
                 return self.__uidump_cache[idx-1][1]
 
     def save_uixml(self, uixml, dirpath, idx):
+        if uixml is None:
+            return
         filename = '%d-uidump.xml' % idx
         filepath = os.path.join(dirpath, filename)
         with open(filepath, 'w') as f:
             f.write(uixml.encode('utf8'))
         return filename
+
+    def load_uixml(self, dirpath, filename):
+        filepath = os.path.join(dirpath, filename)
+        try:
+            return open(filepath).read().decode('utf8')
+        except IOError:
+            return u''
 
     def __start(self):
         print 'start', self.__addon_name
@@ -253,7 +343,7 @@ class UixmlAddon(object):
                     continue
                 tic = time.time()
                 xmldata = self.device.dumpui()
-                print 'dumping ui.. cost', time.time() - tic
+                # print 'dumping ui.. cost', time.time() - tic
                 self.__uidump_cache.append((time.time(), xmldata))
                 self.__uidump_cache = self.__uidump_cache[-uidump_maxnum:]
             finally:
@@ -263,10 +353,34 @@ class UixmlAddon(object):
 if __name__ == '__main__':
 
     class TestRecorder(BaseRecorder, ScreenAddon, UixmlAddon):
-        def attach(self, device): pass
+        def attach(self, device):
+            self.device = device
         def detach(self): pass
         def hook(self): pass
         def unhook(self): pass
 
-    r = TestRecorder()
+    class DummyDevice(object):
+        def screenshot_cv2(self):
+            return None
+
+        def dumpui(self):
+            return u'uixml'
+
+    class DummyEvent(object):
+        def __init__(self):
+            self.time = time.time()
+
+    r = TestRecorder(DummyDevice(), 'testcase')
     r.start()
+
+    count = 10
+    while count > 0:
+        try:
+            time.sleep(1)
+            e = DummyEvent()
+            r.input_event(e)
+        except:
+            break
+        count -= 1
+
+    r.stop()

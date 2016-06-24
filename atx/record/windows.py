@@ -7,9 +7,9 @@ import win32gui
 import pywintypes
 from pyHook import HookManager, HookConstants
 
-from atx.record.base import BaseRecorder
+from atx.record.base import BaseRecorder, ScreenAddon
 
-class WindowsRecorder(BaseRecorder):
+class WindowsRecorder(BaseRecorder, ScreenAddon):
 
     KBFLAG_CTRL = 0x01
     KBFLAG_ALT = 0x02
@@ -20,9 +20,9 @@ class WindowsRecorder(BaseRecorder):
     capture_interval = 0.05
     capture_maxnum = 30
 
-    def __init__(self, device=None):
+    def __init__(self, device=None, workdir='.'):
+        super(WindowsRecorder, self).__init__(device, workdir)
         self.watched_hwnds = set()
-        super(WindowsRecorder, self).__init__(device)
         self.kbflag = 0
         self.hm = HookManager()
         self.hm.MouseAllButtons = self._hook_on_mouse
