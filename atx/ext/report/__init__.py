@@ -26,8 +26,6 @@ class Report(object):
     from atx.ext.report import Report
 
     Report(d)
-
-    # TODO(ssx): move listen to class Report
     """
     def __init__(self, d, save_dir='report'):
         image_dir = os.path.join(save_dir, 'images')

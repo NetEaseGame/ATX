@@ -9,6 +9,7 @@ import sys
 import subprocess32 as subprocess
 import tempfile
 import inspect
+import plistlib
 
 from PIL import Image
 from atx import logutils
@@ -128,6 +129,11 @@ class Device(object):
     @memory_last
     def name(self):
         return idevice('name', '-u', self.udid).decode('utf-8').strip()
+
+    @property
+    @memory_last
+    def info(self):
+        return plistlib.readPlistFromString(idevice('info', '--xml', '--udid', self.udid))
 
     def screenshot(self, filename=None):
         """

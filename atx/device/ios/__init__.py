@@ -10,6 +10,7 @@ import os
 import json
 import time
 
+import yaml
 import subprocess32 as subprocess
 from PIL import Image
 
@@ -32,21 +33,41 @@ class IOSDevice(DeviceMixin):
     def __init__(self, bundle_id=None, udid=None):
         DeviceMixin.__init__(self)
 
-        self._proc = None
-        self._display = Display(2208, 1242)
-
-        self.screen_rotation = 1
         self.d = ioskit.Device(udid)
         self.udid = self.d.udid
+
+        self._proc = None
+        self._display = None #Display(2208, 1242)
+        self._scale = 1
+        self._load_ios_info()
+
+        self.screen_rotation = 1 # TODO: auto judge
 
         if not bundle_id:
             print 'WARNING [ios.py]: bundle_id is not set, only limited functions can be used.'
         else:
             self._init_instruments(bundle_id)
 
+    def _load_ios_info(self):
+        model = self.d.info['HardwareModel']
+        with open(os.path.join(__dir__, 'ios-models.yml'), 'rb') as f:
+            items = yaml.load(f.read())
+        for item in items:
+            if model == item.get('model'):
+                (width, height) = map(int, item.get('pixel').split('x'))
+                self._scale = item.get('scale')
+                self._display = Display(width*self._scale, height*self._scale)
+                break
+        if self._display is None:
+            raise RuntimeError("TODO: not support your phone for now, You need contact the author.")
+
     @property
     def display(self):
-        return self.screen_rotation
+        return self._display
+
+    @property
+    def info(self):
+        return self.d.info
 
     @property
     def rotation(self):
@@ -96,7 +117,7 @@ class IOSDevice(DeviceMixin):
         return image
 
     def click(self, x, y):
-        self._runjs('target.tap({x: %d, y: %d})' % (x/3, y/3))
+        self._runjs('target.tap({x: %d, y: %d})' % (x/self._scale, y/self._scale))
 
     def install(self, filepath):
         raise NotImplementedError()

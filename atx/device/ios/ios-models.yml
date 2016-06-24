@@ -1,0 +1,18 @@
+# most from ios-deploy source code
+# <https://github.com/phonegap/ios-deploy/blob/master/src/ios-deploy/ios-deploy.m#L313>
+# - name (string): name of apple device
+# - pixel (string): ${width}x${height}
+# - scale (int): scale factor
+---
+- name: iPhone 6 Plus
+  model: N56AP
+  pixel: 414x736
+  scale: 3
+- name: iPhone 5c (GSM)
+  model: N48AP
+  pixel: 320x568
+  scale: 2
+- name: iPhone 5c (Global/CDMA)
+  model: N49AP
+  pixel: 320x568
+  scale: 2
