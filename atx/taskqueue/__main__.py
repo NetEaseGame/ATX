@@ -16,14 +16,18 @@ import tornado.web
 import tornado.escape
 from tornado import gen
 from tornado.ioloop import IOLoop
+from tornado.netutil import bind_unix_socket
+from tornado.httpserver import HTTPServer
 from tornado.queues import Queue, QueueEmpty
 
 import requests
+import requests_unixsocket
+requests_unixsocket.monkeypatch()
 
 
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write('Homepage')
+        self.write('atx.taskqueue')
 
     def delete(self):
         self.write('Quit')
@@ -106,37 +110,51 @@ def make_app(**settings):
         (r"/rooms/([^/]*)", TaskQueueHandler),
     ], **settings)
 
-
-def cmd_web(port, debug):
+def cmd_web(unix_socket, debug):
     app = make_app(debug=debug)
-    app.listen(port)
-    IOLoop.current().start()
-    
+    server = HTTPServer(app)
+    if os.path.exists(unix_socket):
+        try:
+            r = requests.get('http+unix://{0}'.format(unix_socket.replace('/', '%2F')))
+            if r.text.strip() == 'atx.taskqueue':
+                print 'Already listening'
+                return
+        except:
+            print 'Unlink unix socket'
+            os.unlink(unix_socket)
 
-def cmd_put(room, port, task_id, data):
+    socket = bind_unix_socket(unix_socket)
+    server.add_socket(socket)
+    IOLoop.current().start()
+
+def _gen_requrl(unix_socket, room):
+    return 'http+unix://{0}/rooms/{1}'.format(unix_socket.replace('/', '%2F'), room) #localhost:%d/rooms/%s' % (port, room)
+
+def cmd_put(requrl, task_id, data):
     data = json.loads(data)
     jsondata = {'id': task_id, 'result': data}
-    r = requests.put('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    r = requests.put(requrl, data=json.dumps(jsondata))
     print r.text
 
-def cmd_get(room, port, timeout):
-    r = requests.get('http://localhost:%d/rooms/%s' % (port, room), params={'timeout': timeout})
+def cmd_get(requrl, timeout):
+    r = requests.get(requrl, params={'timeout': timeout})
     print r.text
 
-def cmd_post(room, port, data):
+def cmd_post(requrl, data):
     jsondata = json.loads(data)
     if not isinstance(jsondata, dict):
         sys.exit('data must be dict, for example: {"name": "kitty"}')
-    r = requests.post('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    r = requests.post(requrl, data=json.dumps(jsondata))
     print r.json()['id']
 
-def cmd_delete(room, port, task_id):
+def cmd_delete(requrl, task_id):
     jsondata = {'id': task_id}
-    r = requests.delete('http://localhost:%d/rooms/%s' % (port, room), data=json.dumps(jsondata))
+    r = requests.delete(requrl, data=json.dumps(jsondata))
     print r.text
 
-def cmd_quit(room, port):
-    r = requests.delete('http://localhost:%d/' % (port))
+def cmd_quit(unix_socket):
+    requrl = 'http+unix://{0}'.format(unix_socket.replace('/', '%2F'))
+    r = requests.delete(requrl)
     print r.text
 
 def _inject(func, kwargs):
@@ -147,7 +165,9 @@ def _inject(func, kwargs):
 
 def wrap(fn):
     def inner(parser_args):
-        return _inject(fn, vars(parser_args))
+        args = vars(parser_args)
+        args['requrl'] = _gen_requrl(parser_args.unix_socket, parser_args.room)
+        return _inject(fn, args)
     return inner
 
 
@@ -155,7 +175,7 @@ def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument("--room", required=False, help="udid or something")
-    ap.add_argument("--port", required=False, default=10020, type=int, help="sever listen port")
+    ap.add_argument("--unix", dest='unix_socket', required=False, default='/tmp/atx-taskqueue.sock', help="sever listen sock path")
     subp = ap.add_subparsers()
 
     @contextmanager

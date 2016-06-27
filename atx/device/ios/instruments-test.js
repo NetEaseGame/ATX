@@ -55,14 +55,11 @@ String.prototype.trim = function(char, type) {
   return this.replace(/^\s+|\s+$/g, '');
 };
 
-// var window = app.mainWindow();
-// //target.logElementTree();
-// var host = target.host();
 var target = UIATarget.localTarget();
 var app = target.frontMostApp();
 
 // $.debug("Hello" + JSON.stringify(target.rect()))
-$.message("Hello message")
+$.message("Instruments is ready")
 
 while (true) {
   $.message("Wait for command")

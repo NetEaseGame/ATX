@@ -20,10 +20,10 @@ from atx import patch
 from atx import base
 from atx import imutils
 from atx import strutils
-from atx.device import Bounds, Display
 from atx import logutils
-from atx.device.mixin import DeviceMixin, hook_wrap
 from atx import ioskit
+from atx.device import Bounds, Display
+from atx.device.mixin import DeviceMixin, hook_wrap
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -39,7 +39,8 @@ class IOSDevice(DeviceMixin):
         self._proc = None
         self._display = None #Display(2208, 1242)
         self._scale = 1
-        self._load_ios_info()
+        self._env = {}
+        self._init_display()
 
         self.screen_rotation = 1 # TODO: auto judge
 
@@ -48,7 +49,7 @@ class IOSDevice(DeviceMixin):
         else:
             self._init_instruments(bundle_id)
 
-    def _load_ios_info(self):
+    def _init_display(self):
         model = self.d.info['HardwareModel']
         with open(os.path.join(__dir__, 'ios-models.yml'), 'rb') as f:
             items = yaml.load(f.read())
@@ -60,6 +61,36 @@ class IOSDevice(DeviceMixin):
                 break
         if self._display is None:
             raise RuntimeError("TODO: not support your phone for now, You need contact the author.")
+    
+    def _init_instruments(self, bundle_id):
+        self._bootstrap = os.path.join(__dir__, 'bootstrap.sh')
+        self._bundle_id = bundle_id
+        self._env.update({'UDID': self.udid, 'BUNDLE_ID': self._bundle_id})
+        # 1. remove pipe
+        # subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
+        # 2. start instruments
+        self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
+
+    def _run(self, code):
+        # print code
+        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
+        return json.loads(output)
+
+    def _run_nowait(self, code):
+        ''' TODO: change to no wait '''
+        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
+        return output
+
+    def _close(self):
+        print 'Terminate instruments'
+        if self._proc:
+            self._proc.terminate()
+        # 1. remove pipe
+        subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
+
+    def __del__(self):
+        if hasattr(self, '_bootstrap'):
+            self._close()
 
     @property
     def display(self):
@@ -72,33 +103,6 @@ class IOSDevice(DeviceMixin):
     @property
     def rotation(self):
         return self._rotation
-    
-    def _init_instruments(self, bundle_id):
-        self._bootstrap = os.path.join(__dir__, 'bootstrap.sh')
-        self._bundle_id = bundle_id
-        self._env = {'UDID': self.udid, 'BUNDLE_ID': self._bundle_id}
-        # 1. remove pipe
-        subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
-        # 2. start instruments
-        self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
-
-    def _runjs(self, code):
-        # print code
-        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
-        # print output
-        return output
-        return json.loads(output)
-
-    def _close(self):
-        print 'Terminate instruments'
-        if self._proc:
-            self._proc.terminate()
-        # 1. remove pipe
-        subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
-
-    def __del__(self):
-        if hasattr(self, '_bootstrap'):
-            self._close()
 
     def screenshot(self, filename=None):
         '''
@@ -117,7 +121,16 @@ class IOSDevice(DeviceMixin):
         return image
 
     def click(self, x, y):
-        self._runjs('target.tap({x: %d, y: %d})' % (x/self._scale, y/self._scale))
+        '''
+        Simulate click operation
+        Args:
+            - x (int): position of x
+            - y (int): position of y
+        Returns:
+            self
+        '''
+        self._run_nowait('target.tap({x: %d, y: %d})' % (x/self._scale, y/self._scale))
+        return self
 
     def install(self, filepath):
         raise NotImplementedError()
@@ -126,8 +139,8 @@ class IOSDevice(DeviceMixin):
         time.sleep(sec)
 
     def type(self, text):
-        self._runjs('$.typeString(%s)' % json.dumps(text))
+        self._run_nowait('$.typeString(%s)' % json.dumps(text))
 
     def current_app(self):
         ''' todo, maybe return dict is a better way '''
-        return self._runjs('target.frontMostApp().bundleID()').strip().strip('"')
+        return self._run('target.frontMostApp().bundleID()').strip().strip('"')
