@@ -39,13 +39,14 @@ class IOSDevice(DeviceMixin):
         self._proc = None
         self._display = None #Display(2208, 1242)
         self._scale = 1
-        self._env = {}
+        self._env = os.environ.copy()
         self._init_display()
 
         self.screen_rotation = 1 # TODO: auto judge
 
         if not bundle_id:
-            print 'WARNING [ios.py]: bundle_id is not set, only limited functions can be used.'
+            print 'WARNING [ios.py]: bundle_id is not set, use "com.netease.atx.apple" instead.'
+            self._init_instruments('com.netease.atx.apple')
         else:
             self._init_instruments(bundle_id)
 
@@ -71,14 +72,20 @@ class IOSDevice(DeviceMixin):
         # 2. start instruments
         self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
 
+    def _wait_instruments(self):
+        pass
+
     def _run(self, code):
         # print code
-        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
+        encoded_code = json.dumps({'command': code})
+        output = subprocess.check_output([self._bootstrap, 'run', encoded_code], env=self._env)
+        print output
         return json.loads(output)
 
     def _run_nowait(self, code):
         ''' TODO: change to no wait '''
-        output = subprocess.check_output([self._bootstrap, 'run', code], env=self._env)
+        encoded_code = json.dumps({'command': code, 'nowait': True})
+        output = subprocess.check_output([self._bootstrap, 'run', '--nowait', encoded_code], env=self._env)
         return output
 
     def _close(self):

@@ -104,9 +104,9 @@ class CropIDE(object):
         self._btn_refresh = tk.Button(frm_screenshot, textvariable=self._refresh_text, command=self._refresh_screen)
         self._btn_refresh.grid(column=0, row=0, sticky=tk.W)
         # tk.Button(frm_screenshot, text="Wakeup", command=self._device.wakeup).grid(column=0, row=1, sticky=tk.W)
-        tk.Button(frm_screenshot, text=u"保存区域", command=self._save_crop).grid(column=0, row=1, sticky=tk.W)
+        tk.Button(frm_screenshot, text=u"保存选中区域", command=self._save_crop).grid(column=0, row=1, sticky=tk.W)
         
-        tk.Button(frm_screenshot, text="保存截屏", command=self._save_screenshot).grid(column=0, row=2, sticky=tk.W)
+        # tk.Button(frm_screenshot, text="保存截屏", command=self._save_screenshot).grid(column=0, row=2, sticky=tk.W)
         frm_checkbtns = tk.Frame(frm_screenshot)
         frm_checkbtns.grid(column=0, row=3, sticky=(tk.W, tk.E))
         tk.Checkbutton(frm_checkbtns, text="Auto refresh", variable=self._auto_refresh_var, command=self._run_check_refresh).grid(column=0, row=0, sticky=tk.W)

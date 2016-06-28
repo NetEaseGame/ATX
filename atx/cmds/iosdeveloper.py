@@ -13,6 +13,12 @@ import shutil
 from atx.cmds.utils import http_download
 
 
+__alias = {
+    '9.3': '9.3 (13E230)', # 2016-05-04
+}
+
+# Can also be found in directory
+IMAGE_BASE_DIR = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/DeviceSupport/'
 IMAGE_BASE_URL = 'http://gohttp.nie.netease.com/tools-ios/DeveloperImages/'
 logger = logging.getLogger('ios')
 
@@ -87,6 +93,12 @@ def device_product_version(udid):
 
 
 def download(filename, tmpdir, version, base_url=IMAGE_BASE_URL):
+    if sys.platform == 'darwin':
+        version = __alias.get(version, version)
+        abs_path = os.path.join(IMAGE_BASE_DIR, version, filename)
+        if os.path.exists(abs_path):
+            print abs_path
+            return abs_path
     target_path = os.path.join(tmpdir, filename)
     source_url = base_url + '/'.join([version, filename])
     logger.info("Download %s/%s", version, filename)
@@ -129,7 +141,7 @@ def main(udid=None):
             "http://quamotion.mobi/iMobileDevice/Download",))
 
     logger.info("Make tmp dir ...")
-    tmpdir = tempfile.mkdtemp(prefix='ins-ios-developer-')
+    tmpdir = tempfile.mkdtemp(prefix='atx-ios-developer-')
     if not tmpdir:
         logger.warn("tmpdir create failed.")
         sys.exit(1)

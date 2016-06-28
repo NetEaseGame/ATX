@@ -81,9 +81,16 @@ while (true) {
         continue
       }
       var rawRes = eval(req.data.command);
+      if (req.nowait) {
+        continue;
+      }
+      
       var res = JSON.stringify(rawRes);
       $.debug("Result: " + res);
-      $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
+      var ret = $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
+      $.debug("Result exitCode: " + ret.exitCode);
+      $.debug("Result stdout: " + ret.stdout);
+      $.debug("Result stderr: " + ret.stderr);
     } catch (err) {
       $.error("Error: " + err.message);
       $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
