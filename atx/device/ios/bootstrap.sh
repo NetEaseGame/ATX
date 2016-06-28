@@ -22,7 +22,7 @@ case "$1" in
 		echo "Start python taskqueue"
 		python -m atx.taskqueue web &>/tmp/atx-taskqueue.log &
 		echo "Start instruments"
-		exec instruments -w ${UDID:?} -t "Automation" -D $WORKDIR/cli.trace $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
+		exec instruments -w ${UDID:?} -t "Automation" -D $WORKDIR/cli.trace $BUNDLE_ID -e UIASCRIPT $TEST &>/tmp/atx-instruments.log # -e UIARESULTSPATH $RESULTPATH
 		#exec instruments -w ${UDID:?} -t "$TRACETEMPLATE" $BUNDLE_ID -e UIASCRIPT $TEST # -e UIARESULTSPATH $RESULTPATH
 		;;
 	run)

@@ -93,7 +93,7 @@ while (true) {
       $.debug("Result stderr: " + ret.stderr);
     } catch (err) {
       $.error("Error: " + err.message);
-      $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
+      // $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
     }
   }
 }

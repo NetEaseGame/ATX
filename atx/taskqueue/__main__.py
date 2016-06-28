@@ -44,7 +44,6 @@ class TaskQueueHandler(tornado.web.RequestHandler):
         timeout = self.get_argument('timeout', 10.0)
         if timeout is not None:
             timeout = float(timeout)
-        print timeout
         que = self.ques[udid]
         try:
             item = yield que.get(timeout=time.time()+timeout) # timeout is a timestamp, strange
@@ -61,9 +60,12 @@ class TaskQueueHandler(tornado.web.RequestHandler):
     def post(self, udid):
         ''' add new task '''
         que = self.ques[udid]
+        timeout = self.get_argument('timeout', 10.0)
+        if timeout is not None:
+            timeout = float(timeout)
         data = tornado.escape.json_decode(self.request.body)
         data = {'id': str(uuid.uuid1()), 'data': data}
-        yield que.put(data)
+        yield que.put(data, timeout=time.time()+timeout)
         print 'post, queue size:', que.qsize()
         self.write({'id': data['id']})
         self.finish()

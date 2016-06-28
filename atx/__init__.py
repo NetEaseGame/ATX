@@ -25,7 +25,7 @@ def connect(*args, **kwargs):
     """Connect to a device, and return its object
     Args:
         platform: string one of <android|ios|windows>
-
+        
     Returns:
         None
 

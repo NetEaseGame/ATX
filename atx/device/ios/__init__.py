@@ -71,19 +71,25 @@ class IOSDevice(DeviceMixin):
         # subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
         # 2. start instruments
         self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
+        time.sleep(3.0)
+        self._wait_instruments()
 
     def _wait_instruments(self):
-        pass
+        if self._run('1') != 1:
+            print 'Instruments stdout:\n' + self._proc.stdout.read()
+            raise RuntimeError('Instruments start failed.')
 
     def _run(self, code):
+        print self._proc.poll()
         # print code
         encoded_code = json.dumps({'command': code})
         output = subprocess.check_output([self._bootstrap, 'run', encoded_code], env=self._env)
-        print output
+        # print output
         return json.loads(output)
 
     def _run_nowait(self, code):
         ''' TODO: change to no wait '''
+        print self._proc.poll()
         encoded_code = json.dumps({'command': code, 'nowait': True})
         output = subprocess.check_output([self._bootstrap, 'run', '--nowait', encoded_code], env=self._env)
         return output
