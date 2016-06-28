@@ -81,10 +81,10 @@ while (true) {
         continue
       }
       var rawRes = eval(req.data.command);
-      if (req.nowait) {
+      if (req.data.nowait) {
         continue;
       }
-      
+
       var res = JSON.stringify(rawRes);
       $.debug("Result: " + res);
       var ret = $.cmd('./bootstrap.sh', ['put', req.id, res], 5);

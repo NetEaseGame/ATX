@@ -37,6 +37,11 @@ $ pip install pyipa
 	1. 重启Mac
 	1. 更新XCode
 
+## 限制的地方
+- 除非使用第三方输入法，否则只能对开发者签名的应用有效，其他的App都会陷入长时间的等待
+- 输入法只能使用系统自带的输入法
+- 点击不受限制，可以将应用转移到后台，然后直接完成点击
+
 ## Articles
 - [2012年的文章关于UIAutomation, 4年的时间也没有让它褪色](http://blog.manbolo.com/2012/04/08/ios-automated-tests-with-uiautomation)
 

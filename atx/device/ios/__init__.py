@@ -45,8 +45,8 @@ class IOSDevice(DeviceMixin):
         self.screen_rotation = 1 # TODO: auto judge
 
         if not bundle_id:
-            print 'WARNING [ios.py]: bundle_id is not set, use "com.netease.atx.apple" instead.'
-            self._init_instruments('com.netease.atx.apple')
+            print 'WARNING [ios.py]: bundle_id is not set' #, use "com.netease.atx.apple" instead.'
+            # self._init_instruments('com.netease.atx.apple')
         else:
             self._init_instruments(bundle_id)
 
@@ -106,16 +106,16 @@ class IOSDevice(DeviceMixin):
             self._close()
 
     @property
+    def rotation(self):
+        return self.screen_rotation
+    
+    @property
     def display(self):
         return self._display
 
     @property
     def info(self):
         return self.d.info
-
-    @property
-    def rotation(self):
-        return self._rotation
 
     def screenshot(self, filename=None):
         '''
@@ -126,8 +126,8 @@ class IOSDevice(DeviceMixin):
             PIL.Image object
         '''
         image = self.d.screenshot()
-        if self.screen_rotation:
-            method = getattr(Image, 'ROTATE_{}'.format(self.screen_rotation*90))
+        if self.rotation:
+            method = getattr(Image, 'ROTATE_{}'.format(self.rotation*90))
             image = image.transpose(method)
         if filename:
             image.save(filename)

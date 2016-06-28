@@ -118,8 +118,18 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	```
 
 	Remember the atx version in case if you want to rollback.
-	
+
+## IOS Documentation
+该部分记录的内容灵活性比较大，有可能会有大的改动，也有可能以后会删掉。
+
+iOS自动化必须一台Mac，所以请准备好硬件
+
+* [iOS需要安装的软件](README_IOS.md)
+
 ## Quick start
+* [iOS Quick Start](README_IOS_QUICKSTART.md)
+
+## Windows Quick start
 1. 连接一台安卓手机 (4.1+)
 
 	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
@@ -158,11 +168,6 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	可以使用的接口还有很多，请接着往下看
 
-
-## 实验室
-该部分记录的内容灵活性比较大，有可能会有大的改动，也有可以会删掉。第一次看的人，可以直接跳过
-
-- [iOS自动化相关](README_IOS.md)
 
 ## Examples
 ATX毕竟是一个python库，给出代码的例子可能更好理解一些
