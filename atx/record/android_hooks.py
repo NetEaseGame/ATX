@@ -28,34 +28,37 @@ __all__ = ['AndroidInputHookManager', 'HookManager', 'HookConstants']
 
 class HookConstants:
     # basic events
-    TOUCH_DOWN = 0x01
-    TOUCH_UP   = 0x02
-    TOUCH_MOVE = 0x03
-    TOUCH_PRESS_TIMEOUT = 0x04
-    TOUCH_FOLLOW_TIMEOUT = 0x05
-    TOUCH_MOVESTOP_TIMEOUT = 0x06
+    TOUCH_ANY  = 1 << 3
+    TOUCH_DOWN = 1 << 3 ^ 1
+    TOUCH_UP   = 1 << 3 ^ 2
+    TOUCH_MOVE = 1 << 3 ^ 3
+    TOUCH_PRESS_TIMEOUT     = 1 << 3 ^ 4
+    TOUCH_FOLLOW_TIMEOUT    = 1 << 3 ^ 5
+    TOUCH_MOVESTOP_TIMEOUT  = 1 << 3 ^ 6
 
-    KEY_ANY = 0x10
-    KEY_HOME_DOWN = 0x11
-    KEY_HOME_UP   = 0x12
-    KEY_BACK_DOWN = 0x13
-    KEY_BACK_UP   = 0x14
-    KEY_MENU_DOWN = 0x15
-    KEY_MENU_UP   = 0x16
-    KEY_POWER_DOWN      = 0x17
-    KEY_POWER_UP        = 0x18
-    KEY_VOLUMEDOWN_DOWN = 0x19
-    KEY_VOLUMEDOWN_UP   = 0x1a
-    KEY_VOLUMEUP_DOWN   = 0x1b
-    KEY_VOLUMEUP_UP     = 0x1c
+    # DOWN is odd, UP is even
+    KEY_ANY = 1 << 4
+    KEY_HOME_DOWN = 1 << 4 ^ 1
+    KEY_HOME_UP   = 1 << 4 ^ 2
+    KEY_BACK_DOWN = 1 << 4 ^ 3
+    KEY_BACK_UP   = 1 << 4 ^ 4
+    KEY_MENU_DOWN = 1 << 4 ^ 5
+    KEY_MENU_UP   = 1 << 4 ^ 6
+    KEY_POWER_DOWN      = 1 << 4 ^ 7
+    KEY_POWER_UP        = 1 << 4 ^ 8
+    KEY_VOLUMEDOWN_DOWN = 1 << 4 ^ 9
+    KEY_VOLUMEDOWN_UP   = 1 << 4 ^ 10
+    KEY_VOLUMEUP_DOWN   = 1 << 4 ^ 11
+    KEY_VOLUMEUP_UP     = 1 << 4 ^ 12
 
     # gestures
-    GST_TAP = 0x21
-    GST_DOUBLE_TAP = 0x22
-    GST_LONG_PRESS = 0x23
-    GST_SWIPE = 0x24
-    GST_DRAG = 0x25
-    GST_PINCH = 0x26
+    GST_KEYPRESS = 1 << 5
+    GST_TAP        = 1 << 5 ^ 1
+    GST_DOUBLE_TAP = 1 << 5 ^ 2
+    GST_LONG_PRESS = 1 << 5 ^ 3
+    GST_SWIPE   = 1 << 5 ^ 4
+    GST_PINCH   = 1 << 5 ^ 5
+    GST_DRAG    = GST_SWIPE
 
 HC = HookConstants
 
@@ -107,9 +110,12 @@ class KeyEvent(Event):
 
 class GestureEvent(Event):
     msg = None
-    def __init__(self, time, endtime, slotid):
+    def __init__(self, time, duration, slotid=None):
         super(GestureEvent, self).__init__(time, slotid)
-        self.endtime = endtime
+        self.duration = duration
+
+class KeyPress(GestureEvent):
+    msg = HC.GST_KEYPRESS
 
 class Tap(GestureEvent):
     msg = HC.GST_TAP
@@ -117,6 +123,14 @@ class Tap(GestureEvent):
 class DoubleTap(GestureEvent):
     msg = HC.GST_DOUBLE_TAP
 
+class LongPress(GestureEvent):
+    msg = HC.GST_LONG_PRESS
+
+class Swipe(GestureEvent):
+    msg = HC.GST_SWIPE
+
+class Pinch(GestureEvent):
+    msg = HC.GST_PINCH
 
 SLOT_NUM = 5
 _X, _Y, _VR, _VA, _MJ, _PR, FIELD_NUM = range(7)
@@ -276,7 +290,7 @@ class GestureRecognizer(object):
 
     double_tap_delay = 0.5
     long_press_delay = 1
-    move_stop_delay = 0.5
+    move_stop_delay = 0.3
     pinch_difference_square = 3000
 
     def __init__(self, queue):
@@ -290,11 +304,25 @@ class GestureRecognizer(object):
         self.tracks = [[] for i in range(SLOT_NUM)]
         self.track_slots = set()
 
+    def register(self, keycode, func):
+        self.dispatch_map[keycode] = func
+
     def handle_event(self, event):
-        self.dispatch_event(event)
-        if event.msg & HC.KEY_ANY: # skip keys
+        self.dispatch_event(event.msg, event)
+        if event.msg & HC.KEY_ANY:
+            self.dispatch_event(HC.KEY_ANY, event)
+        else:
+            self.dispatch_event(HC.TOUCH_ANY, event)
+            self.analyze_tracks(event)
+
+    def dispatch_event(self, msg, event):
+        func = self.dispatch_map.get(msg)
+        if func is None:
             return
-        self.analyze_tracks(event)
+        try:
+            func(event)
+        except:
+            traceback.print_exc()
 
     def analyze_tracks(self, e):
         # handle one-finger and two-finger gestures only
@@ -357,18 +385,6 @@ class GestureRecognizer(object):
 
     def post_gesture(self, slotid, track):
         print slotid, track
-
-    def register(self, keycode, func):
-        self.dispatch_map[keycode] = func
-
-    def dispatch_event(self, event):
-        func = self.dispatch_map.get(event.msg)
-        if not func:
-            return
-        try:
-            func(event)
-        except:
-            traceback.print_exc()
 
     def start(self):
         if self.running:
