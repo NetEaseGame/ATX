@@ -51,7 +51,6 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon):
 
     def _on_click(self, event):
         pos = (event.x, event.y)
-        print 'touch on', pos
         self.input_event(event)
 
     def analyze_frame(self, idx, event, status):

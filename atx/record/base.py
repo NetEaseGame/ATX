@@ -100,25 +100,25 @@ class BaseRecorder(object):
         if not self.realtime_analyze:
             self.analyze_all()
         self.save()
-        print 'stopped.'
+        print 'recorder stopped.'
 
     def input_event(self, event):
         '''should be called when user input events happens (from hook)'''
         if not self.running or self.device is None:
             return
-        print 'input_event', event.time
+        # print 'input_event', event.time
         status = self.get_device_status(event.time)
         self.input_index += 1
         self.input_queue.put((self.input_index, event, status))
 
     def handle_frame(self, frame):
-        print 'handle frame'
+        # print 'handle frame'
         idx, event, status = frame
         meta = {'index':idx}
         meta['event'] = {}
 
         # save frames.
-        print 'saving...'
+        # print 'saving...'
         eventpath = os.path.join(self.framedir, '%d-event.pkl' % idx)
         pickle.dump(event, file(eventpath, 'w'))
         meta['status'] = {}
