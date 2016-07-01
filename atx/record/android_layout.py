@@ -41,6 +41,7 @@ class AndroidLayout(object):
         self.tree = None
         self.nodes = []
         self.rotation = 0
+        self.focused_node = None
 
     def find_clickable_rect(self, x, y):
         def _find(node, x, y):
@@ -126,6 +127,7 @@ class AndroidLayout(object):
         dom = xml.dom.minidom.parseString(xmldata)
         root = dom.documentElement
         self.rotation = int(root.getAttribute('rotation'))
+        self.focused_node = None
 
         def walk(node, ui_nodes, depth=0):
             while len(node.childNodes) == 1 and node.getAttribute('bounds') == '':
@@ -137,6 +139,10 @@ class AndroidLayout(object):
                 if sub is not None:
                     uinode.children.append(sub)
             ui_nodes.append(uinode)
+            if uinode.focused:
+                if self.focused_node is not None:
+                    print 'Errorrrrrrr, more than one focused node.'
+                self.focused_node = uinode
             return uinode
 
         self.nodes = []

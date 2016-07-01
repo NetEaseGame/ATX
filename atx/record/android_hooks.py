@@ -52,7 +52,6 @@ class HookConstants:
     KEY_VOLUMEUP_UP     = 1 << 4 ^ 12
 
     # gestures
-    GST_KEYPRESS = 1 << 5
     GST_TAP        = 1 << 5 ^ 1
     GST_DOUBLE_TAP = 1 << 5 ^ 2
     GST_LONG_PRESS = 1 << 5 ^ 3
@@ -61,6 +60,15 @@ class HookConstants:
     GST_DRAG    = GST_SWIPE
 
 HC = HookConstants
+
+HCRepr = {
+    HC.TOUCH_DOWN : 'D',
+    HC.TOUCH_UP   : 'U',
+    HC.TOUCH_MOVE : 'M',    
+    HC.TOUCH_PRESS_TIMEOUT     : 'P',
+    HC.TOUCH_FOLLOW_TIMEOUT    : 'F',
+    HC.TOUCH_MOVESTOP_TIMEOUT  : 'S',
+}
 
 class Event(object):
     msg = None
@@ -113,9 +121,6 @@ class GestureEvent(Event):
     def __init__(self, time, duration, slotid=None):
         super(GestureEvent, self).__init__(time, slotid)
         self.duration = duration
-
-class KeyPress(GestureEvent):
-    msg = HC.GST_KEYPRESS
 
 class Tap(GestureEvent):
     msg = HC.GST_TAP
@@ -332,28 +337,37 @@ class GestureRecognizer(object):
 
         i = e.slotid
 
-        # end guesture when touch up
-        if e.msg == HC.TOUCH_UP:
-            if not self.tracks[i]:
-                return
-            self.tracks[i].append(e)
-            # self.post_gesture(i, self.tracks[i])
-            self.tracks[i] = None
-            self.track_slots.discard(i)
-        
         # begin guesture when touch down
-        elif e.msg == HC.TOUCH_DOWN:
+        if e.msg == HC.TOUCH_DOWN:
             if len(self.track_slots) == 2:
                 return
-            self.tracks[i]  = [e]
-            self.track_slots.add(i)
+            if not self.tracks[i]:
+                self.tracks[i] = []
+                self.track_slots.add(i)
+            self.tracks[i].append(e)
+            return
+
+        if not self.tracks[i]:
+            return
+
+        if e.msg in (HC.TOUCH_UP, HC.TOUCH_MOVE):
+            self.tracks[i].append(e)
+            return
+
+        # end guesture when touch follow timeout
+        if e.msg == HC.TOUCH_FOLLOW_TIMEOUT:
+            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
+            self.tracks[i] = None
+            self.track_slots.discard(i)
+
+        elif e.msg == HC.TOUCH_PRESS_TIMEOUT:
+            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
+            e = self.tracks[i][-1]
+            self.tracks[i] = [e]
             
         # find drag/pan/pinch/swipe guestures
-        elif e.msg == HC.TOUCH_MOVE:
-            if not self.tracks[i]:
-                return
-            self.tracks[i].append(e)
-
+        elif e.msg == HC.TOUCH_MOVESTOP_TIMEOUT:
+            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
             if len(self.track_slots) == 1: # single finger move
                 if e.time - self.tracks[i][0].time > 1:
                     # print 'drag'
@@ -383,9 +397,6 @@ class GestureRecognizer(object):
 
                 print dists[::-1]
 
-    def post_gesture(self, slotid, track):
-        print slotid, track
-
     def start(self):
         if self.running:
             return
@@ -410,14 +421,6 @@ class GestureRecognizer(object):
                 if timediff == 0:
                     timediff = time.time() - event.time
                 self.touches[event.slotid] = event
-                if event.msg == HC.TOUCH_DOWN:
-                    print 'D',
-                elif event.msg == HC.TOUCH_MOVE:
-                    print 'M',
-                elif event.msg == HC.TOUCH_UP:
-                    print 'U',
-                else:
-                    print '?',
             except Queue.Empty:
                 if not self.running:
                     break
@@ -427,18 +430,12 @@ class GestureRecognizer(object):
                     if e is None:
                         continue
                     if e.msg == HC.TOUCH_DOWN and now - e.time > self.long_press_delay:
-                        # print i, 'long press'
-                        print 'P',
                         self.handle_event(TouchPressTimeout(now, i))
                         self.touches[i] = None
                     elif e.msg == HC.TOUCH_UP and now - e.time > self.double_tap_delay:
-                        # print i, 'double tap timeout'
-                        print 'F',
                         self.handle_event(TouchFollowTimeout(now, i))
                         self.touches[i] = None
                     elif e.msg == HC.TOUCH_MOVE and now - e.time > self.move_stop_delay:
-                        # print i, 'move stop'
-                        print 'S',
                         self.handle_event(TouchMoveStopTimeout(now, i))
                         self.touches[i] = None
 
@@ -466,7 +463,6 @@ class AndroidInputHookManager(object):
         self._processor.register(keycode, func)
 
     def hook(self):
-        '''input should be a filelike object.'''
         self._processor.start()
         self.running = True
         t = threading.Thread(target=self._run_hook)
