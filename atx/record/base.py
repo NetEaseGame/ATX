@@ -21,9 +21,10 @@ class BaseRecorder(object):
         self.device = None
         self.device_info = {}
         self.running = False
+        self.setup_workdir(workdir)
+        
         if device is not None:
             self.attach(device)
-        self.setup_workdir(workdir)
         self.realtime_analyze = realtime_analyze
 
         self.thread = None
@@ -100,25 +101,25 @@ class BaseRecorder(object):
         if not self.realtime_analyze:
             self.analyze_all()
         self.save()
-        print 'stopped.'
+        print 'recorder stopped.'
 
     def input_event(self, event):
         '''should be called when user input events happens (from hook)'''
         if not self.running or self.device is None:
             return
-        print 'input_event', event.time
+        # print 'input_event', event.time
         status = self.get_device_status(event.time)
         self.input_index += 1
         self.input_queue.put((self.input_index, event, status))
 
     def handle_frame(self, frame):
-        print 'handle frame'
+        # print 'handle frame'
         idx, event, status = frame
         meta = {'index':idx}
         meta['event'] = {}
 
         # save frames.
-        print 'saving...'
+        # print 'saving...'
         eventpath = os.path.join(self.framedir, '%d-event.pkl' % idx)
         pickle.dump(event, file(eventpath, 'w'))
         meta['status'] = {}
@@ -313,13 +314,13 @@ class UixmlAddon(object):
         filename = '%d-uidump.xml' % idx
         filepath = os.path.join(dirpath, filename)
         with open(filepath, 'w') as f:
-            f.write(uixml.encode('utf8'))
+            f.write(uixml)
         return filename
 
     def load_uixml(self, dirpath, filename):
         filepath = os.path.join(dirpath, filename)
         try:
-            return open(filepath).read().decode('utf8')
+            return open(filepath).read()
         except IOError:
             return u''
 
@@ -343,6 +344,7 @@ class UixmlAddon(object):
                     continue
                 tic = time.time()
                 xmldata = self.device.dumpui()
+                xmldata = xmldata.encode('utf-8')
                 # print 'dumping ui.. cost', time.time() - tic
                 self.__uidump_cache.append((time.time(), xmldata))
                 self.__uidump_cache = self.__uidump_cache[-uidump_maxnum:]
