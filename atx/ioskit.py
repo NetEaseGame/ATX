@@ -41,12 +41,21 @@ def look_exec(name):
         r'C:\Program Files (x86)\Quamotion\iMobileDevice',
         r'D:\Program Files (x86)\Quamotion\iMobileDevice',
         r'E:\Program Files (x86)\Quamotion\iMobileDevice',
+        r'F:\Program Files (x86)\Quamotion\iMobileDevice',
         r'C:\Program Files\Quamotion\iMobileDevice',
         r'D:\Program Files\Quamotion\iMobileDevice',
         r'E:\Program Files\Quamotion\iMobileDevice',
+        r'F:\Program Files\Quamotion\iMobileDevice',
     ]
     filepath = look_path(name+ext, search_paths)
     __execpath[name] = filepath
+    return filepath
+
+
+def must_look_exec(name):
+    filepath = look_exec(name)
+    if not filepath:
+        raise EnvironmentError('No "%s" found.' % filepath)
     return filepath
 
 
@@ -108,7 +117,7 @@ class Device(object):
         if not udid:
             devs = devices()
             if len(devs) == 0:
-                raise EnvironmentError("No ios devices connected.")
+                raise EnvironmentError("No iOS devices connected.")
             elif len(devs) > 1:
                 raise EnvironmentError("More than one device connected, need to specify udid")
             else:
@@ -166,9 +175,7 @@ class Device(object):
         Returns:
             idevicedebug subprocess instance
         '''
-        idevicedebug = look_exec('idevicedebug')
-        if not idevicedebug:
-            raise EnvironmentError("No idevicedebug found.")
+        idevicedebug = must_look_exec('idevicedebug')
 
         # run in background
         kwargs = {'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE}
@@ -177,7 +184,12 @@ class Device(object):
         return subprocess.Popen([idevicedebug, "--udid", self.udid, 'run', bundle_id], **kwargs)
 
     def install(self, filepath):
-        raise NotImplementedError()
+        ''' TODO(ssx): not tested. '''
+        if not os.path.exists(filepath):
+            raise EnvironmentError('file "%s" not exists.' % filepath)
+
+        ideviceinstaller = must_look_exec('ideviceinstaller')
+        os.system(subprocess.list2cmdline([ideviceinstaller, '-u', self.udid, '-i', filepath]))
 
 
 if __name__ == '__main__':

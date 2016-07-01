@@ -38,7 +38,8 @@
 	import atx
 
 	bundle_id = 'com.netease.demo'
-	d = atx.connect(bundle_id, platform='ios') # need wait for nearly 10s
+	udid = None
+	d = atx.connect(bundle_id, udid=udid, platform='ios') # need wait for nearly 10s
 	d.click('button.png')
 	```
 

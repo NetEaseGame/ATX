@@ -80,7 +80,7 @@ class IOSDevice(DeviceMixin):
             raise RuntimeError('Instruments start failed.')
 
     def _run(self, code):
-        print self._proc.poll()
+        # print self._proc.poll()
         # print code
         encoded_code = json.dumps({'command': code})
         output = subprocess.check_output([self._bootstrap, 'run', encoded_code], env=self._env)

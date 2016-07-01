@@ -496,6 +496,25 @@ class DeviceMixin(object):
         else:
             sys.stdout.write('\n')
             raise errors.AssertExistsError('image not found %s' %(pattern,))
+            
+	# TODO: need to add hook here
+    def click_nowait(self, pattern, action='click'):
+    	""" Return immediately if no image found
+
+    	Args:
+    		- pattern (str or Pattern): filename or an opencv image object.
+    		- action (str): click or long_click
+
+    	Returns:
+    		Click point or None
+    	"""
+    	point = self.match(pattern)
+    	if not point or not point.matched:
+    		return None
+
+    	func = getattr(self, action)
+    	func(*point.pos)
+    	return point
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_image(self, pattern, timeout=20.0, action='click'):
