@@ -85,7 +85,11 @@ class IOSDevice(DeviceMixin):
         encoded_code = json.dumps({'command': code})
         output = subprocess.check_output([self._bootstrap, 'run', encoded_code], env=self._env)
         # print output
-        return json.loads(output)
+        try:
+            return json.loads(output)
+        except:
+            print 'unknown json output:', output
+            return output
 
     def _run_nowait(self, code):
         ''' TODO: change to no wait '''
@@ -146,13 +150,16 @@ class IOSDevice(DeviceMixin):
         return self
 
     def install(self, filepath):
-        raise NotImplementedError()
+        self.d.install(filepath)
 
     def sleep(self, sec):
-        time.sleep(sec)
+        self.delay(sec)
 
     def type(self, text):
         self._run_nowait('$.typeString(%s)' % json.dumps(text))
+
+    def start_app(self, bundle_id):
+        self.d.start_app(bundle_id)
 
     def current_app(self):
         ''' todo, maybe return dict is a better way '''
