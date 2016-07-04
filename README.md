@@ -249,7 +249,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.long_click(50, 100) # only works on android for now
 
 * click_image函数
-	
+
 	# click image, if "button.png" not found, exception will be raise.
 	d.click_image("button.png")
 
@@ -501,9 +501,9 @@ python -m atx --help
 	# Start app after installed.
 	```
 
-	另外install支持一些默认软件的安装，目前有 utf8ime
+	另外install支持一些默认软件的安装，目前有 utf7ime
 
-	使用方法如 `python -matx install utf8ime`
+	使用方法如 `python -matx install utf7ime`
 
 7. screencap
 	拥有超越`adb shell screencap`的速度以及兼容性，使用了PIL库，输出的格式根据文件的扩展名的自动确定
@@ -602,6 +602,24 @@ python -m atx --help
 
 	adb shell rm /data/local/tmp/minicap
 	adb shell rm /data/local/tmp/minicap.so
+	```
+
+7. 解决输入法遇到的问题
+
+	可以使用日本友人开发的输入法 utf7ime, 其源码地址在 <https://github.com/sumio/uiautomator-unicode-input-helper>
+
+	启动方法
+
+	```
+	python -m atx install utf7ime
+	adb shell ime enable jp.jun_nama.test.utf7ime/.Utf7ImeService # optional
+	adb shell ime set jp.jun_nama.test.utf7ime/.Utf7ImeService
+	```
+
+	关闭方法
+
+	```
+	adb shell ime disable jp.jun_nama.test.utf7ime/.Utf7ImeService
 	```
 
 ## 代码导读

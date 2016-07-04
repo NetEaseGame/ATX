@@ -37,6 +37,10 @@ $ pip install pyipa
 	1. 重启Mac
 	1. 更新XCode
 
+- How to know my udid
+	
+	<http://whatsmyudid.com/>
+
 ## 限制的地方
 - 除非使用第三方输入法，否则只能对开发者签名的应用有效，其他的App都会陷入长时间的等待
 - 输入法只能使用系统自带的输入法

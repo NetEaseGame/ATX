@@ -22,7 +22,7 @@ from atx.cmds import utils
 log = logutils.getLogger('install')
 DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
 __apks = dict(
-    utf8ime='http://7rfh09.com2.z0.glb.qiniucdn.com/Utf7Ime.apk')
+    utf7ime='http://7rfh09.com2.z0.glb.qiniucdn.com/Utf7Ime.apk')
 
 
 def clean(tmpdir):
@@ -86,7 +86,7 @@ def adb_must_install(adb, remote_path, package_name):
         adb_install(adb, remote_path)
     except IOError:
         log.info("Remove already installed app: %s", package_name)
-        adb.cmd('uninstall', package_name).wait()
+        adb.raw_cmd('uninstall', package_name).wait()
         adb_install(adb, remote_path)
 
 

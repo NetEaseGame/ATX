@@ -49,3 +49,7 @@
 
 ## How it works
 The iOS automation is very like appium, which use *UIAutomation* for test. Create a unix socket for communication between python and UIAutomation.
+
+## 其他资料
+- [Apple Provisioning Profile 图文介绍](http://ryantang.me/blog/2013/11/28/apple-account-3/)
+- [iOS Provisioning Profile(Certificate)与Code Signing详解](http://blog.csdn.net/phunxm/article/details/42685597)
