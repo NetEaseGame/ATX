@@ -497,33 +497,34 @@ class DeviceMixin(object):
             sys.stdout.write('\n')
             raise errors.AssertExistsError('image not found %s' %(pattern,))
             
-	# TODO: need to add hook here
+    # TODO: need to add hook here
     def click_nowait(self, pattern, action='click'):
-    	""" Return immediately if no image found
+        """ Return immediately if no image found
 
-    	Args:
-    		- pattern (str or Pattern): filename or an opencv image object.
-    		- action (str): click or long_click
+        Args:
+            - pattern (str or Pattern): filename or an opencv image object.
+            - action (str): click or long_click
 
-    	Returns:
-    		Click point or None
-    	"""
-    	point = self.match(pattern)
-    	if not point or not point.matched:
-    		return None
+        Returns:
+            Click point or None
+        """
+        point = self.match(pattern)
+        if not point or not point.matched:
+            return None
 
-    	func = getattr(self, action)
-    	func(*point.pos)
-    	return point
+        func = getattr(self, action)
+        func(*point.pos)
+        return point
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0, action='click'):
+    def click_image(self, pattern, timeout=20.0, action='click', safe=False):
         """Simulate click according image position
 
         Args:
             - pattern (str or Pattern): filename or an opencv image object.
             - timeout (float): if image not found during this time, ImageNotFoundError will raise.
             - action (str): click or long_click
+            - safe (bool): if safe is True, Exception will not raise and return None instead.
         Returns:
             None
 
@@ -555,6 +556,9 @@ class DeviceMixin(object):
         sys.stdout.write('\n')
 
         if not found:
+            if safe:
+                log.info("Image(%s) not found, safe=True, skip", pattern)
+                return None
             raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
         # FIXME(ssx): maybe this function is too complex

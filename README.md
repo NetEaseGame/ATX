@@ -247,15 +247,23 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	# long click
 	d.long_click(50, 100) # only works on android for now
+
+* click_image函数
 	
-	# click image
+	# click image, if "button.png" not found, exception will be raise.
 	d.click_image("button.png")
+
+	# click image, if "button.png" not found, will return None
+	d.click_image("button.png", safe=True)
 
 	# click image with long click
 	d.click_image("button.png", action='long_click')
 
 	# 文件名添加截图手机的分辨率
 	d.click_image("button.1920x1080.png")
+
+	# 不等待的图片点击, 如果图片不存在直接返回None
+	d.click_nowait('button.1920x1080.png')
 
 	# click offset image
 	d.click_image(atx.Pattern('button.png', offset=(100, 20))) # 带有偏移量的点击
@@ -568,6 +576,8 @@ python -m atx --help
 	测试后，发现是可以的。我直接用了当前市场上最流行的[海马玩 版本0.9.0 Beta](http://dl.haima.me/download/D4XU/win/0.9.0/Setup.exe) 安装完之后使用 `adb connect 127.0.0.1:26944` 连接上，之后的操作就跟普通的手机一样了。_注: 根据海马玩版本的不同，端口可能也不一定一样_
 
 	海马玩监听的端口是本机的26944，如果需要测试脚本运行在远程，用tcp转发到0.0.0.0就好了。方法有很多，可以用自带的程序 `python -matx tcpproxy` 或者直接参考目录下的 [scripts/simple-tcp-proxy.py](scripts/simple-tcp-proxy.py) 用代码实现
+
+	很多模拟器的引擎是VirutualBox，其实还可以通过VirtualBox的接口来截图，这种方法更快一点，不过看说明安装似乎很复杂，试验了下也没成功，若是有人搞定了，可以分享下
 
 4. minicap是什么, 如何安装?
 

@@ -7,7 +7,7 @@ import atx
 from atx.ext.report import Report # report lib
 
 
-d = d.connect()
+d = atx.connect()
 rp = Report(d, save_dir='report')
 rp.info("Test started")
 

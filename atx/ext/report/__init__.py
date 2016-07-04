@@ -102,7 +102,8 @@ class Report(object):
         if evt.flag == consts.EVENT_CLICK:
             if evt.depth > 1: # base depth is 1
                 return
-            d.last_screenshot.save(screen_before_abspath)
+            if d.last_screenshot: # just in case
+                d.last_screenshot.save(screen_before_abspath)
             screen_after = 'images/after_%d.png' % time.time()
             d.screenshot(os.path.join(self.save_dir, screen_after))
 
@@ -122,6 +123,10 @@ class Report(object):
                 'success': evt.traceback is None,
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
             }
+            # not record if image not found
+            if evt.retval is None:
+                return
+            
             if d.last_screenshot:
                 d.last_screenshot.save(screen_before_abspath)
                 step['screen_before'] = screen_before
@@ -138,6 +143,7 @@ class Report(object):
                 step['confidence'] = evt.retval.confidence
                 (x, y) = evt.retval.pos
                 step['position'] = {'x': x, 'y': y}
+
             self.steps.append(step)
 
 
