@@ -41,7 +41,7 @@ class TaskQueueHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, udid):
         ''' get new task '''
-        timeout = self.get_argument('timeout', 10.0)
+        timeout = self.get_argument('timeout', 20.0)
         if timeout is not None:
             timeout = float(timeout)
         que = self.ques[udid]
@@ -87,10 +87,10 @@ class TaskQueueHandler(tornado.web.RequestHandler):
         self.finish()
 
     @gen.coroutine
-    def delete(self, udid):
+    def patch(self, udid):
         data = tornado.escape.json_decode(self.request.body)
         id = data['id']
-        timeout = float(data.get('timeout', 10.0))
+        timeout = float(data.get('timeout', 20.0))
         print 'Timeout:', timeout
         result = self.results.get(id)
         if result is None:
@@ -103,6 +103,18 @@ class TaskQueueHandler(tornado.web.RequestHandler):
         else:
             self.write(json.dumps(result))
             self.results.pop(id, None)
+
+    @gen.coroutine
+    def delete(self, udid):
+        que = self.ques[udid]
+        for i in range(que.qsize()+1):
+            try:
+                que.get_nowait()
+            except QueueEmpty:
+                self.write("Queue cleaned")
+                break
+        else:
+            self.write("Queue clean not finished yet")
 
 
 def make_app(**settings):
@@ -149,9 +161,13 @@ def cmd_post(requrl, data):
     r = requests.post(requrl, data=json.dumps(jsondata))
     print r.json()['id']
 
-def cmd_delete(requrl, task_id):
+def cmd_patch(requrl, task_id):
     jsondata = {'id': task_id}
-    r = requests.delete(requrl, data=json.dumps(jsondata))
+    r = requests.patch(requrl, data=json.dumps(jsondata))
+    print r.text
+
+def cmd_clean(requrl):
+    r = requests.delete(requrl)
     print r.text
 
 def cmd_quit(unix_socket):
@@ -202,9 +218,12 @@ def main():
         p.add_argument('data')
         p.set_defaults(func=wrap(cmd_post))
 
-    with add_parser('delete') as p:
+    with add_parser('retr') as p: # retrive result
         p.add_argument('task_id')
-        p.set_defaults(func=wrap(cmd_delete))
+        p.set_defaults(func=wrap(cmd_patch))
+
+    with add_parser('clean') as p:
+        p.set_defaults(func=wrap(cmd_clean))
 
     with add_parser('quit') as p:
         p.set_defaults(func=wrap(cmd_quit))
