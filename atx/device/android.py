@@ -447,8 +447,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             ui_nodes.append(self._parse_xml_node(node))
         return ui_nodes
 
-    def _escape_text(self, s):
-        return s.replace(' ', '%s')
+    def _escape_text(self, s, utf7=False):
+        s = s.replace(' ', '%s')
+        if utf7:
+            s = s.encode('utf-7')
+        return s
 
     def keyevent(self, keycode):
         """call adb shell input keyevent ${keycode}
@@ -476,19 +479,17 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
         first = True
-        if self.current_ime() == 'android.unicode.ime/.Utf7ImeService':
-            # FIXME(ssx): canot input "中文 cn" but ok with "中文cn"
-            text = text.encode('utf-7')
+        is_utf7 = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
 
         for s in text.split('%s'):
-            if s == '':
-                continue
-            estext = self._escape_text(s)
             if first:
                 first = False
             else:
                 self.adb_shell(['input', 'text', '%'])
-                estext = 's' + estext
+                s = 's' + s
+            if s == '':
+                continue
+            estext = self._escape_text(s, is_utf7)
             self.adb_shell(['input', 'text', estext])
 
         if enter:
@@ -501,6 +502,5 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         if m:
             return m.group(1)
 
-        raise RuntimeError("Canot detect current input method")
-
-    # mCurMethodId=android.unicode.ime/.Utf7ImeService
+        # Maybe no need to raise error
+        # raise RuntimeError("Canot detect current input method")
