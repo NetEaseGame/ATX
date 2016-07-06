@@ -1,6 +1,26 @@
 CHANGES
 =======
 
+* make ios test more stable
+* fix utf7ime install
+* add click_image( safe = True), also update report
+* little modify
+* finish ios install, some ios bug fix
+* watch activity on android (lame way..)
+* basic events recorder
+* union touchups/moves/downs
+* add ios documentation
+* add timeout for queue post
+* fix typo
+* fix ios taskqueue, support nowait support
+* use unix socket instead of port listen, because ios test can only run on mac
+* generate draft from saved record frames
+* support iphone6p and iphone5c
+
+1.0.12
+------
+
+* fix all license
 * update document
 * fix dir
 * remove uesless comment

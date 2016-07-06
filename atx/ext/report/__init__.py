@@ -124,7 +124,7 @@ class Report(object):
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
             }
             # not record if image not found
-            if evt.retval is None:
+            if evt.retval is None and evt.traceback is None:
                 return
             
             if d.last_screenshot:
