@@ -22,7 +22,7 @@ from atx.cmds import utils
 log = logutils.getLogger('install')
 DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
 __apks = dict(
-    utf7ime='http://7rfh09.com2.z0.glb.qiniucdn.com/Utf7Ime.apk')
+    utf7ime='http://o8oookdsx.qnssl.com/android_unicode_ime-debug.apk')
 
 
 def clean(tmpdir):

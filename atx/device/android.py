@@ -33,11 +33,14 @@ from atx.device.mixin import DeviceMixin, hook_wrap
 from atx import adbkit
 
 
-DISPLAY_RE = re.compile(
+_DISPLAY_RE = re.compile(
     r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
-PROP_PATTERN = re.compile(
+_PROP_PATTERN = re.compile(
     r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
+
+_INPUT_METHOD_RE = re.compile(
+    r'mCurMethodId=([-_./\w]+)')
 
 UINode = collections.namedtuple('UINode', [
     'xml',
@@ -147,7 +150,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             return self.__display
         w, h = (0, 0)
         for line in self.adb_shell('dumpsys display').splitlines():
-            m = DISPLAY_RE.search(line, 0)
+            m = _DISPLAY_RE.search(line, 0)
             if not m:
                 continue
             w = int(m.group('width'))
@@ -323,7 +326,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         '''
         props = {}
         for line in self.adb_shell(['getprop']).splitlines():
-            m = PROP_PATTERN.match(line)
+            m = _PROP_PATTERN.match(line)
             if m:
                 props[m.group('key')] = m.group('value')
         return props
@@ -463,7 +466,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         "Hi world" maybe spell into "H iworld"
 
         Args:
-            - text: string (text to input)
+            - text: string (text to input), better to be unicode
             - enter(bool): input enter at last
 
         The android source code show that
@@ -473,6 +476,10 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
         first = True
+        if self.current_ime() == 'android.unicode.ime/.Utf7ImeService':
+            # FIXME(ssx): canot input "中文 cn" but ok with "中文cn"
+            text = text.encode('utf-7')
+
         for s in text.split('%s'):
             if s == '':
                 continue
@@ -486,3 +493,14 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
         if enter:
             self.keyevent('KEYCODE_ENTER')
+
+    def current_ime(self):
+        ''' Get current input method '''
+        dumpout = self.adb_shell(['dumpsys', 'input_method'])
+        m = _INPUT_METHOD_RE.search(dumpout)
+        if m:
+            return m.group(1)
+
+        raise RuntimeError("Canot detect current input method")
+
+    # mCurMethodId=android.unicode.ime/.Utf7ImeService
