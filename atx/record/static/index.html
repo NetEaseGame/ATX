@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+    <style>
+      body {
+        background-color: #F3F3F3;
+        font-family: monospace;
+      }
+      ul {
+        padding: 0px;
+      }
+      li {
+        list-style: none;
+      }
+      select {
+        border-radius: 3px;
+        /*box-shadow: 0px 1px 1px #aaa;*/
+        padding: 1px 3px;
+      }
+      .action {
+        background-color: white;
+        margin: 10px;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .action > div.left > img {
+        vertical-align: middle;
+      }
+      .left {
+        float: left;
+      }
+      .right {
+        float: right;
+      }
+      .clear-fix {
+        *overflow: hidden;
+        *zoom: 1;
+      }
+      .clear-fix::after {
+        display: table;
+        content: "";
+        width: 0;
+        clear: both;
+      }
+      button.skip{
+        background: url("imgs/remove.png");
+        width: 20px;
+        height: 20px;
+        border: 0px;
+      }
+      .skipped {
+        height: 6px;
+        padding: 0px;
+      }
+      .skipped b {
+        color: gray;
+      }
+      .wrapper {
+        display: flex;
+        flex-direction: row;
+      }
+      .left-panel {
+        flex-basis: 1;
+        flex-grow: 1;
+      }
+      .right-panel {
+        flex-basis: 1;
+      }
+      .v-slider {
+        position: relative;
+        height: 10px;
+        vertical-align: middle;
+      }
+      .v-slider-bar {
+        height: 4px;
+        width: 100%;
+        background-color: #333;
+        position: absolute;
+        margin-top: 3px;
+      }
+      .v-slider-point {
+        width: 10px;
+        height: 10px;
+        border-radius: 10px;
+        background-color: #bbb;
+        position: absolute;
+      }
+      .highlight {
+        background: none repeat scroll 0 0 #FFFFE0;
+        border: 1px solid #E6DB55;
+      }
+      #ui-overlap {
+        position: relative;
+      }
+      #ui-overlap > div {
+        position: absolute;
+      }
+      .uibox {
+        position: absolute;
+        border: 1px solid #ffff00;
+      }
+      .point {
+        width: 18px;
+        height: 18px;
+        border-radius: 18px;
+        background-color: #fff;
+        box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+        position: absolute;
+      }
+      .chop {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .rect {
+        width: auto;
+        position: absolute;
+        border: 1px solid #ffff00;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper" id="container">
+      <div class="left-panel">
+        <div class="toolbar">
+          <p>Current Frame: {{current+1}}/{{total_frames}}</p>
+        </div>
+        <ul>
+          <li v-for="idx in total_frames">
+            <div is="frame" v-bind:idx="idx"></div>
+          </li>
+          <li style="display:none">
+            <div class="action action-open clear-fix">
+              <div class="left">
+                <img src="imgs/open.png" alt="" />
+                <b>Open</b>
+                <label for="">Device:</label>
+                <select class="" name="">
+                  <option value="option">Nexus 4 (Lolipop) - 5.1</option>
+                </select>
+                <label for="">App:</label>
+                <select class="" name="">
+                  <option value="option">Xamarin CRM</option>
+                </select>
+              </div>
+            </div>
+          </li>
+          <li>
+            <div class="action action-swipe clear-fix">
+              <div class="left">
+                <img src="imgs/swipe.png" alt="" />
+                <b>Swipe</b>
+                <select class="" name="">
+                  <option value="option">Up</option>
+                  <option value="option">Down</option>
+                  <option value="option">Left</option>
+                  <option value="option">Right</option>
+                </select>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="right-panel">
+        <div id="screen">
+          <div id="ui-overlap"></div>
+          <canvas id="canvas" width="300" height="300"></canvas>
+        </div>
+        <div is="slider" min="1" v-bind:max="total_frames" v-bind:value.sync="current"></div>
+      </div>
+    </div>
+    <script type="x/template" id="v-slider-template">
+      <div class="v-slider" @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag" >
+        <div class="v-slider-bar"></div>
+        <div class="v-slider-point"></div>
+      </div>
+    </script>
+    <script type="x/template" id="frame-template">
+      <div class="action clear-fix" @click="showMe">
+        <div class="left">
+          <img v-bind:src="icon"/>
+          <b>{{action | camel}}</b>
+          <template v-if="has_select">
+            <select v-model="selected" @change="onSelect">
+              <option v-for="opt in options" value="{{$key}}">{{opt}}</option>
+            </select>
+            <label>Selected: {{selected}}</label>
+          </template>
+          <template v-if="has_image">
+            <div class="chop" v-bind:style="chopstyle"></div>
+            <label>({{imgbound.width}}x{{imgbound.height}})@({{imgbound.left}}, {{imgbound.top}})</label>
+          </template>
+          <span v-if="has_point">({{point.left}}, {{point.top}})</span>
+        </div>
+        <div class="right">
+          <button class="skip" @click="skip"></button>
+        </div>
+      </div>
+      <div class="ui-overlap" v-bind:style="overlapstyle">
+        <template v-if="has_select">
+        </template>
+        <template v-if="has_point">
+        </template>
+        <template v-if="has_image">
+        </template>
+      </div>
+    </script>
+    <script type="text/javascript" src="js/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/vue.min.js"></script>
+    <script type="text/javascript">
+
+      Vue.filter('capitalize', function(s) {
+        if (s == undefined || s == null) {return "";}
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      })
+
+      Vue.filter('camel', function(s) {
+        if (s == undefined || s == null) {return "";}
+        var str='', arr = s.split(/_/g);
+        for (var i=0; i<arr.length; i++) {
+          str += arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+        }
+        return str;
+      })
+
+      var FrameComponent = Vue.extend({
+        props: {
+          idx: {
+            required: true,
+            coerce : function (val) {return parseInt(val);}
+          },
+        },
+        computed: {
+          data: function() {
+            return this.$parent.frames[this.idx];
+          },
+          action: function() {
+            return this.data.event;
+          },
+          icon: function() {
+            return "imgs/" + this.data.event + ".png";
+          },
+          options: function() {
+            var d = {};
+            for (var i = 0, n; i < this.uinodes.length; i++) {
+              n = this.uinodes[i];
+              d[i] = n.xml.attr("class") + "-" + n.xml.attr("index");
+            }
+            return d;
+          },
+          chopstyle: function(){
+            var height = 50.0,
+                scale = height / this.imgbound.height,
+                width = this.imgbound.width * scale,
+                left = this.imgbound.left * scale,
+                top = this.imgbound.top * scale,
+                $canvas = $("#canvas");
+            return {
+              "height": height + "px",
+              "width" : width + "px",
+              "background-image": "url(frames/" + this.data.status.screen + ")",
+              "background-position" : "-" + left +"px -" + top + "px",
+              "background-size" : $canvas.width()*scale/this.$parent.scale + "px " +
+                                  $canvas.height()*scale/this.$parent.scale + "px",
+            };
+          },
+          overlapstyle: function(){
+            var origin = $("#screen").position();
+            return {
+              "position": "absolute",
+              "left": origin.left + "px",
+              "top": origin.top + "px",
+              "width": $("#screen").width(),
+              "height": $("#screen").height(),
+            };
+          },
+        },
+        data: function(){
+          return {
+            uinodes: [],
+            has_select: false,
+            selected: null,
+            has_point: 0,
+            point: {left:100, top:200},
+            has_image: false,
+            imgbound: {left:100, top:100, width:100, height:100},
+          }
+        },
+        template: "#frame-template",
+        ready: function() {
+          var self = this;
+
+          // setup for different events.
+          switch (self.data.event) {
+            case "click":
+              self.has_point= 1;
+              break
+            case "click_image":
+              self.has_image = true;
+              break;
+            case "click_ui":
+              self.has_select = true;
+              self.selected = 0;
+              break;
+            default:
+          }
+
+          // initialize uilayer
+          self.$uilayer = $("<div>").hide().appendTo($("#ui-overlap"));
+
+          // display point for click
+          if (self.data.event == "click") {
+            var $point = $("<div>").addClass("point");
+            $point.css("left", self.point.left * self.$parent.scale - $point.width()*0.5);
+            $point.css("top", self.point.top * self.$parent.scale - $point.height()*0.5);
+            self.$uilayer.append($point);
+            // click to move point
+            self.$uilayer.click(function(event){
+              var origin = $("#ui-overlap").position();
+              self.point.left = parseInt((event.pageX - origin.left) / self.$parent.scale);
+              self.point.top = parseInt((event.pageY - origin.top) / self.$parent.scale);
+              $point.css("left", self.point.left * self.$parent.scale - $point.width()*0.5);
+              $point.css("top", self.point.top * self.$parent.scale - $point.height()*0.5);
+            })
+          }
+
+          // display image chop for click_image
+          if (self.data.event == "click_image") {
+            var $div = $("<div>").addClass("rect");
+            $div.css({
+              "width": self.imgbound.width * self.$parent.scale,
+              "height": self.imgbound.height * self.$parent.scale,
+              "left": self.imgbound.left * self.$parent.scale,
+              "top": self.imgbound.top* self.$parent.scale,
+            });
+            // make it draggable and resizable
+            $div.resizable({
+              minWidth: 50,
+              minWidth: 50,
+              maxWidth: 300,
+              maxHeight: 300,
+              handles: "n,e,s,w,se",
+              resize: function(event, ui) {
+                self.imgbound.width = parseInt(parseFloat(ui.size.width)/self.$parent.scale);
+                self.imgbound.height = parseInt(parseFloat(ui.size.height)/self.$parent.scale);
+              },
+            });
+            $div.draggable({
+              containment: "parent",
+              drag: function(event, ui) {
+                var origin = $("#ui-overlap").position();
+                self.imgbound.left = parseInt(ui.position.left/self.$parent.scale);
+                self.imgbound.top = parseInt(ui.position.top/self.$parent.scale);
+              },
+            });
+            self.$uilayer.append($div);
+
+            // support drag on uilayer and move $div
+            // $div.mousedown(function(event){ event.stopPropagation();});
+            // $div.mouseup(function(event){ event.stopPropagation();});
+            // self.$uilayer.mousedown(function(event){
+            //   $div.hide();
+            //   var origin = $("#ui-overlap").position();
+            //   $div.css({
+            //     "left": event.pageX - origin.left,
+            //     "top": event.pageY - origin.top,
+            //   });
+            //   self.imgbound.left = parseInt((event.pageX-origin.left)/self.$parent.scale);
+            //   self.imgbound.top = parseInt((event.pageY-origin.left)/self.$parent.scale);
+            // });
+            // self.$uilayer.mouseup(function(event){
+            //   var left = parseFloat($div.css("left")),
+            //       top = parseFloat($div.css("top")),
+            //       origin = $("#ui-overlap").position();
+            //   $div.css({
+            //     "width": Math.min(300, event.pageX - origin.left - left),
+            //     "height": Math.min(300, event.pageY - origin.top - top),
+            //   });
+            //   self.imgbound.width = parseInt(parseFloat($div.css("width"))/self.$parent.scale);
+            //   self.imgbound.height = parseInt(parseFloat($div.css("height"))/self.$parent.scale);
+            //   $div.show();
+            // });
+          }
+
+          // load uixml for click_ui
+          if (self.data.event == "click_ui") {
+            $.ajax({
+              url: 'frames/' + self.data['status']['uixml'],
+              type: 'GET',
+              dataType: 'xml',
+              success: function(xmldata){
+                $(xmldata).find('node').each(function(){
+                  if ($(this).attr("clickable") != "true") {
+                    return;
+                  }
+                  var bounds = $(this).attr("bounds").match(/\d+/g),
+                      left = parseInt(bounds[0]),
+                      top = parseInt(bounds[1]),
+                      right = parseInt(bounds[2]),
+                      bottom = parseInt(bounds[3]),
+                      width = right - left,
+                      height = bottom - top;
+                  // skip fullscreen rects
+                  if (width == self.$parent.device.width && height == self.$parent.device.height){
+                    return;
+                  }
+                  var $div = $("<div>").addClass("uibox")
+                    .css("left", left*self.$parent.scale + "px")
+                    .css("top", top*self.$parent.scale + "px")
+                    .css("width", width*self.$parent.scale + "px")
+                    .css("height", height*self.$parent.scale + "px");
+                  $div.xml = $(this);
+                  self.$uilayer.append($div);
+                  self.uinodes.push($div);
+                });
+                self.update(self.$parent.current); // update after load.
+              },
+              error: function(){
+                console.log('Get uixml failed', self.data['status']['uixml']);
+                self.$uilayer.empty();
+                self.uinodes = [];
+              }
+            });
+
+            // click to change ui selection
+            self.$uilayer.click(function(event){
+              var i = 0, n, top, left, width, height, origin=$("#ui-overlap").position();
+              for (; i < self.uinodes.length; i++) {
+                n = self.uinodes[i];
+                left = parseFloat(n.css("left"));
+                top = parseFloat(n.css("top"));
+                width = parseFloat(n.css("width"));
+                height = parseFloat(n.css("height"));
+                if ((event.pageX > origin.left + left) && (event.pageX < origin.left + left + width)
+                   && (event.pageY > origin.top + top) && (event.pageY < origin.top + top + height))
+                {
+                  n.siblings().hide();
+                  n.show();
+                  self.selected = i;
+                  break;
+                }
+              }
+            });
+          }
+
+          // check skip
+          if (self.data.skip) {
+            self.skip();
+          }
+
+        },
+        methods: {
+          update: function(v){
+            if (v == this.idx) {
+              $(this.$el).addClass("highlight");
+              var canvas = document.getElementById("canvas");
+              this.$uilayer.css("width", canvas.width).css("height", canvas.height);
+              this.$uilayer.show();
+              this.onSelect();
+            } else {
+              $(this.$el).removeClass("highlight");
+            }
+          },
+          skip: function(event){
+            if (event) {
+              event.stopPropagation();
+            }
+            this.$parent.skipFrame(this.idx);
+            $(this.$el).addClass("skipped");
+            $(this.$el).children().hide();
+          },
+          showMe: function(event) {
+            // undo skip first
+            this.$parent.unSkipFrame(this.idx);
+            $(this.$el).removeClass("skipped");
+            $(this.$el).children().show();
+            // change to this frame.
+            this.$parent.current = this.idx;
+          },
+          onSelect: function(event) {
+            if (! this.has_select || this.uinodes.length == 0 ) {
+              return;
+            }
+            var $div = this.uinodes[this.selected];
+            $div.siblings().hide();
+            $div.show();
+          }
+        },
+      });
+
+      Vue.component("frame", FrameComponent);
+
+      var SliderComponent = Vue.extend({
+        props: {
+          min : {
+            default: 0,
+            coerce : function (val) {return parseInt(val);}
+          },
+          max : {
+            default: 100,
+            coerce : function (val) {return parseInt(val);}
+          },
+          value:{
+            default: 0,
+            twoWay: true,
+            coerce : function (val) {return parseInt(val);}
+          }
+        },
+        template: "#v-slider-template",
+        data : function() {
+          return {dragging:false, $point:null, left:0, length:1}
+        },
+        ready: function(){
+          var $obj = $(this.$el);
+          this.left = $obj.position().left;
+          this.length = $obj.width();
+          this.$point = $obj.children(".v-slider-point");
+        },
+        methods: {
+          startDrag: function(event) {
+            this.dragging = true;
+          },
+          onDrag: function(event) {
+            if (this.dragging) {
+              this.setPos(event.pageX-this.left);
+            }
+          },
+          stopDrag: function(){
+            this.dragging = false;
+          },
+          setPos: function(pos) {
+            pos = Math.max(0, Math.min(pos, this.length));
+            this.value = Math.floor((this.max - this.min) * pos / this.length + 0.5);
+          },
+          update: function(v){
+            var $obj = $(this.$el);
+            this.left = $obj.position().left;
+            this.length = $obj.width();
+            this.value = this.value;
+
+            var pos;
+            if (this.max == this.min) {
+              pos = 0;
+            } else {
+              pos = this.length * this.value/ (this.max - this.min);
+            }
+            this.$point.css("left", pos - 0.5*this.$point.width() + 'px');
+          }
+        },
+        watch: {
+          'value' : function(v) {
+            if (null == this.$point) {
+              return;
+            }
+            this.update(v);
+          }
+        },
+      });
+
+      Vue.component("slider", SliderComponent);
+
+      var vm = new Vue({
+        el : "#container",
+        data : {
+          device : {},
+          frames : [],
+          total_frames : 0,
+          current: null,
+          scale: 0.4,
+          actions : {},
+        },
+        created : function(){
+          var self = this;
+          self.image = new Image();
+          self.image.addEventListener("load", function(){
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = this.width * self.scale;
+            canvas.height = this.height * self.scale;
+            ctx.drawImage(self.image, 0, 0, canvas.width, canvas.height);
+            self.updateChildren();
+          })
+
+          $.getJSON("frames/frames.json", function(data){
+            self.device = data["device"];
+            self.frames = data["frames"];
+            self.total_frames = self.frames.length;
+            if (self.total_frames > 0) {
+              self.current = 0;
+            }
+          });
+        },
+        methods: {
+          updateChildren: function() {
+            for (var i=0; i<this.$children.length; i++){
+              var child = this.$children[i];
+              if (child.update != null) {
+                child.update(this.current);
+              }
+            }
+          },
+          nextFrame: function() {
+            var i = this.current+1, found = false;
+            for (; i < this.total_frames; i++) {
+              if (! this.frames[i].skip) {
+                found = true;
+                break
+              }
+            }
+            if (found) {
+              this.current = i;
+            }
+          },
+          prevFrame: function() {
+            var i = this.current-1, found = false;
+            for (; i >= 0; i--) {
+              if (! this.frames[i].skip) {
+                found = true;
+                break
+              }
+            }
+            if (found) {
+              this.current = i;
+            }
+          },
+          skipFrame: function(idx) {
+            this.frames[idx].skip = true;
+          },
+          unSkipFrame: function(idx) {
+            delete this.frames[idx].skip;
+          },
+        },
+        watch: {
+          "current" : function(newval, oldval){
+            var self = this;
+            var frame = this.frames[newval];
+            self.image.src = frame["status"]["screen"];
+            $("#ui-overlap").children().hide();
+          }
+        },
+      });
+
+      $(document).keydown(function(event) {
+        switch (event.keyCode) {
+          case 37: //left
+            vm.prevFrame();
+            return false;
+          case 39: //right
+            vm.nextFrame();
+            return false;
+        }
+      });
+
+      // $(document).bind('mousewheel', function(event){
+      //   var delta = event.originalEvent.wheelDelta;
+      //   if (delta > 0) {
+      //     vm.prevFrame();
+      //   } else {
+      //     vm.nextFrame();
+      //   }
+      // });
+
+    </script>
+  </body>
+</html>
