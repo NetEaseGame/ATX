@@ -606,7 +606,7 @@ python -m atx --help
 
 7. 解决输入法遇到的问题
 
-	可以使用日本友人开发的输入法 utf7ime, 其源码地址在 <https://github.com/sumio/uiautomator-unicode-input-helper>
+	可以专门为自动化开发的Utf7Ime的输入法 [源码地址](https://github.com/macacajs/android-unicode)
 
 	启动方法
 
