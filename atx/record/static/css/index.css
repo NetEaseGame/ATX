@@ -15,8 +15,8 @@ select {
 }
 .action {
   background-color: white;
-  margin: 10px;
-  padding: 10px;
+  margin: 6px;
+  padding: 6px;
   border-radius: 5px;
 }
 .action > div.left > img {
@@ -52,15 +52,16 @@ button.skip{
   display: none;
 }
 .wrapper {
+  flex-grow: 1;
   display: flex;
-  flex-direction: row;
+  flex-flow: row nowrap;
 }
 .left-panel {
-  flex-basis: 1;
   flex-grow: 1;
+  margin-right: 10px;
 }
 .right-panel {
-  flex-basis: 1;
+  flex-basis: 300px;
 }
 .v-slider {
   position: relative;
@@ -69,9 +70,6 @@ button.skip{
 .v-slider-bar {
   background-color: #333;
   position: absolute;
-}
-.v-slider-bar:hover {
-  border: 1px solid #ff0;
 }
 .v-slider-point {
   background-color: #bbb;
@@ -125,4 +123,23 @@ button.skip{
 }
 .resizer:hover {
   cursor: se-resize;
+}
+.nav {
+  margin-left: 12px;
+}
+.nav > li {
+  float: left;
+  margin-right: 8px;
+  line-height: 22px;
+}
+.toolbar {
+  flex-basis: 60px;
+}
+.tool {
+  margin: 5px;
+}
+
+.tool img {
+  width: 30px;
+  height: 30px;
 }

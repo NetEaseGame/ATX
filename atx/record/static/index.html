@@ -5,22 +5,35 @@
     <link rel="stylesheet" href="css/jquery-ui-smoothness.css">
     <link rel="stylesheet" href="css/index.css">
   </head>
-  <body>
+  <body class="wrapper">
+    <div id="toolbar" class="toolbar" v-bind:style="{'display':visible?'block':'none'}">
+      <div class="tool" v-for="t in tools">
+        <button type="button" @click="click($key)">
+          <img v-bind:src="t.icon" alt="{{$key}}" />
+        </button>
+      </div>
+    </div>
     <div class="wrapper" id="container">
       <div class="left-panel">
-        <div class="toolbar">
-          <p>Current Frame: {{current+1}}/{{total_frames}}</p>
+        <div>
+          <ul class="nav clear-fix">
+            <li><button @click="toggleToolbar">ToggleToobar</button></li>
+            <li><button>Save</button></li>
+            <li><button>Run</button></li>
+            <li>Current Frame: {{current+1}}/{{total_frames}}</li>
+          </ul>
         </div>
-        <ul>
-          <li v-for="idx in total_frames">
-            <div is="frame" v-bind:idx="idx" v-bind:scale="scale" v-bind></div>
-          </li>
-        </ul>
+        <div>
+          <!-- need to scroll -->
+          <ul>
+            <li v-for="idx in total_frames">
+              <div is="frame" v-bind:idx="idx" v-bind:scale="scale" v-bind></div>
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="right-panel">
-        <div id="screen">
-          <canvas id="canvas" width="300" height="300"></canvas>
-        </div>
+        <canvas id="canvas" width="300" height="300"></canvas>
         <div is="slider" min="1" v-bind:max="total_frames" v-bind:value.sync="current"></div>
       </div>
     </div>
@@ -31,7 +44,7 @@
       </div>
     </script>
     <script type="x/template" id="frame-template">
-      <div class="action clear-fix" v-bind:class="{'highlight' : (idx==$parent.current), 'skipped': data.skip}" @click="showMe">
+      <div class="action clear-fix" v-bind:class="frameclass" @click="showMe">
         <div class="left">
           <img v-bind:src="icon"/>
           <b>{{action | camel}}</b>
@@ -71,9 +84,9 @@
         </div>
       </div>
     </script>
-    <script type="text/javascript" src="js/jquery-3.0.0.js"></script>
-    <script type="text/javascript" src="js/jquery-ui.js"></script>
-    <script type="text/javascript" src="js/vue.js"></script>
+    <script type="text/javascript" src="js/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/vue.min.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
     <script type="text/javascript">
       $(document).keydown(function(event) {

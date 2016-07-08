@@ -21,18 +21,6 @@ var FrameComponent = Vue.extend({
     scale: {},
   },
   computed: {
-    data: function() {
-      return this.$parent.frames[this.idx];
-    },
-    skipped: function(){
-      return this.data.skipped;
-    },
-    action: function() {
-      return this.data.event;
-    },
-    icon: function() {
-      return "imgs/" + this.data.event + ".png";
-    },
     options: function() {
       var d = {};
       for (var i = 0, n; i < this.uinodes.length; i++) {
@@ -40,6 +28,12 @@ var FrameComponent = Vue.extend({
         d[i] = n.$xml.attr("class") + "-" + n.$xml.attr("index");
       }
       return d;
+    },
+    frameclass: function(){
+      return {
+        "highlight": this.idx == this.$parent.current,
+        "skipped" : this.skipped,
+      };
     },
     chopstyle: function(){
       var height = 50.0,
@@ -98,7 +92,12 @@ var FrameComponent = Vue.extend({
     },
   },
   data: function(){
+    var d = this.$parent.frames[this.idx];
     return {
+      data: d,
+      action: d.event,
+      icon: "imgs/" + d.event + ".png",
+      skipped: d.skip,
       uilayer: {left:0, top:0, width:0, height:0},
       // click_ui
       uinodes: [],
@@ -188,10 +187,12 @@ var FrameComponent = Vue.extend({
         event.stopPropagation();
       }
       this.$parent.skipFrame(this.idx);
+      this.skipped = true;
     },
     showMe: function(event) {
       // undo skip first
       this.$parent.unSkipFrame(this.idx);
+      this.skipped = false;
       // change to this frame.
       this.$parent.current = this.idx;
     },
@@ -225,8 +226,8 @@ var FrameComponent = Vue.extend({
       if (this.imgdragging || this.imgresizing) {
         var right = parseInt((event.pageX - this.uilayer.left) / this.scale),
             bottom = parseInt((event.pageY - this.uilayer.top) / this.scale);
-        this.imgbound.width = Math.min(300, Math.max(30, right - this.imgbound.left));
-        this.imgbound.height = Math.min(300, Math.max(30, bottom - this.imgbound.top));
+        this.imgbound.width = Math.min(600, Math.max(60, right - this.imgbound.left));
+        this.imgbound.height = Math.min(600, Math.max(60, bottom - this.imgbound.top));
       }
     },
     stopRect: function(event){
@@ -360,6 +361,7 @@ var vm = new Vue({
     current: null,
     scale: 0.4,
     actions : {},
+    showtoolbar: false,
   },
   created : function(){
     var self = this;
@@ -421,6 +423,9 @@ var vm = new Vue({
     unSkipFrame: function(idx) {
       delete this.frames[idx].skip;
     },
+    toggleToolbar: function(){
+      toolbar.toggle();
+    },
   },
   watch: {
     "current" : function(newval, oldval){
@@ -428,5 +433,47 @@ var vm = new Vue({
       var frame = this.frames[newval];
       self.image.src = "frames/" + frame["status"]["screen"];
     }
+  },
+});
+
+var toolbar = new Vue({
+  el: "#toolbar",
+  data: {
+    visible: true,
+    tools : {
+      "newClick" : {icon:"imgs/1_touch.png", },
+      "newClickUi" : {icon:"imgs/1_touch.png",},
+      "newClickImage" : {icon:"imgs/1_touch.png"},
+      "newSwipe": {icon:"imgs/2_swipe.png"},
+      "newText": {icon:"imgs/5_text.png"},
+      "newKeyEvent": {icon:"imgs/6_keyboard.png"},
+      "newServerCall": {icon:"imgs/7_command.png"},
+      "newAssertExists": {icon:"imgs/4_exists.png"},
+      "newWait": {icon:"imgs/3_wait.png"},
+      "newIfElse": {icon:"imgs/9_what.png"},
+      "newForLoop": {icon:"imgs/9_what.png"},
+      "newWhileLoop": {icon:"imgs/9_what.png"},
+    },
+  },
+  methods: {
+    toggle : function(){
+      this.visible = !this.visible;
+    },
+    click: function(what){
+      var func = this[what];
+      if (func) {func.call(this, what);}
+    },
+    newClick: function(what){console.log(what);},
+    newClickUi: function(what){console.log(what);},
+    newClickImage: function(what){console.log(what);},
+    newSwipe: function(what){console.log(what);},
+    newText: function(what){console.log(what);},
+    newKeyEvent: function(what){console.log(what);},
+    newServerCall: function(what){console.log(what);},
+    newAssertExists: function(what){console.log(what);},
+    newWait: function(what){console.log(what);},
+    newIfElse: function(what){console.log(what);},
+    newForLoop: function(what){console.log(what);},
+    newWhileLoop: function(what){console.log(what);},
   },
 });
