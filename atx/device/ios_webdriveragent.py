@@ -4,7 +4,7 @@
 from __future__ import absolute_import
 
 import os
-import io
+import time
 
 from PIL import Image
 import subprocess32 as subprocess
@@ -38,8 +38,15 @@ class IOSDevice(DeviceMixin, ioskit.Device):
             if 'TEST FAILED' in line:
                 raise RuntimeError("webdriver start test failed, maybe need to unlock the keychain, try\n" + 
                     '$ security unlock-keychain ~/Library/Keychains/login.keychain')
-            elif "Test Case '-[UITestingUITests testRunner]' started" in line:
-                print 'GOOD ^_^'
+            elif "Successfully wrote Manifest cache" in line:
+                print 'GOOD ^_^, wait 5s'
+                time.sleep(5.0)
+                break
+
+    def __del__(self):
+        if self._xcproc:
+            print 'Terminate xcodebuild'
+            self._xcproc.terminate()
 
     @property
     def display(self):
