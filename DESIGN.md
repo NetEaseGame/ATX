@@ -6,38 +6,47 @@
 from atx import script_utils as wu
 ```
 
-只触发一次效果
-```
+### 只触发一次效果
+```py
 btn_login = d(text=u'登陆', className='Button')
-if scu.once_exists(btn_login):
-	btn_login.click()
+once = scu.Once()
+once.exists(btn_login) and btn_login.click()
+```
 
-# same sa
+Same as
+```py
+btn_login = d(text=u'登陆', className='Button')
 trigged = False
 if not trigged and btn_login.exists:
 	trigged = True
 	btn_login.click()
 ```
 
-存在并点击效果
+### 存在并点击效果
 ```
 scu.safe_click(d(text='Update'))
+```
 
-# same as
+等价于
+
+```
 btn_update = d(text='Update')
 if btn_update.exists:
 	btn_update.click()
 ```
 
-Timeout效果
+### Timeout效果
 
 ```
 with scu.while_timeout(50, safe=True):
 	pass
 	# raise scu.Continue()
 	# raise scu.Break()
+```
 
-# same as
+等价于
+
+```
 safe = True
 deadline = time.time() + 50
 while time.time() < deadline:
