@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import collections
+import base64
 import os
 import re
 import sys
@@ -478,22 +479,36 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         android source code can be found here.
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
-        first = True
-        is_utf7 = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
-
-        for s in text.split('%s'):
-            if first:
-                first = False
-            else:
-                self.adb_shell(['input', 'text', '%'])
-                s = 's' + s
-            if s == '':
-                continue
-            estext = self._escape_text(s, is_utf7)
-            self.adb_shell(['input', 'text', estext])
+        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
+        if is_utf7ime:
+            estext = base64.b64encode(text.encode('utf-7'))
+            self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
+        else:
+            first = True
+            for s in text.split('%s'):
+                if first:
+                    first = False
+                else:
+                    self.adb_shell(['input', 'text', '%'])
+                    s = 's' + s
+                if s == '':
+                    continue
+                estext = self._escape_text(s)
+                self.adb_shell(['input', 'text', estext])
 
         if enter:
             self.keyevent('KEYCODE_ENTER')
+
+    def clear_text(self, count=100):
+        """Clear text
+        Args:
+            - count (int): send KEY_DEL count
+        """
+        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
+        if not is_utf7ime:
+            raise RuntimeError("Input method must be 'android.unicode.ime'")
+        self.keyevent('KEYCODE_MOVE_END')
+        self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
 
     def current_ime(self):
         ''' Get current input method '''
