@@ -510,6 +510,19 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         self.keyevent('KEYCODE_MOVE_END')
         self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
 
+    def input_methods(self):
+        """
+        Get all input methods
+
+        Return example: ['com.sohu.inputmethod.sogou/.SogouIME', 'android.unicode.ime/.Utf7ImeService']
+        """
+        imes = []
+        for line in self.adb_shell(['ime', 'list', '-s', '-a']).splitlines():
+            line = line.strip()
+            if re.match('^.+/.+$', line):
+                imes.append(line)
+        return imes
+
     def current_ime(self):
         ''' Get current input method '''
         dumpout = self.adb_shell(['dumpsys', 'input_method'])
