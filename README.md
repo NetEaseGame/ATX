@@ -159,7 +159,7 @@ iOS自动化必须一台Mac，所以请准备好硬件
 
 	命令行运行 `python -m atx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
 
-	![tkide](images/tkide.png)
+	![gui](images/atx-gui.gif)
 
 	_PS: 这里其实有个好的IDE截图的最好了，现在是用Tkinter做的，比较简洁，但是可以跨平台，效果也还可以_
 

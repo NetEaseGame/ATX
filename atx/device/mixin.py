@@ -255,6 +255,8 @@ class DeviceMixin(object):
         self._listeners = []
         self._depth = 0 # used for hook_wrap
         self.image_path = ['.']
+        self.__last_screen = None
+        self.__keep_screen = False
 
     @property
     def resolution(self):
@@ -434,14 +436,29 @@ class DeviceMixin(object):
         _d._bounds = bounds
         return _d
 
+    def keep_screen(self):
+        """
+        Freese screenshot, so all image functions will not take images, until call free_screen()
+        """
+        self.__last_screen = self.screenshot()
+        self.__keep_screen = True
+        return self
+        
+    def free_screen(self):
+        """
+        Unlock keep_screen()
+        """
+        self.__keep_screen = False
+        return self
+
     def region_screenshot(self, filename=None):
-        if self._bounds is None:
-            return self.screenshot(filename)
-        screen = self.screenshot()
-        screen_crop = screen.crop(self.bounds)
+        """ take part of the screenshot """
+        screen = self.__last_screen if self.__keep_screen else self.screenshot()
+        if self._bounds:
+            screen = screen.crop(self.bounds)
         if filename:
-            screen_crop.save(filename)
-        return screen_crop
+            screen.save(filename)
+        return screen
 
     def touch_image(self, *args, **kwargs):
         """ALias for click_image"""
