@@ -56,7 +56,7 @@ def adb_pushfile(adb, filepath, remote_path):
 
 def get_file_size(adb, remote_path):
     try:
-        output = subprocess.check_output(adb.build_cmd('shell', 'ls', '-l', remote_path))
+        output = adb.run_cmd('shell', 'ls', '-l', remote_path)
         m = re.search(r'\s(\d+)', output)
         if not m:
             return 0
