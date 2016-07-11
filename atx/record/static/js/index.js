@@ -95,10 +95,12 @@ var FrameComponent = Vue.extend({
     var d = this.$parent.frames[this.idx];
     return {
       data: d,
-      action: d.event,
-      icon: "imgs/" + d.event + ".png",
+      action: d.event.action,
+      icon: "imgs/" + d.event.action + ".png",
       skipped: d.skip,
       uilayer: {left:0, top:0, width:0, height:0},
+      // keyevent
+      key: null,
       // click_ui
       uinodes: [],
       has_select: false,
@@ -117,10 +119,18 @@ var FrameComponent = Vue.extend({
   ready: function() {
     var self = this;
 
+    console.log(self.data.event);
     // setup for different events.
-    switch (self.data.event) {
+    switch (self.data.event.action) {
+      case "keyevent":
+        self.key = self.data.event.args[0];
+        break;
+      case "touch":
       case "click":
         self.has_point= 1;
+        var obj = self.data.event.args;
+        self.point.left = obj[0];
+        self.point.top = obj[1];
         break
       case "click_image":
         self.has_image = true;
@@ -133,7 +143,7 @@ var FrameComponent = Vue.extend({
     }
 
     // load uixml for click_ui
-    if (self.data.event == "click_ui") {
+    if (self.data.event.action == "click_ui") {
       $.ajax({
         url: 'frames/' + self.data['status']['uixml'],
         type: 'GET',
@@ -439,7 +449,7 @@ var vm = new Vue({
 var toolbar = new Vue({
   el: "#toolbar",
   data: {
-    visible: true,
+    visible: false,
     tools : {
       "newClick" : {icon:"imgs/1_touch.png", },
       "newClickUi" : {icon:"imgs/1_touch.png",},

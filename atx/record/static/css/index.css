@@ -90,15 +90,24 @@ button.skip{
   border: 1px solid #ffff00;
 }
 @keyframes breath {
-  from {opacity: 1;}
-  50%  {opacity: 0.4;}
-  from {opacity: 1;}
+  0% {
+    opacity: 1;
+    box-shadow: 0 0 10px 10px #DC143C;
+  }
+  50%  {
+    opacity: 0.4;
+    box-shadow: 0 0 1px 1px #DC143C;
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 10px 10px #DC143C;
+  }
 }
 .point {
   animation: breath 2s ease-in-out infinite;
   background-color: #fff;
   border: 1px solid #f00;
-  box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+  /*box-shadow: 0 0 5px rgba(81, 203, 238, 1);*/
   position: absolute;
 }
 .chop {

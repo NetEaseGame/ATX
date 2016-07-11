@@ -18,7 +18,7 @@
         <div>
           <ul class="nav clear-fix">
             <li><button @click="toggleToolbar">ToggleToobar</button></li>
-            <li><button>Save</button></li>
+            <li><button @click="saveCase">Save</button></li>
             <li><button>Run</button></li>
             <li>Current Frame: {{current+1}}/{{total_frames}}</li>
           </ul>
@@ -48,6 +48,7 @@
         <div class="left">
           <img v-bind:src="icon"/>
           <b>{{action | camel}}</b>
+          <span v-if="(action=='keyevent')">{{key}}</span>
           <template v-if="has_select">
             <select v-model="selected">
               <option v-for="opt in options" value="{{$key}}">{{opt}}</option>

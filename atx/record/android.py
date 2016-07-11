@@ -13,7 +13,6 @@ from atx.adbkit.mixins import RotationWatcherMixin, MinicapStreamMixin
 from atx.record.base import BaseRecorder, ScreenAddon, UixmlAddon
 from atx.record.android_hooks import HookManager, HookConstants as HC
 from atx.record.android_layout import AndroidLayout
-from atx.imutils import from_pillow
 
 class RecordDevice(RotationWatcherMixin, MinicapStreamMixin, AndroidDevice):
 
@@ -128,7 +127,7 @@ class AdbStatusAddon(object):
                 time.sleep(self.__cmd_interval)
                 if not self.running or self.device is None:
                     continue
-                tic = time.time()
+                # tic = time.time()
                 status = {
                     'activity' : self.__get_activity(),
                 }
@@ -185,6 +184,16 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
     def on_key(self, event):
         if not event.msg & 0x01: # key_up
             self.input_event(event)
+
+    def serialize_event(self, event):
+        e = event
+        if e.msg & HC.KEY_ANY:
+            return {'action':'keyevent', 'args':(e.key,)}
+        e.msg = HC.GST_TAP
+        if e.msg == HC.GST_TAP:
+            return {'action':'touch', 'args':(e.x, e.y)}
+        if e.msg == HC.GST_SWIPE:
+            return {'action':'swipe', 'args':(e.sx, e.sy, e.ex, e.ey)}
 
     def analyze_frame(self, idx, event, status):
         e = event
@@ -255,15 +264,20 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 def find_clicked_img(img, x, y):
     return img
 
-
 if __name__ == '__main__':
-    d = RecordDevice()
-    rec = AndroidRecorder(d, 'testcase', realtime_analyze=True)
-    rec.add_nonui_activity('com.netease.txx.mi/com.netease.txx.Client')
-    rec.start()
-    while True:
-        try:
-            time.sleep(1)
-        except:
-            break
-    rec.stop()
+    def test():
+        d = RecordDevice()
+        rec = AndroidRecorder(d, 'testcase', realtime_analyze=True)
+        rec.add_nonui_activity('com.netease.txx.mi/com.netease.txx.Client')
+        rec.start()
+        while True:
+            try:
+                time.sleep(1)
+            except:
+                break
+        rec.stop()
+
+    if os.path.exists(os.path.join('testcase', 'frames', 'frames.json')):
+        AndroidRecorder.analyze_frames('testcase')
+    else:
+        test()
