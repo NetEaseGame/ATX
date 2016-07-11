@@ -106,7 +106,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 3. Install `ADB` (Android Debug Bridge)
 
-	If already installed, just skip the part. recommend version `1.0.36`
+	If already installed, just skip the part. recommend version `1.0.36`, you can download from [github release](https://github.com/codeskyblue/AutomatorX/releases/download/1.0.12/adb-1.0.36.zip)
 
 	* Download address 1: <https://developer.android.com/studio/index.html>
 	* Download address 2: <http://adbshell.com> (this site update not too fast)
