@@ -339,14 +339,16 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Args:
             package_name: string like com.example.app1
 
-        Returns:
-            None
+        Returns time used (unit second), if activity is not None
         '''
+        _pattern = re.compile(r'TotalTime: (\d+)')
         if activity is None:
             self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
         else:
-            self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
-        return self
+            output = self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
+            m = _pattern.search(output)
+            if m:
+                return int(m.group(1))/1000.0
 
     def stop_app(self, package_name, clear=False):
         '''

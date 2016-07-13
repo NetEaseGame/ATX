@@ -93,9 +93,19 @@ class Report(object):
             step['screenshot'] = screen_path
         self.steps.append(step)
 
+    # def add_click(self, x, y, screen=None):
+    #     if screen is None:
+    #         screen = self.d.screenshot()
+
+    def add_step(self, action, **kwargs):
+        kwargs['success'] = kwargs.pop('success', True)
+        kwargs['time'] = kwargs.pop('time', time.time()-self._start_time)
+        kwargs['action'] = action
+        self.steps.append(kwargs)
+
     def listener(self, evt):
         d = self.d
-        start_time = self.start_time
+        self._start_time = self.start_time
         screen_before = 'images/before_%d.png' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
@@ -108,18 +118,12 @@ class Report(object):
             d.screenshot(os.path.join(self.save_dir, screen_after))
 
             (x, y) = evt.args
-            self.steps.append({
-                'time': '%.1f' % (time.time()-start_time,),
-                'action': 'click',
-                'screen_before': screen_before,
-                'screen_after': screen_after,
-                'position': {'x': x, 'y': y},
-                'success': True,
-            })
+            self.add_step('click',
+                screen_before=screen_before,
+                screen_after=screen_after,
+                position={'x': x, 'y': y})
         elif evt.flag == consts.EVENT_CLICK_IMAGE:
-            step = {
-                'time': '%.1f' % (time.time()-start_time,),
-                'action': 'click_image',
+            kwargs = {
                 'success': evt.traceback is None,
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
             }
@@ -129,22 +133,21 @@ class Report(object):
             
             if d.last_screenshot:
                 d.last_screenshot.save(screen_before_abspath)
-                step['screen_before'] = screen_before
+                kwargs['screen_before'] = screen_before
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
                 target = 'images/target_%d.png' % time.time()
                 target_abspath = os.path.join(self.save_dir, target)
                 pattern = d.pattern_open(evt.args[0])
                 pattern.save(target_abspath)
-                step['target'] = target
+                kwargs['target'] = target
             if evt.traceback is None:
                 screen_after = 'images/after_%d.png' % time.time()
                 d.screenshot(os.path.join(self.save_dir, screen_after))
-                step['screen_after'] = screen_after
-                step['confidence'] = evt.retval.confidence
+                kwargs['screen_after'] = screen_after
+                kwargs['confidence'] = evt.retval.confidence
                 (x, y) = evt.retval.pos
-                step['position'] = {'x': x, 'y': y}
-
-            self.steps.append(step)
+                kwargs['position'] = {'x': x, 'y': y}
+            self.add_step('click_image', **kwargs)
 
 
 def listen(d, save_dir='report'):
