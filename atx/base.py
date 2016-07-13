@@ -168,20 +168,23 @@ def nameddict(name, props):
     print pt
     """
     class NamedDict(object):
-        def __init__(self, **kwargs):
+        def __init__(self, *args, **kwargs):
             self.__store = {}.fromkeys(props)
+            if args:
+                for i, k in enumerate(props[:len(args)]):
+                    self[k] = args[i]
             for k, v in kwargs.items():
                 self[k] = v
 
         def __getattr__(self, key):
-            print '+', key
+            # print '+', key
             if key.startswith('_NamedDict__'):
                 return self.__dict__[key]
             else:
                 return self.__store[key]
 
         def __setattr__(self, key, value):
-            print '-', key
+            # print '-', key
             if key.startswith('_NamedDict__'):
                 object.__setattr__(self, key, value)
             else:
@@ -207,6 +210,9 @@ def nameddict(name, props):
 
 
 if __name__ == '__main__':
-    print search_image('你好.png')
-    print search_image('oo')
-    print search_image()
+    # print search_image('你好.png')
+    # print search_image('oo')
+    # print search_image()
+
+    Point = nameddict('Point', ['x', 'y'])
+    print Point(2, 3, 4)

@@ -109,9 +109,15 @@ class Report(object):
         screen_before = 'images/before_%d.png' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
+        if evt.depth > 1: # base depth is 1
+            return
+
+        if evt.is_before: # call before function
+            if evt.flag == consts.EVENT_CLICK:
+                d.screenshot()
+            return
+
         if evt.flag == consts.EVENT_CLICK:
-            if evt.depth > 1: # base depth is 1
-                return
             if d.last_screenshot: # just in case
                 d.last_screenshot.save(screen_before_abspath)
             screen_after = 'images/after_%d.png' % time.time()

@@ -34,6 +34,7 @@ from atx import base
 from atx import logutils
 from atx import strutils
 from atx import imutils
+from atx.base import nameddict
 from atx.device import Pattern, Bounds, FindPoint
 
 
@@ -219,7 +220,7 @@ class Watcher(object):
 
 
 Traceback = collections.namedtuple('Traceback', ['stack', 'exception'])
-HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth'])
+HookEvent = nameddict('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth', 'is_before'])
 
 def hook_wrap(event_type):
     def wrap(fn):
@@ -227,21 +228,28 @@ def hook_wrap(event_type):
         def _inner(*args, **kwargs):
             func_args = inspect.getcallargs(fn, *args, **kwargs)
             self = func_args.get('self')
+            self._depth += 1
+
+            def trigger(event):
+                for (f, event_flag) in self._listeners:
+                    if event_flag & event_type:
+                        event.args = args[1:]
+                        event.kwargs = kwargs
+                        event.flag = event_type
+                        event.depth = self._depth
+                        f(event)
             
             _traceback = None
             _retval = None
             try:
-                self._depth += 1
+                trigger(HookEvent(is_before=True))
                 _retval = fn(*args, **kwargs)
                 return _retval
             except Exception as e:
                 _traceback = Traceback(traceback.format_exc(), e)
                 raise
             finally:
-                if self and hasattr(self, '_listeners'):
-                    for (f, event_flag) in self._listeners:
-                        if event_flag & event_type:
-                            f(HookEvent(event_type, args[1:], kwargs, _retval, _traceback, self._depth)) # remove self from args
+                trigger(HookEvent(is_before=False, retval=_retval, traceback=_traceback))
                 self._depth -= 1
         return _inner
     return wrap
