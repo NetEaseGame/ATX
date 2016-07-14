@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import atexit
+import argparse
 import os
 import time
 import json
@@ -9,6 +10,7 @@ import warnings
 
 from atx import consts
 from atx import errors
+from atx.base import nameddict
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +20,15 @@ class ExtDeprecationWarning(DeprecationWarning):
     pass
 
 warnings.simplefilter('always', ExtDeprecationWarning)
+
+def json2obj(data):
+    data['this'] = data.pop('self', None)
+    return nameddict('X', data.keys())(**data)
+
+def center(bounds):
+    x = (bounds['left'] + bounds['right'])/2
+    y = (bounds['top'] + bounds['bottom'])/2
+    return (x, y)
 
 
 class Report(object):
@@ -36,8 +47,29 @@ class Report(object):
         self.save_dir = save_dir
         self.steps = []
         self.result = None
-        # listen(self.d, self.save_dir)
+        self.__uia_last_position = None
         self.start_record()
+
+    def _uia_listener(self, evtjson):
+        evt = json2obj(evtjson)
+        if evt.name != '_click':
+            return
+        if evt.is_before:
+            self.d.screenshot()
+            self.__uia_last_position = center(evt.this.bounds)
+        else:
+            screen_before = self._save_screenshot(self.d.last_screenshot)
+            # FIXME: maybe need sleep for a while
+            screen_after = self._save_screenshot()
+            (x, y) = self.__uia_last_position
+            self.add_step('click',
+                screen_before=screen_before,
+                screen_after=screen_after,
+                position={'x': x, 'y': y})
+
+    def patch_uiautomator(self):
+        import uiautomator
+        uiautomator.add_listener('atx-report', self._uia_listener)
 
     def start_record(self):
         self.start_time = time.time()
@@ -52,7 +84,7 @@ class Report(object):
             start_timestamp=time.time(),
         ), steps=self.steps)
 
-        self.d.add_listener(self.listener, consts.EVENT_ALL ^ consts.EVENT_SCREENSHOT)
+        self.d.add_listener(self._listener, consts.EVENT_ALL ^ consts.EVENT_SCREENSHOT)
         atexit.register(self._finish)
 
     def _finish(self):
@@ -99,13 +131,20 @@ class Report(object):
 
     def add_step(self, action, **kwargs):
         kwargs['success'] = kwargs.pop('success', True)
-        kwargs['time'] = kwargs.pop('time', time.time()-self._start_time)
+        kwargs['time'] = round(kwargs.pop('time', time.time()-self.start_time), 1)
         kwargs['action'] = action
         self.steps.append(kwargs)
 
-    def listener(self, evt):
+    def _save_screenshot(self, screen=None):
+        if screen is None:
+            screen = self.d.screenshot()
+        abspath = 'images/before_%d.png' % time.time()
+        relpath = os.path.join(self.save_dir, abspath)
+        screen.save(relpath)
+        return abspath
+
+    def _listener(self, evt):
         d = self.d
-        self._start_time = self.start_time
         screen_before = 'images/before_%d.png' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
