@@ -1,19 +1,23 @@
 Vue.filter('capitalize', function(s) {
-  if (s == undefined || s == null) {return "";}
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  if (Object.prototype.toString.call(s) === "[object String]") {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  return "";
 })
 
 Vue.filter('camel', function(s) {
-  if (s == undefined || s == null) {return "";}
-  var str='', arr = s.split(/_/g);
-  for (var i=0; i<arr.length; i++) {
-    str += arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+  if (Object.prototype.toString.call(s) === "[object String]") {
+    var str='', arr = s.split(/_/g);
+    for (var i=0; i<arr.length; i++) {
+      str += arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+    }
+    return str;
   }
-  return str;
+  return "";
 })
 
 var FrameComponent = Vue.extend({
-  props: {
+    props: {
     idx: {
       required: true,
       coerce : function (val) {return parseInt(val);}
@@ -21,6 +25,12 @@ var FrameComponent = Vue.extend({
     scale: {},
   },
   computed: {
+    action: function(){
+      return this.event.action;
+    },
+    icon: function(){
+      return "imgs/" + this.event.action + ".png";
+    },
     options: function() {
       var d = {};
       for (var i = 0, n; i < this.uinodes.length; i++) {
@@ -40,15 +50,14 @@ var FrameComponent = Vue.extend({
           scale = height / this.imgbound.height,
           width = this.imgbound.width * scale,
           left = this.imgbound.left * scale,
-          top = this.imgbound.top * scale,
-          $canvas = $("#canvas");
+          top = this.imgbound.top * scale;
       return {
         "height": height + "px",
         "width" : width + "px",
-        "background-image": "url(frames/" + this.data.status.screen + ")",
+        "background-image": "url(frames/" + this.status.screen + ")",
         "background-position" : "-" + left +"px -" + top + "px",
-        "background-size" : $canvas.width()*scale/this.scale + "px " +
-                            $canvas.height()*scale/this.scale + "px",
+        "background-size" : this.uilayer.width*scale/this.scale + "px " +
+                            this.uilayer.height*scale/this.scale + "px",
       };
     },
     overlapstyle: function(){
@@ -81,7 +90,7 @@ var FrameComponent = Vue.extend({
       };
     },
     uiboxstyle: function() {
-      var obj = this.uinodes[this.selected];
+      var obj = this.uinodes[this.selected_ui];
       if (undefined == obj) { return {};}
       return {
         "top": obj.top * this.scale + "px",
@@ -94,7 +103,8 @@ var FrameComponent = Vue.extend({
   data: function(){
     var d = this.$parent.frames[this.idx];
     return {
-      data: d,
+      event: d.event,
+      status: d.status,
       action: d.event.action,
       icon: "imgs/" + d.event.action + ".png",
       skipped: d.skip,
@@ -103,49 +113,54 @@ var FrameComponent = Vue.extend({
       key: null,
       // click_ui
       uinodes: [],
-      has_select: false,
-      selected: null,
+      selected_ui: null,
       // click
-      has_point: 0,
       point: {left:100, top:200},
       // click_image
-      has_image: false,
       imgbound: {left:100, top:100, width:100, height:100},
       imgdragging: false,
       imgresizing: false,
+      // swipe
+      swipepoints: null,
     }
   },
   template: "#frame-template",
-  ready: function() {
+    ready: function() {
     var self = this;
 
-    console.log(self.data.event);
+    var event = self.$parent.actions[self.idx+1+""];
+    if (event) {
+      this.event = event;
+    }
+
     // setup for different events.
-    switch (self.data.event.action) {
+    switch (self.event.action) {
       case "keyevent":
-        self.key = self.data.event.args[0];
+        self.key = self.event.args[0];
         break;
-      case "touch":
       case "click":
-        self.has_point= 1;
-        var obj = self.data.event.args;
+        var obj = self.event.args;
         self.point.left = obj[0];
         self.point.top = obj[1];
         break
       case "click_image":
-        self.has_image = true;
         break;
       case "click_ui":
-        self.has_select = true;
-        self.selected = 0;
+        self.selected_ui = 0;
         break;
+      case "swipe":
+        var obj = self.event.args;
+        self.swipepoints = {
+          start:{left:obj[0], top:obj[1]},
+          end:{left:obj[2], top:obj[3]}
+        };
       default:
     }
 
     // load uixml for click_ui
-    if (self.data.event.action == "click_ui") {
+    if (self.event.action == "click_ui") {
       $.ajax({
-        url: 'frames/' + self.data['status']['uixml'],
+        url: 'frames/' + self.status.uixml,
         type: 'GET',
         dataType: 'xml',
         success: function(xmldata){
@@ -171,19 +186,19 @@ var FrameComponent = Vue.extend({
           });
         },
         error: function(){
-          console.log('Get uixml failed', self.data['status']['uixml']);
+          console.log('Get uixml failed', self.status.uixml);
           self.uinodes = [];
         }
       });
     }
 
     // check skip
-    if (self.data.skip) {
+    if (self.skipped) {
       self.skip();
     }
   },
   methods: {
-    update: function(v){
+      update: function(v){
       if (v == this.idx) {
         var canvas = document.getElementById("canvas");
         this.uilayer.left = $("#canvas").position().left;
@@ -192,7 +207,7 @@ var FrameComponent = Vue.extend({
         this.uilayer.height = canvas.height;
       }
     },
-    skip: function(event){
+      skip: function(event){
       if (event) {
         event.stopPropagation();
       }
@@ -207,7 +222,6 @@ var FrameComponent = Vue.extend({
       this.$parent.current = this.idx;
     },
     selectUi: function(event) {
-      console.log('onclick', this.data.event);
       var i = 0, n, left, right, top, bottom;
       for (; i < this.uinodes.length; i++) {
         n = this.uinodes[i];
@@ -218,7 +232,7 @@ var FrameComponent = Vue.extend({
         if ((event.pageX > left) && (event.pageX < right)
            && (event.pageY > top) && (event.pageY < bottom))
         {
-          this.selected = i;
+          this.selected_ui = i;
           break;
         }
       }
@@ -365,13 +379,12 @@ var vm = new Vue({
   el : "#container",
   data : {
     device : {},
-    // screen: {left: 0, top: 0, width:0, height: 0},
     frames : [],
     total_frames : 0,
     current: null,
     scale: 0.4,
-    actions : {},
-    showtoolbar: false,
+    // for generated case.
+    actions: {},
   },
   created : function(){
     var self = this;
@@ -385,14 +398,27 @@ var vm = new Vue({
       self.updateChildren();
     })
 
-    $.getJSON("frames/frames.json", function(data){
-      self.device = data["device"];
-      self.frames = data["frames"];
-      self.total_frames = self.frames.length;
-      if (self.total_frames > 0) {
-        self.current = 0;
+    // get case info after frames.
+    $.getJSON("case/draft.json", function(data){
+      for (var i = 0, f; i < data["skips"].length; i++) {
+        f = self.frames[data["skips"][i]];
+        if (f != undefined) {
+          f.skip = true;
+        }
       }
+      self.actions = data["actions"];
+
+      $.getJSON("frames/frames.json", function(data){
+        self.device = data["device"];
+        self.frames = data["frames"];
+        self.total_frames = self.frames.length;
+        if (self.total_frames > 0) {
+          self.current = 0;
+        }
+      });
+
     });
+
   },
   methods: {
     updateChildren: function() {
@@ -429,12 +455,22 @@ var vm = new Vue({
     },
     skipFrame: function(idx) {
       this.frames[idx].skip = true;
+      if ($.inArray(idx, this.skips) == -1) {
+        this.skips.push(idx);
+      }
     },
     unSkipFrame: function(idx) {
       delete this.frames[idx].skip;
+      var i = $.inArray(idx, this.skips);
+      if (i != -1) {
+        this.skips.del(i);
+      }
     },
     toggleToolbar: function(){
       toolbar.toggle();
+    },
+    saveCase: function(){
+      console.log('saved.');
     },
   },
   watch: {

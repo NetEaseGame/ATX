@@ -39,10 +39,14 @@ select {
   clear: both;
 }
 button.skip{
+  opacity: 0;
   background: url("../imgs/remove.png");
   width: 20px;
   height: 20px;
   border: 0px;
+}
+button.skip:hover{
+  opacity: 1;
 }
 .skipped {
   height: 6px;
@@ -87,7 +91,7 @@ button.skip{
 }
 .uibox {
   position: absolute;
-  border: 1px solid #ffff00;
+  border: 1px solid #ff0000;
 }
 @keyframes breath {
   0% {
@@ -116,7 +120,7 @@ button.skip{
 }
 .rect {
   position: absolute;
-  border: 1px solid #ffff00;
+  border: 1px solid #ff0000;
 }
 .full {
   width: 100%;

@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import json
 import socket
 import webbrowser
 import tornado.ioloop
@@ -17,8 +18,21 @@ class MainHandler(tornado.web.RequestHandler):
         self.redirect('/index.html')
 
 class CaseHandler(tornado.web.RequestHandler):
+    def initialize(self, casedir):
+        self.casedir = casedir
+        self.case = {}
+        casepath = os.path.join(casedir, 'case.json')
+        draftpath = os.path.join(casedir, 'draft.json')
+        if os.path.exists(casepath):
+            with open(casepath) as f:
+                self.case = json.load(f)
+        elif os.path.exists(draftpath):
+            with open(draftpath) as f:
+                self.case = json.load(f)
+
     def get(self):
-        pass
+        self.write(self.case)
+        self.finish()
 
     def post(self):
         pass
@@ -30,14 +44,12 @@ def get_valid_port():
     s.close()
     return port
 
-def load_case(casedir):
-    pass
-
-def run(casedir):
-    casedir = os.path.abspath(casedir)
+def run(basedir):
+    basedir = os.path.abspath(basedir)
     application = tornado.web.Application([
         (r'/', MainHandler),
-        (r'/frames/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(casedir, 'frames')}),
+        (r'/frames/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(basedir, 'frames')}),
+        (r'/case', CaseHandler, {'casedir':os.path.join(basedir, 'case')}),
         (r'/(.*)', tornado.web.StaticFileHandler, {'path':'static'}),
     ], autoreload=True, static_hash_cache=False)
 
@@ -47,7 +59,7 @@ def run(casedir):
 
     application.listen(port)
     print 'Listen on', port
-    print 'CaseDir:', casedir
+    print 'CaseDir:', basedir
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == '__main__':
