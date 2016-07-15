@@ -2,7 +2,7 @@
 # hook only ui related events via uiautomator.
 # the basic idea is find gesture target via postion.
 # so we should simulate the layout via dumped ui tree.
-# The ui hierarchy needs to be dumped repeatedly 
+# The ui hierarchy needs to be dumped repeatedly
 # and the process costs a rather long time.
 # after each gesture we need to refresh the tree.
 
@@ -16,13 +16,11 @@ import numpy as np
 from atx.device import Bounds
 UINode = collections.namedtuple('UINode', [
     'xml', 'children', 'depth',
-    'bounds', 
-    'selected', 'checkable', 'clickable', 'scrollable', 'focusable', 'enabled', 'focused', 'long_clickable',
-    'password',
-    'class_name',
-    'index', 'resource_id',
-    'text', 'content_desc',
-    'package'])
+    'index', 'text', 'resourceId',
+    'className', 'packageName', 'description',
+    'checkable', 'checked', 'clickable', 'enabled', 'focusable', 'focused',
+    'scrollable', 'longClickable', 'password', 'selected',
+    'bounds'])
 
 def parse_bounds(text):
     m = re.match(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', text)
@@ -71,7 +69,7 @@ class AndroidLayout(object):
         w, h = b.right - b.left, b.bottom - b.top
         img = np.zeros((h, w, 3), np.uint8)
         # highlight = np.zeros((h, w, 3), np.uint8)
-        
+
         i = 0
         for n in self.nodes:
             if not n.clickable and not n.scrollable: continue
@@ -81,31 +79,32 @@ class AndroidLayout(object):
         return img
 
     def _parse_xml_node(self, node, depth=0):
-        # ['bounds', 'checkable', 'class', 'text', 'resource_id', 'package']
         __alias = {
-            'class': 'class_name',
-            'resource-id': 'resource_id',
-            'content-desc': 'content_desc',
-            'long-clickable': 'long_clickable',
+            'class': 'className',
+            'package': 'packageName',
+            'resource-id': 'resourceId',
+            'content-desc': 'description',
+            'long-clickable': 'longClickable',
         }
 
         parsers = {
-            'bounds': parse_bounds,
+            'index': int,
             'text': convstr,
-            'class_name': convstr,
-            'resource_id': convstr,
-            'package': convstr,
+            'resourceId': convstr,
+            'className': convstr,
+            'packageName': convstr,
+            'description': convstr,
+            'bounds': parse_bounds,
             'checkable': str2bool,
-            'scrollable': str2bool,
-            'focused': str2bool,
+            'checked': str2bool,
             'clickable': str2bool,
             'enabled': str2bool,
-            'selected': str2bool,
-            'long_clickable': str2bool,
             'focusable': str2bool,
+            'focused': str2bool,
+            'scrollable': str2bool,
+            'longClickable': str2bool,
             'password': str2bool,
-            'index': int,
-            'content_desc': convstr,
+            'selected': str2bool,
         }
         ks = {}
         for key, value in node.attributes.items():
@@ -150,6 +149,26 @@ class AndroidLayout(object):
         # self.nodes.sort(key=lambda x: x.depth, reverse=True)
         self.nodes.sort(key=lambda x: x.bounds.area)
 
+    def find_exclusive_features(self, node):
+        '''find condition for locate a node'''
+        '''
+        text
+        className
+        description
+        checkable
+        checked
+        clickable
+        longClickable
+        scrollable
+        enabled
+        focusable
+        focused
+        selected
+        packageName
+        resourceId
+        '''
+
+
 if __name__ == '__main__':
     # import subprocess
     # subprocess.check_call('adb shell uiautomator dump /data/local/tmp/window_dump.xml')
@@ -186,7 +205,7 @@ if __name__ == '__main__':
             if (_x-x)**2 + (_y-y)**2 > 64:
                 param[2] = True
             return
-        if event != cv2.EVENT_LBUTTONUP: 
+        if event != cv2.EVENT_LBUTTONUP:
             return
 
         # update layout.highlight
@@ -200,21 +219,21 @@ if __name__ == '__main__':
             print 'scroll to', x*2, y*2
             if node:
                 b = node.bounds
-                print 'scrolled node', b, node.index, node.class_name, 
-                print 'resource_id:', node.resource_id, 
-                print 'text:', node.text, 
-                print 'desc:', node.content_desc
+                print 'scrolled node', b, node.index, node.className,
+                print 'resource_id:', node.resourceId,
+                print 'text:', node.text,
+                print 'desc:', node.description
                 cv2.rectangle(highlight, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (0,255,255), 4)
         else:
             # node = layout.find_clickable_rect(x*2, y*2)
             node = layout.find_minimal_clickable_rect(x*2+l, y*2+t)
             if node:
                 b = node.bounds
-                print 'clicked node', b, node.index, node.class_name, 
-                print 'resource_id:', node.resource_id, 
-                print 'text:', node.text, 
-                print 'desc:', node.content_desc
-                print device(className=node.class_name, index=node.index).info
+                print 'scrolled node', b, node.index, node.className,
+                print 'resource_id:', node.resourceId,
+                print 'text:', node.text,
+                print 'desc:', node.description
+                print device(className=node.className, index=node.index).info
                 cv2.rectangle(highlight, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (0,0,255), 4)
 
         param[0].highlight = highlight
@@ -229,8 +248,8 @@ if __name__ == '__main__':
         while True:
             xmldata = device.dump(pretty=False).encode('utf-8')
             layout.parse_xmldata(xmldata)
-            if layout.tree.package != package:
-                package = layout.tree.package
+            if layout.tree.packageName != package:
+                package = layout.tree.packageName
                 print "change to", package
 
             img = layout.display()
@@ -248,5 +267,3 @@ if __name__ == '__main__':
     toc = time.time()
     t = toc - tic
     print 'get %d dumps in %f seconds (%f each)' % (count, t, t/count)
-
-
