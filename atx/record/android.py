@@ -7,11 +7,12 @@ import threading
 import time
 import traceback
 
+from atx.device import Bounds
 from atx.device.android import AndroidDevice
 from atx.adbkit.mixins import RotationWatcherMixin, MinicapStreamMixin
 
 from atx.record.base import BaseRecorder, ScreenAddon, UixmlAddon
-from atx.record.android_hooks import HookManager, HookConstants as HC
+from atx.record.android_hooks import HookManager, HookConstants as HC, set_multitap
 from atx.record.android_layout import AndroidLayout
 
 class RecordDevice(RotationWatcherMixin, MinicapStreamMixin, AndroidDevice):
@@ -81,7 +82,7 @@ class AndroidAtomRecorder(BaseRecorder):
                 d = {
                     'action' : 'key_up',
                     'args' : (e.key,),
-                    'pyscript' : 'd.key_down("%s")' % (e.key,)
+                    'pyscript' : 'd.key_up("%s")' % (e.key,)
                 }
         else:
             return
@@ -144,16 +145,14 @@ class AdbStatusAddon(object):
             traceback.print_exc()
             return
 
-
 class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
     def __init__(self, *args, **kwargs):
         self.hm = HookManager()
         super(AndroidRecorder, self).__init__(*args, **kwargs)
         self.hm.register(HC.KEY_ANY, self.on_key)
-        self.hm.register(HC.TOUCH_DOWN, self.input_event)
         self.hm.register(HC.GST_TAP, self.input_event)
         self.hm.register(HC.GST_SWIPE, self.input_event)
-        self.hm.register(HC.GST_PINCH, self.input_event)
+        self.hm.register(HC.GST_DRAG, self.input_event)
 
         self.uilayout = AndroidLayout()
         self.nonui_activities = set()
@@ -189,11 +188,13 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         e = event
         if e.msg & HC.KEY_ANY:
             return {'action':'keyevent', 'args':(e.key,)}
-        e.msg = HC.GST_TAP
         if e.msg == HC.GST_TAP:
-            return {'action':'touch', 'args':(e.x, e.y)}
-        if e.msg == HC.GST_SWIPE:
-            return {'action':'swipe', 'args':(e.sx, e.sy, e.ex, e.ey)}
+            x, y = e.points[0]
+            return {'action':'touch', 'args':(x, y)}
+        if e.msg in (HC.GST_SWIPE, HC.GST_DRAG):
+            sx, sy = e.points[0]
+            ex, ey = e.points[1]
+            return {'action':'swipe', 'args':(sx, sy, ex, ey)}
 
     def analyze_frame(self, idx, event, status):
         e = event
@@ -218,10 +219,9 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 self.uilayout.parse_xmldata(uixml)
                 analyze_ui = True
 
-        event.msg = HC.GST_TAP
         d = {}
         if event.msg == HC.GST_TAP:
-            x, y = event.x, event.y
+            x, y = event.points[0]
             if analyze_ui:
                 node = self.uilayout.find_clickable_rect(x, y)
                 if node:
@@ -232,26 +232,28 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)
-                    d['pyscript'] = 'd.click(%s, %s)' % d['args']
+                    d['pyscript'] = 'd.click(%s, %s)' % (x, y)
             elif screen is not None:
                 d['action'] = 'click_image'
-                img = find_clicked_img(screen, x, y)
+                img, bounds = find_clicked_img(screen, x, y)
                 imgname = '%d-click.png' % (idx,)
                 imgpath = os.path.join(self.draftdir, imgname)
                 cv2.imwrite(imgpath, img)
-                d['args'] = ()
-                d['pyscript'] = 'd.click_image()'
+                d['args'] = ((x, y), tuple(bounds))
+                d['pyscript'] = 'd.click_image("%s")' % (imgname,)
             else:
                 d['action'] = 'click'
                 d['args'] = (x, y)
-                d['pyscript'] = 'd.click(%s, %s)' % d['args']
+                d['pyscript'] = 'd.click(%s, %s)' % (x, y)
 
-        elif event.msg == HC.GST_SWIPE:
-            #TODO
-            # sx, sy, ex, ey = event.sx, event.sy, event.ex, event.ey
-            pass
+        elif event.msg in (HC.GST_SWIPE, HC.GST_DRAG):
+            sx, sy = e.points[0]
+            ex, ey = e.points[1]
+            d['action'] = 'swipe'
+            d['args'] = (sx, sy, ex, ey)
+            d['pyscript'] = 'd.swipe(%s, %s, %s, %s, 10)' % (sx, sy, ex, ey)
 
-        elif event.msg == HC.GST_PINCH:
+        elif event.msg == HC.GST_PINCH_IN:
             #TODO
             pass
 
@@ -262,9 +264,11 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
 
 def find_clicked_img(img, x, y):
-    return img
+    bounds = Bounds(0, 0, 100, 100)
+    return img, bounds
 
 if __name__ == '__main__':
+    set_multitap(1)
     def test():
         d = RecordDevice()
         rec = AndroidRecorder(d, 'testcase', realtime_analyze=True)

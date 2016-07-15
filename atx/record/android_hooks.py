@@ -5,15 +5,15 @@
 # Basic input: TouchDown(D), TouchUp(U), TouchMove(M)
 # Basic timeouts: TouchPressTimeout(P), TouchFollowTimeout(F), TouchMoveStopTimeout(S)
 # guestures are defined as follows:
-#   Tap: DM?UF
+#   Tap/Touch/Click: DM?UF
 #   TapFollow: (DM?U)+DM?UF
-#   LongPress: DP, may be followed by Drag or half-Fling
-#   Drag: D?M+S, may be followed by Drag or half-Fling
-#   Fling: DM+U
+#   LongPress: DP, may be followed by Drag or Swipe
+#   Drag: D?M+S, may be followed by Drag or Swipe
+#   Swipe/Fling: D?M+U, difference with `Drag` is that `TouchMoveStopTimeout` cannot be fired.
 #   2-Finger-Pinch: distance changing
 #   2-Finger-Drag: distance hold while moving
 # where '?' after M means a little movement and '+' means a large one.
-# other guestures are ignored. 
+# other guestures are ignored.
 
 import re
 import math
@@ -26,17 +26,28 @@ import traceback
 
 __all__ = ['AndroidInputHookManager', 'HookManager', 'HookConstants']
 
+# global, max MultiTap count. Set to 1 to disable MultiTap, 0 for infinite.
+_MULTI_TAP_NUM = 3
+
+def set_multitap(count):
+    if count < 0:
+        print 'Cannot set to negative count.'
+        return
+    global _MULTI_TAP_NUM
+    _MULTI_TAP_NUM = int(count)
+
 class HookConstants:
     # basic events
     TOUCH_ANY  = 1 << 3
     TOUCH_DOWN = 1 << 3 ^ 1
     TOUCH_UP   = 1 << 3 ^ 2
     TOUCH_MOVE = 1 << 3 ^ 3
+    # only used for gesture analyze
     TOUCH_PRESS_TIMEOUT     = 1 << 3 ^ 4
     TOUCH_FOLLOW_TIMEOUT    = 1 << 3 ^ 5
     TOUCH_MOVESTOP_TIMEOUT  = 1 << 3 ^ 6
 
-    # DOWN is odd, UP is even
+    # DOWN is odd, UP is even & DONW + 1 == UP
     KEY_ANY = 1 << 4
     KEY_HOME_DOWN = 1 << 4 ^ 1
     KEY_HOME_UP   = 1 << 4 ^ 2
@@ -52,90 +63,86 @@ class HookConstants:
     KEY_VOLUMEUP_UP     = 1 << 4 ^ 12
 
     # gestures
-    GST_TAP        = 1 << 5 ^ 1
-    GST_DOUBLE_TAP = 1 << 5 ^ 2
-    GST_LONG_PRESS = 1 << 5 ^ 3
-    GST_SWIPE   = 1 << 5 ^ 4
-    GST_PINCH   = 1 << 5 ^ 5
-    GST_DRAG    = GST_SWIPE
+    GST_TAP         = 1 << 5 ^ 1
+    GST_MULTI_TAP   = 1 << 5 ^ 2
+    GST_LONG_PRESS  = 1 << 5 ^ 3
+    GST_LONG_PRESS_RELEASE = 1 << 5 ^ 4
+    GST_DRAG        = 1 << 5 ^ 5
+    GST_SWIPE       = 1 << 5 ^ 6
+    GST_PINCH_IN    = 1 << 5 ^ 7
+    GST_PINCH_OUT   = 1 << 5 ^ 8
 
 HC = HookConstants
 
-HCRepr = {
+HCREPR = {
     HC.TOUCH_DOWN : 'D',
     HC.TOUCH_UP   : 'U',
-    HC.TOUCH_MOVE : 'M',    
+    HC.TOUCH_MOVE : 'M',
     HC.TOUCH_PRESS_TIMEOUT     : 'P',
     HC.TOUCH_FOLLOW_TIMEOUT    : 'F',
     HC.TOUCH_MOVESTOP_TIMEOUT  : 'S',
+    HC.GST_TAP: 'Tap',
+    HC.GST_MULTI_TAP: 'MultiTap',
+    HC.GST_LONG_PRESS: 'LongPress',
+    HC.GST_LONG_PRESS_RELEASE: 'PressRelease',
+    HC.GST_DRAG: 'Drag',
+    HC.GST_SWIPE: 'Swipe',
+    HC.GST_PINCH_IN: 'PinchIn',
+    HC.GST_PINCH_OUT: 'PinchOut',
 }
 
 class Event(object):
-    msg = None
-    def __init__(self, time, slotid=None):
+    def __init__(self, time, msg):
         self.time = time
-        self.slotid = slotid
+        self.msg = msg
+
+    def __str__(self):
+        return '%s_%s' % (self.__class__.__name__, HCREPR.get(self.msg, self.msg))
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__,
+            ', '.join(['%s=%s' % (k, v) for k, v in self.__dict__.iteritems()]))
+
+class KeyEvent(Event):
+    def __init__(self, time, msg, key):
+        super(KeyEvent, self).__init__(time, msg)
+        self.key = key
 
 class TouchEvent(Event):
-    def __init__(self, time, slotid, x, y, pressure, touch_major):
-        '''msg: touch_down, touch_up, touch_move'''
-        super(TouchEvent, self).__init__(time, slotid)
+    def __init__(self, time, msg, slotid, x, y, pressure, touch_major, **extra):
+        super(TouchEvent, self).__init__(time, msg)
+        self.slotid = slotid
         self.x = x
         self.y = y
         self.pressure = pressure
         self.touch_major = touch_major
+        self.__dict__.update(extra)
 
-class TouchDownEvent(TouchEvent):
-    msg = HC.TOUCH_DOWN
-
-class TouchUpEvent(TouchEvent):
-    msg = HC.TOUCH_UP
-
-class TouchMoveEvent(TouchEvent):
-    msg = HC.TOUCH_MOVE
-    def __init__(self, time, slotid, x, y, pressure, touch_major, distance, direction, speed):
-        super(TouchMoveEvent, self).__init__(time, slotid, x, y, pressure, touch_major)
-        self.distance = distance
-        self.direction = direction
-        self.speed = speed
-
-class TouchPressTimeout(Event):
-    msg = HC.TOUCH_PRESS_TIMEOUT
-
-class TouchFollowTimeout(Event):
-    msg = HC.TOUCH_FOLLOW_TIMEOUT
-
-class TouchMoveStopTimeout(Event):
-    msg = HC.TOUCH_MOVESTOP_TIMEOUT
-
-class KeyEvent(Event):
-    msg = HC.KEY_ANY
-    def __init__(self, time, msg, key):
-        '''msg: keydown, keyup'''
-        super(KeyEvent, self).__init__(time)
-        self.key = key
-        self.msg = msg
+class TouchTimeoutEvent(Event):
+    def __init__(self, time, msg, slotid):
+        super(TouchTimeoutEvent, self).__init__(time, msg)
+        self.slotid = slotid
 
 class GestureEvent(Event):
-    msg = None
-    def __init__(self, time, duration, slotid=None):
-        super(GestureEvent, self).__init__(time, slotid)
-        self.duration = duration
+    def __init__(self, msg, track):
+        # suffixes: s for start, e for end.
+        # two-finger guestures need two tracks
+        if msg in (HC.GST_PINCH_IN, HC.GST_PINCH_OUT):
+            t1, t2 = track[0], track[1]
+            ts = min(t1[0].time, t2[0].time)
+            te = max(t1[-1].time, t2[-1].time)
+        else:
+            es, ee = track[0], track[-1]
+            ts, te = track[0].time, track[-1].time
+            print 'Gesture', HCREPR.get(msg, msg), ''.join([HCREPR.get(e.msg, e.msg) for e in track])
+            if msg in (HC.GST_SWIPE, HC.GST_DRAG):
+                # TODO: check for corners for complicated trace
+                self.points = [(es.x, es.y), (ee.x, ee.y)]
+            else:
+                self.points = [(es.x, es.y), (ee.x, ee.y)]
 
-class Tap(GestureEvent):
-    msg = HC.GST_TAP
-
-class DoubleTap(GestureEvent):
-    msg = HC.GST_DOUBLE_TAP
-
-class LongPress(GestureEvent):
-    msg = HC.GST_LONG_PRESS
-
-class Swipe(GestureEvent):
-    msg = HC.GST_SWIPE
-
-class Pinch(GestureEvent):
-    msg = HC.GST_PINCH
+        super(GestureEvent, self).__init__(ts, msg)
+        self.duration = te - ts
 
 SLOT_NUM = 5
 _X, _Y, _VR, _VA, _MJ, _PR, FIELD_NUM = range(7)
@@ -148,7 +155,7 @@ class InputParser(object):
     def __init__(self, queue):
         self.timediff = None
         self.queue = queue
-        # the 'standard' status temp_status is compared to. 
+        # the 'standard' status temp_status is compared to.
         # if changes are great enough, new event are emitted.
         # velocity will be calculated for touch-move events.
         self._status = np.ones((SLOT_NUM, FIELD_NUM), dtype=int) * (-INF)
@@ -156,7 +163,6 @@ class InputParser(object):
         # realtime status, minor changes are cumulated
         self._temp_status = np.ones((SLOT_NUM, FIELD_NUM), dtype=int) * (-INF)
         self._temp_status_time = 0
-        # self._trackids = [None] * SLOT_NUM
 
         self._touch_batch = []
         self._curr_slot = 0
@@ -215,11 +221,9 @@ class InputParser(object):
         for (_time, _device, _type, _code, _value) in self._touch_batch:
             if _code == 'ABS_MT_TRACKING_ID':
                 if _value == 0xffffffff:
-                    # self._trackids[self._curr_slot] = None
                     self._temp_status[self._curr_slot] = -INF
                     changed = True
                 else:
-                    # self._trackids[self._curr_slot] = _value
                     pass
             elif _code == 'ABS_MT_SLOT':
                 self._curr_slot = _value
@@ -249,23 +253,22 @@ class InputParser(object):
         for i in range(SLOT_NUM):
             arr = self._temp_status[i]
             oldarr = self._status[i]
-            # trackid = self._trackids[i]
             dx, dy = diff[i,_X], diff[i,_Y]
             if dx > INF or dy > INF:
                 # touch begin
-                event = TouchDownEvent(_time, i, arr[_X], arr[_Y], arr[_PR], arr[_MJ])
+                event = TouchEvent(_time, HC.TOUCH_DOWN, i, arr[_X], arr[_Y], arr[_PR], arr[_MJ])
                 self.emit_touch_event(event)
                 emitted = True
             elif dx < -INF or dy < -INF:
                 # touch end
-                event = TouchUpEvent(_time, i, oldarr[_X], oldarr[_Y], oldarr[_PR], oldarr[_MJ])
+                event = TouchEvent(_time, HC.TOUCH_UP, i, oldarr[_X], oldarr[_Y], oldarr[_PR], oldarr[_MJ])
                 self.emit_touch_event(event)
                 emitted = True
             else:
                 r, a = radang(float(dx), float(dy))
                 if r > self._move_radius:
                     v = r / dt
-                    event = TouchMoveEvent(_time, i, arr[_X], arr[_Y], arr[_PR], arr[_MJ], r, a, v)
+                    event = TouchEvent(_time, HC.TOUCH_MOVE, i, arr[_X], arr[_Y], arr[_PR], arr[_MJ], angle=a, velocity=v)
                     self.emit_touch_event(event)
                     emitted = True
 
@@ -287,7 +290,7 @@ def radang(x, y):
     a = math.degrees(math.atan(y/x))
     if x < 0:
         a += 180
-    elif y < 0: 
+    elif y < 0:
         a += 360
     return r, a
 
@@ -295,7 +298,7 @@ class GestureRecognizer(object):
 
     double_tap_delay = 0.5
     long_press_delay = 1
-    move_stop_delay = 0.3
+    move_stop_delay = 0.2
     pinch_difference_square = 3000
 
     def __init__(self, queue):
@@ -306,96 +309,11 @@ class GestureRecognizer(object):
         self.touches = [None] * SLOT_NUM
 
         # used for recognition
-        self.tracks = [[] for i in range(SLOT_NUM)]
+        self.tracks = [None for i in range(SLOT_NUM)]
         self.track_slots = set()
 
     def register(self, keycode, func):
         self.dispatch_map[keycode] = func
-
-    def handle_event(self, event):
-        self.dispatch_event(event.msg, event)
-        if event.msg & HC.KEY_ANY:
-            self.dispatch_event(HC.KEY_ANY, event)
-        else:
-            self.dispatch_event(HC.TOUCH_ANY, event)
-            self.analyze_tracks(event)
-
-    def dispatch_event(self, msg, event):
-        func = self.dispatch_map.get(msg)
-        if func is None:
-            return
-        try:
-            func(event)
-        except:
-            traceback.print_exc()
-
-    def analyze_tracks(self, e):
-        # handle one-finger and two-finger gestures only
-        # means a third finger will be ignored even if one of the
-        # first two fingers leaves the screen.
-        # hint: try it on <Boom Beach>
-
-        i = e.slotid
-
-        # begin guesture when touch down
-        if e.msg == HC.TOUCH_DOWN:
-            if len(self.track_slots) == 2:
-                return
-            if not self.tracks[i]:
-                self.tracks[i] = []
-                self.track_slots.add(i)
-            self.tracks[i].append(e)
-            return
-
-        if not self.tracks[i]:
-            return
-
-        if e.msg in (HC.TOUCH_UP, HC.TOUCH_MOVE):
-            self.tracks[i].append(e)
-            return
-
-        # end guesture when touch follow timeout
-        if e.msg == HC.TOUCH_FOLLOW_TIMEOUT:
-            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
-            self.tracks[i] = None
-            self.track_slots.discard(i)
-
-        elif e.msg == HC.TOUCH_PRESS_TIMEOUT:
-            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
-            e = self.tracks[i][-1]
-            self.tracks[i] = [e]
-            
-        # find drag/pan/pinch/swipe guestures
-        elif e.msg == HC.TOUCH_MOVESTOP_TIMEOUT:
-            # print ''.join([HCRepr.get(e.msg) for e in self.tracks[i]])
-            if len(self.track_slots) == 1: # single finger move
-                if e.time - self.tracks[i][0].time > 1:
-                    # print 'drag'
-                    pass
-            elif len(self.track_slots) == 2: # two finger move, may be pan/pinch
-                t1, t2 = [self.tracks[s] for s in self.track_slots]
-                # check for pinch
-                if len(t1) + len(t2) < 5:
-                    return
-                # make copy and check distance changing
-                t1, t2 = t1[:], t2[:]
-                dists = []
-                while len(dists) < 5:
-                    e1, e2 = t1[-1], t2[-1]
-                    dx, dy = e1.x-e2.x, e1.y-e2.y
-                    dists.append(dx*dx+dy*dy)
-                    if e1.time < e2.time:
-                        if len(t2) == 1:
-                            break
-                        else:
-                            t2.pop()
-                    else:
-                        if len(t1) == 1:
-                            break
-                        else:
-                            t1.pop()
-
-                print dists[::-1]
 
     def start(self):
         if self.running:
@@ -430,30 +348,240 @@ class GestureRecognizer(object):
                     if e is None:
                         continue
                     if e.msg == HC.TOUCH_DOWN and now - e.time > self.long_press_delay:
-                        self.handle_event(TouchPressTimeout(now, i))
+                        self.analyze_tracks(TouchTimeoutEvent(now, HC.TOUCH_PRESS_TIMEOUT, i))
                         self.touches[i] = None
                     elif e.msg == HC.TOUCH_UP and now - e.time > self.double_tap_delay:
-                        self.handle_event(TouchFollowTimeout(now, i))
+                        self.analyze_tracks(TouchTimeoutEvent(now, HC.TOUCH_FOLLOW_TIMEOUT, i))
                         self.touches[i] = None
                     elif e.msg == HC.TOUCH_MOVE and now - e.time > self.move_stop_delay:
-                        self.handle_event(TouchMoveStopTimeout(now, i))
+                        self.analyze_tracks(TouchTimeoutEvent(now, HC.TOUCH_MOVESTOP_TIMEOUT, i))
                         self.touches[i] = None
-
             except:
                 traceback.print_exc()
 
         print 'process done.'
 
+    def handle_event(self, event):
+        self.dispatch_event(event.msg, event)
+        if event.msg & HC.KEY_ANY:
+            self.dispatch_event(HC.KEY_ANY, event)
+        else:
+            self.dispatch_event(HC.TOUCH_ANY, event)
+            self.analyze_tracks(event)
+
+    def dispatch_event(self, msg, event):
+        func = self.dispatch_map.get(msg)
+        if func is None:
+            return
+        try:
+            func(event)
+        except:
+            traceback.print_exc()
+
+    def analyze_tracks(self, event):
+        pass
+
+    def handle_gesture(self, msg, tracks):
+        event = GestureEvent(msg, tracks)
+        func = self.dispatch_map.get(msg)
+        if func is None:
+            return
+        try:
+            func(event)
+        except:
+            traceback.print_exc()
+
+## NOT COMPLEMENTED ##
+class SimpleGestureRecognizer(GestureRecognizer):
+
+    N_FINGER = 2
+
+    def analyze_tracks(self, event):
+        # handle one-finger and two-finger gestures only
+        # means a third finger will be ignored even if one of the
+        # first two fingers leaves the screen.
+        i = event.slotid
+
+        # begin guesture when touch down
+        if event.msg == HC.TOUCH_DOWN:
+            if len(self.track_slots) == self.N_FINGER and i not in self.track_slots:
+                return
+            if self.tracks[i] is None:
+                self.tracks[i] = []
+                self.track_slots.add(i)
+            self.tracks[i].append(event)
+            return
+
+        if self.tracks[i] is None:
+            return
+
+        if event.msg == HC.TOUCH_FOLLOW_TIMEOUT:
+            self.tracks[i] = []
+        elif event.msg == HC.TOUCH_PRESS_TIMEOUT:
+            # print ''.join([HCREPR.get(e.msg) for e in self.tracks[i]]), 'long press'
+            self.tracks[i] = []
+        elif event.msg == HC.TOUCH_MOVESTOP_TIMEOUT:
+            # print ''.join([HCREPR.get(e.msg) for e in self.tracks[i]]), 'drag'
+            self.tracks[i] = []
+            if len(self.track_slots) == 2:
+                for s in self.track_slots:
+                    print s, ''.join([HCREPR.get(e.msg) for e in self.tracks[s]])
+                print
+        elif event.msg == HC.TOUCH_UP:
+            self.tracks[i].append(event)
+            if len(self.track_slots) == 2:
+                for s in self.track_slots:
+                    print s, ''.join([HCREPR.get(e.msg) for e in self.tracks[s]])
+                print
+            self.tracks[i] = None
+            self.track_slots.discard(i)
+        else: # TOUCH_MOVE
+            self.tracks[i].append(event)
+            return
+
+            # check for pinch/pan
+            if len(self.track_slots) == 2:
+                t1, t2 = [self.tracks[s] for s in self.track_slots]
+                if len(t1) == 0 or len(t2) == 0 or len(t1) + len(t2) < 6:
+                    return
+                # make copy and check distance changing
+                t1, t2 = t1[:], t2[:]
+                dists = []
+                while len(dists) < 5:
+                    e1, e2 = t1[-1], t2[-1]
+                    dx, dy = e1.x-e2.x, e1.y-e2.y
+                    dists.append(dx*dx+dy*dy)
+                    if e1.time < e2.time:
+                        if len(t2) == 1:
+                            break
+                        else:
+                            t2.pop()
+                    else:
+                        if len(t1) == 1:
+                            break
+                        else:
+                            t1.pop()
+                print [dists[j+1]-dists[j] for j in range(len(dists)-1)]
+                # just keep latest position
+                for s in self.track_slots:
+                    self.tracks[s] = self.tracks[s][-1:]
+
+class RegexpGestureRecognizer(GestureRecognizer):
+
+    N_FINGER = 1
+
+    def analyze_tracks(self, event):
+        # handle one-finger gestures only
+        i = event.slotid
+
+        # begin guesture when touch down
+        if event.msg == HC.TOUCH_DOWN:
+            if len(self.track_slots) == self.N_FINGER and i not in self.track_slots:
+                return
+            if not self.tracks[i]:
+                self.tracks[i] = []
+                self.track_slots.add(i)
+            self.tracks[i].append(event)
+            return
+
+        if self.tracks[i] is None:
+            return
+
+        s = ''.join([HCREPR.get(e.msg) for e in self.tracks[i]])
+
+        if event.msg == HC.TOUCH_FOLLOW_TIMEOUT:
+            if re.match('^DM?U$', s):
+                self.handle_gesture(HC.GST_TAP, self.tracks[i][:])
+            elif re.match('^(DM?U)+DM?U$', s):
+                self.handle_gesture(HC.GST_MULTI_TAP, self.tracks[i][:])
+            self.tracks[i] = None
+            self.track_slots.discard(i)
+        elif event.msg == HC.TOUCH_MOVESTOP_TIMEOUT:
+            if re.match('^D?MM+$', s):
+                self.handle_gesture(HC.GST_DRAG, self.tracks[i][:])
+            self.tracks[i] = []
+        elif event.msg == HC.TOUCH_PRESS_TIMEOUT:
+            if s == 'D':
+                self.handle_gesture(HC.GST_LONG_PRESS, self.tracks[i][:])
+            self.tracks[i] = []
+        elif event.msg == HC.TOUCH_UP:
+            self.tracks[i].append(event) # note: it's not the same with s after add
+            if s == '':
+                self.handle_gesture(HC.GST_LONG_PRESS_RELEASE, [event])
+            elif re.match('^D?MM+$', s):
+                self.handle_gesture(HC.GST_SWIPE, self.tracks[i][:])
+                self.tracks[i] = []
+            elif _MULTI_TAP_NUM == 1 and re.match('^DM?$', s):
+                self.handle_gesture(HC.GST_TAP, self.tracks[i][:])
+            elif _MULTI_TAP_NUM > 1 and re.match('^(DM?U){%d}DM?$' % (_MULTI_TAP_NUM-1,), s):
+                self.handle_gesture(HC.GST_MULTI_TAP, self.tracks[i][:])
+                self.tracks[i] = []
+        elif event.msg == HC.TOUCH_MOVE:
+            if re.match('^(DU)+D$', s):
+                if s == 'DUD':
+                    self.handle_gesture(HC.GST_TAP, self.tracks[i][:-1])
+                else:
+                    self.handle_gesture(HC.GST_MULTI_TAP, self.tracks[i][:-1])
+                self.tracks[i] = self.tracks[i][-1:]
+            self.tracks[i].append(event)
+
+NOTACTIVE, ACTIVE, STAGE_1, STAGE_2, TRIGGERED = range(5)
+
+## NOT COMPLEMENTED ##
+class StateMachineGestureRecognizer(GestureRecognizer):
+
+    state_map = {
+        HC.GST_TAP: {
+            NOTACTIVE: { HC.TOUCH_DOWN : ACTIVE },
+            ACTIVE: {
+                HC.TOUCH_MOVE: STAGE_1,
+                HC.TOUCH_PRESS_TIMEOUT : NOTACTIVE,
+                HC.TOUCH_FOLLOW_TIMEOUT : TRIGGERED,
+            },
+            STAGE_1: {
+                HC.TOUCH_MOVE: NOTACTIVE,
+                HC.TOUCH_PRESS_TIMEOUT : NOTACTIVE,
+                HC.TOUCH_FOLLOW_TIMEOUT : TRIGGERED,
+            }
+        },
+        HC.GST_SWIPE: {
+            NOTACTIVE: { HC.TOUCH_DOWN: ACTIVE },
+            ACTIVE: { HC.TOUCH_UP: NOTACTIVE, HC.TOUCH_MOVE: STAGE_1},
+            STAGE_1: { HC.TOUCH_UP: NOTACTIVE, HC.TOUCH_MOVE: STAGE_2 },
+            STAGE_2: { HC.TOUCH_UP: TRIGGERED, HC.TOUCH_MOVESTOP_TIMEOUT: TRIGGERED},
+        },
+    }
+
+    def __init__(self, queue):
+        super(self.__class__, self).__init__(queue)
+        self.state = {}
+        for k in self.state_map:
+            self.state[k] = NOTACTIVE
+        print self.state_map
+
+    def analyze_tracks(self, event):
+        for k, v in self.state.iteritems():
+            s = self.state_map.get(k, {}).get(v, {}).get(event.msg)
+            if s is not None:
+                self.state[k] = s
+        triggered = False
+        for k, v in self.state.iteritems():
+            if v == TRIGGERED:
+                print 'trigger event', k
+                triggered = True
+        if triggered:
+            for k in self.state:
+                self.state[k] = NOTACTIVE
 
 class AndroidInputHookManager(object):
 
-    def __init__(self, serial=None):
+    def __init__(self, serial=None, processor_class=RegexpGestureRecognizer):
         self._serial = serial
         self.running = False
         self._queue = Queue.Queue()
         self._listener = None
         self._parser = InputParser(self._queue)
-        self._processor = GestureRecognizer(self._queue)
+        self._processor = processor_class(self._queue)
 
     def set_serial(self, serial):
         self._serial = serial
@@ -491,7 +619,7 @@ class AndroidInputHookManager(object):
                 except:
                     p.kill()
                     traceback.print_exc()
-            
+
             if not self.running:
                 break
             state = subprocess.check_output(['adb', '-s', self._serial, 'get-state']).strip()
@@ -503,14 +631,14 @@ class AndroidInputHookManager(object):
 
     def unhook(self):
         self.running = False
-        self._processor.stop()        
+        self._processor.stop()
         if self._listener:
             self._listener.kill()
 
 HookManager = AndroidInputHookManager
 
 if __name__ == '__main__':
-    hm = AndroidInputHookManager()
+    hm = AndroidInputHookManager(processor_class=RegexpGestureRecognizer)
     hm.hook()
     while True:
         try:
