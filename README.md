@@ -121,6 +121,17 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	Remember the atx version in case if you want to rollback.
 
+Some may still failed the installation. There are some ways which may help you.
+
+1. Uninstall your python, and reinstall from <https://python.org>
+2. Mac user may found install numpy error
+
+    Reference: <http://blog.csdn.net/hqzxsc2006/article/details/51602654>
+
+3. Windows user may found install pyyaml failed.
+
+    Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
+    
 ## IOS Documentation
 该部分记录的内容灵活性比较大，有可能会有大的改动，也有可能以后会删掉。
 
