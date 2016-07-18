@@ -306,15 +306,14 @@ class CropIDE(object):
                     # self._device.click(cx, cy)
 
                 self._gencode_text.set('d.click(%d, %d)' % (cx, cy))
-
             else:
                 (x0, y0, x1, y1) = self.select_bounds
                 ww, hh = x1-x0, y1-y0
                 cx, cy = (x/self._ratio, y/self._ratio)
                 mx, my = (x0+x1)/2, (y0+y1)/2 # middle
                 self._offset = (offx, offy) = map(int, (cx-mx, cy-my))
-                poffx = round(offx*100.0/ww)
-                poffy = round(offy*100.0/hh)
+                poffx = ww and round(offx*100.0/ww) # in case of ww == 0
+                poffy = hh and round(offy*100.0/hh)
                 self._poffset = (poffx, poffy)
                 self._gencode_text.set('(%d, %d)' % (cx, cy)) #offset=(%.2f, %.2f)' % (poffx/100, poffy/100))
                 # self._gencode_text.set('offset=(%.2f, %.2f)' % (poffx/100, poffy/100))
