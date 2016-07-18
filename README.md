@@ -264,6 +264,13 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# 文件名添加截图手机的分辨率
 	d.click_image("button.1920x1080.png")
 
+	# 文件名中添加偏移量, 格式为 <L|R><number><T|B><number>.png
+	# 其中 L: Left, R: Right, T: Top, B: Bottom
+	# number为百分比
+	# 所以 R20T50代表，点击为止从图片中心向右偏移20%并且向上偏移50%
+	d.click_image("button.R20T50.png")
+
+
 	# 不等待的图片点击, 如果图片不存在直接返回None
 	d.click_nowait('button.1920x1080.png')
 

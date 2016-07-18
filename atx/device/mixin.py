@@ -7,33 +7,22 @@ from __future__ import absolute_import
 
 import collections
 import copy
-import os
-import re
-import sys
-import subprocess
-import time
-import tempfile
-import traceback
-import warnings
 import functools
-import logging
-import uuid
 import inspect
-import xml.dom.minidom
+import os
+import sys
+import time
+import traceback
 
 import cv2
-import numpy as np
 import aircv as ac
 from uiautomator import AutomatorDeviceObject
-from PIL import Image
 
+from atx import base
 from atx import consts
 from atx import errors
-from atx import patch
-from atx import base
-from atx import logutils
-from atx import strutils
 from atx import imutils
+from atx import logutils
 from atx.base import nameddict
 from atx.device import Pattern, Bounds, FindPoint
 
@@ -393,7 +382,12 @@ class DeviceMixin(object):
         screen = screen or self.region_screenshot()
         threshold = threshold or pattern.threshold or self.image_match_threshold
 
-        dx, dy = pattern.offset
+        dx, dy = pattern.offset or (0, 0)
+        # handle offset if percent, ex (0.2, 0.8)
+        if 0 < dx <= 5:
+            dx = pattern.image.shape[1] * dx # opencv object width
+        if 0 < dy <= 5:
+            dx = pattern.image.shape[0] * dy # opencv object height
         dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
 
         # image match
@@ -441,7 +435,7 @@ class DeviceMixin(object):
         if not isinstance(bounds, Bounds):
             raise TypeError("region param bounds must be isinstance of Bounds")
         _d = copy.copy(self)
-        _d._bounds = bounds
+        _d._bounds = Bounds(bounds)
         return _d
 
     def keep_screen(self):
@@ -462,7 +456,7 @@ class DeviceMixin(object):
     def region_screenshot(self, filename=None):
         """ take part of the screenshot """
         screen = self.__last_screen if self.__keep_screen else self.screenshot()
-        if self._bounds:
+        if self.bounds:
             screen = screen.crop(self.bounds)
         if filename:
             screen.save(filename)

@@ -59,6 +59,7 @@ class CropIDE(object):
         self._refresh_text = tk.StringVar()
         self._refresh_text.set("Refresh")
         self._gencode_text = tk.StringVar()
+        self._fileext_text = tk.StringVar()
         self._auto_refresh_var = tk.BooleanVar()
         self._uiauto_detect_var = tk.BooleanVar()
         self._attachfile_text = tk.StringVar()
@@ -73,6 +74,7 @@ class CropIDE(object):
         self._bounds = None # crop area
         self._center = (0, 0) # center point
         self._offset = (0, 0) # offset to image center
+        self._poffset = (0, 0)
         self._size = (90, 90)
         self._moved = False # click or click and move
         self._color = 'red' # draw color
@@ -87,6 +89,13 @@ class CropIDE(object):
         self._init_vars()
 
     def _init_items(self):
+        """
+        .---------------.
+        | Ctrl | Screen |
+        |------|        |
+        | Code |        |
+        |      |        |
+        """
         root = self._root
         root.resizable(0, 0)
 
@@ -112,8 +121,12 @@ class CropIDE(object):
         tk.Checkbutton(frm_checkbtns, text="Auto refresh", variable=self._auto_refresh_var, command=self._run_check_refresh).grid(column=0, row=0, sticky=tk.W)
         tk.Checkbutton(frm_checkbtns, text="UI detect", variable=self._uiauto_detect_var).grid(column=1, row=0, sticky=tk.W)
 
-        tk.Label(frm_code, text='Generated code').grid(column=0, row=0, sticky=tk.W)
-        tk.Entry(frm_code, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
+        frm_code_editor = tk.Frame(frm_code)
+        frm_code_editor.grid(column=0, row=0, sticky=(tk.W, tk.E))
+        tk.Label(frm_code_editor, text='Generated code').grid(column=0, row=0, sticky=tk.W)
+        tk.Entry(frm_code_editor, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
+        tk.Label(frm_code_editor, text='Extention name').grid(column=0, row=2, sticky=tk.W)
+        tk.Entry(frm_code_editor, textvariable=self._fileext_text, width=30).grid(column=0, row=3, sticky=tk.W)
         
         frm_code_btns = tk.Frame(frm_code)
         frm_code_btns.grid(column=0, row=2, sticky=(tk.W, tk.E))
@@ -178,6 +191,12 @@ class CropIDE(object):
         y1 = min(h, y1)
         return map(int, [x0, y0, x1, y1])
 
+    @property
+    def select_bounds(self):
+        if self._bounds is None:
+            return None
+        return self._fix_bounds(self._bounds)
+
     def _fix_path(self, path):
         try:
             return os.path.relpath(path, os.getcwd())
@@ -198,27 +217,25 @@ class CropIDE(object):
         log.debug('crop bounds: %s', self._bounds)
         if self._bounds is None:
             return
-        bounds = self._fix_bounds(self._bounds)
-        ext = '.%dx%d.png' % tuple(self._size)
+        bounds = self.select_bounds
+        # ext = '.%dx%d.png' % tuple(self._size)
         # tkFileDialog doc: http://tkinter.unpythonic.net/wiki/tkFileDialog
         save_to = tkFileDialog.asksaveasfilename(**dict(
             initialdir=self._save_parent_dir,
-            defaultextension=ext,
-            filetypes=[('PNG with size', ext)],
+            defaultextension=".png",
+            filetypes=[('PNG', ".png")],
             title='Select file'))
         if not save_to:
             return
         save_to = self._fix_path(save_to)
+        # force change extention with info (resolution and offset)
+        save_to = os.path.splitext(save_to)[0] + self._fileext_text.get()
+
         self._save_parent_dir = os.path.dirname(save_to)
 
         log.info('Crop save to: %s', save_to)
         self._image.crop(bounds).save(save_to)
-        if self._offset == (0, 0):
-            self._gencode_text.set('d.click_image(r"%s")' % save_to)
-        else:
-            code = 'd.click_image(atx.Pattern(r"{name}", offset=({x}, {y})))'.format(
-                name=save_to, x=self._offset[0], y=self._offset[1])
-            self._gencode_text.set(code)
+        self._gencode_text.set('d.click_image(r"%s")' % save_to)
 
     def _run_code(self):
         d = self._device
@@ -278,22 +295,37 @@ class CropIDE(object):
         if self._moved: # drag action
             x, y = (self._lastx+x)/2, (self._lasty+y)/2
             self._offset = (0, 0)
-        elif self._bounds is None:
-            cx, cy = (x/self._ratio, y/self._ratio)
-            if self._uiauto_detect_var.get() and self._hovered_node:
-                self._selected_node = self._hovered_node
-                log.debug("select node: %s", repr(self._selected_node))
-                log.debug("center: %s", self._selected_node.bounds.center)
-                # self._device.click(cx, cy)
+        else:
+            # click action
+            if self._bounds is None:
+                cx, cy = (x/self._ratio, y/self._ratio)
+                if self._uiauto_detect_var.get() and self._hovered_node:
+                    self._selected_node = self._hovered_node
+                    log.debug("select node: %s", repr(self._selected_node))
+                    log.debug("center: %s", self._selected_node.bounds.center)
+                    # self._device.click(cx, cy)
 
-            self._gencode_text.set('d.click(%d, %d)' % (cx, cy))
+                self._gencode_text.set('d.click(%d, %d)' % (cx, cy))
 
-        elif self._bounds is not None:
-            (x0, y0, x1, y1) = self._fix_bounds(self._bounds)
-            cx, cy = (x/self._ratio, y/self._ratio)
-            mx, my = (x0+x1)/2, (y0+y1)/2
-            self._offset = (offx, offy) = map(int, (cx-mx, cy-my))
-            self._gencode_text.set('offset=(%d, %d)' % (offx, offy))
+            else:
+                (x0, y0, x1, y1) = self.select_bounds
+                ww, hh = x1-x0, y1-y0
+                cx, cy = (x/self._ratio, y/self._ratio)
+                mx, my = (x0+x1)/2, (y0+y1)/2 # middle
+                self._offset = (offx, offy) = map(int, (cx-mx, cy-my))
+                poffx = round(offx*100.0/ww)
+                poffy = round(offy*100.0/hh)
+                self._poffset = (poffx, poffy)
+                self._gencode_text.set('(%d, %d)' % (cx, cy)) #offset=(%.2f, %.2f)' % (poffx/100, poffy/100))
+                # self._gencode_text.set('offset=(%.2f, %.2f)' % (poffx/100, poffy/100))
+
+        ext = ".%dx%d" % tuple(self._size)
+        if self._poffset != (0, 0):
+            px, py = self._poffset
+            ext += '.%s%d%s%d' % (
+                'R' if px > 0 else 'L', abs(px), 'B' if py > 0 else 'T', abs(py))
+        ext += '.png'
+        self._fileext_text.set(ext)
         self._center = (x, y) # rember position
         self._draw_lines()
         self.canvas.itemconfigure('select-bounds', width=2)
@@ -330,6 +362,7 @@ class CropIDE(object):
     def _reset(self):
         self._bounds = None
         self._offset = (0, 0)
+        self._poffset = (0, 0)
         self._center = (0, 0)
         self.canvas.delete('select-bounds')
         self.canvas.delete('select-point')
