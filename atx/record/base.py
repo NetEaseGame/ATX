@@ -135,13 +135,13 @@ class BaseRecorder(object):
 
         # analyze
         if self.realtime_analyze:
-            self.analyze_frame(idx, event, status)
+            self.analyze_frame(idx, event, status, meta['waittime'])
         self.frames.append(meta)
 
     def serialize_event(self, event):
         return {}
 
-    def analyze_frame(self, idx, event, status):
+    def analyze_frame(self, idx, event, status, waittime):
         '''analyze status and generate draft code'''
         # Example:
         #
@@ -173,7 +173,7 @@ class BaseRecorder(object):
                     continue
                 func = self.addons[name][2]
                 status[name] = func(self.framedir, data)
-            self.analyze_frame(idx, event, status)
+            self.analyze_frame(idx, event, status, meta['waittime'])
 
     @classmethod
     def analyze_frames(cls, workdir):

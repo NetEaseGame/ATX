@@ -198,7 +198,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             ex, ey = e.points[1]
             return {'action':'swipe', 'args':(sx, sy, ex, ey)}
 
-    def analyze_frame(self, idx, event, status):
+    def analyze_frame(self, idx, event, status, waittime):
         e = event
         if e.msg & HC.KEY_ANY:
             d = {
@@ -230,9 +230,11 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                     d['action'] = 'click_ui'
                     d['args'] = (selector, order)
                     if order is None:
-                        d['pyscript'] = 'd(%s).click()' % (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]),)
+                        d['pyscript'] = 'd(%s).click(timeout=%d)' %\
+                            (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
                     else:
-                        d['pyscript'] = 'objs = d(%s)\nwhile(objs.count == 0):\n    time.sleep(0.5)\nobjs[%d].click()' % (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), order)
+                        d['pyscript'] = 'objs = d(%s)\nif objs.wait.exists(timeout=%d):\n    objs[%d].click()'  %\
+                            (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)), order)
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)
