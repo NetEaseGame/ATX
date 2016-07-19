@@ -5,6 +5,7 @@ import cv2
 import os
 import pickle
 import Queue
+import sys
 import threading
 import time
 import traceback
@@ -100,6 +101,7 @@ class BaseRecorder(object):
             self.analyze_all()
         self.save()
         print 'recorder stopped.'
+        sys.exit()
 
     def input_event(self, event):
         '''should be called when user input events happens (from hook)'''
@@ -213,8 +215,10 @@ class BaseRecorder(object):
             'def test(d):',
         ]
         for row in self.case_draft:
-            content.append(' '*4 + row['pyscript'].encode('utf-8', 'ignore'))
-            content.append(' '*4 + 'time.sleep(1)')
+            script = row['pyscript'].encode('utf-8', 'ignore')
+            for line in script.split('\n'):
+                content.append(' '*4 + line)
+            # content.append(' '*4 + 'time.sleep(1)')
         content.extend([
             '',
             'if __name__ == "__main__":',

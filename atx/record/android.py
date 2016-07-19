@@ -5,7 +5,6 @@ import cv2
 import os
 import threading
 import time
-import traceback
 
 from atx.device import Bounds
 from atx.device.android import AndroidDevice
@@ -184,6 +183,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
     def on_key(self, event):
         if not event.msg & 0x01: # key_up
+            print 'KeyEvent', event.key
             self.input_event(event)
 
     def serialize_event(self, event):
@@ -216,7 +216,6 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
         analyze_ui = False
         if activity is not None and activity not in self.nonui_activities:
-            print 'in activity:', activity
             if uixml is not None:
                 self.uilayout.parse_xmldata(uixml)
                 analyze_ui = True
@@ -228,13 +227,12 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 node = self.uilayout.find_clickable_node(x, y)
                 if node:
                     selector, order = self.uilayout.find_selector(node)
-                    print node.bounds, x, y
                     d['action'] = 'click_ui'
                     d['args'] = (selector, order)
                     if order is None:
-                        d['pyscript'] = 'd(%s).click()' % (','.join(['%s=u"%s"' % item for item in selector.iteritems()]))
+                        d['pyscript'] = 'd(%s).click()' % (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]),)
                     else:
-                        d['pyscript'] = 'd(%s)[%d].click()' % (','.join(['%s=u"%s"' % item for item in selector.iteritems()]), order)
+                        d['pyscript'] = 'objs = d(%s)\nwhile(objs.count == 0):\n    time.sleep(0.5)\nobjs[%d].click()' % (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), order)
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)

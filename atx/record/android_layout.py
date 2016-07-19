@@ -171,7 +171,8 @@ class AndroidLayout(object):
                 res.append(n)
         return res
 
-    def _get_node_selector(self, n):
+    def _get_node_selector(self, n, sub=False):
+        '''text in subnode cannot be all numbers'''
         d = {'className':n.className}
         nodes = self._filter_nodes(d)
         if len(nodes) == 1:
@@ -181,18 +182,13 @@ class AndroidLayout(object):
             nodes = self._filter_nodes(d, nodes)
             if len(nodes) == 1:
                 return d, None
-        if n.text and txt_pat.match(n.text):
+        if n.text and txt_pat.match(n.text) and not (sub and n.text.isdigit()):
             d['text'] = n.text
             nodes = self._filter_nodes(d, nodes)
             if len(nodes) == 1:
                 return d, None
-        if n.description and txt_pat.match(n.description):
+        if n.description and txt_pat.match(n.description) and not (sub and n.description.isdigit()):
             d['description'] = n.description
-            nodes = self._filter_nodes(d, nodes)
-            if len(nodes) == 1:
-                return d, None
-        if n.index:
-            d['index'] = n.index
             nodes = self._filter_nodes(d, nodes)
             if len(nodes) == 1:
                 return d, None
@@ -216,7 +212,7 @@ class AndroidLayout(object):
 
         choices = []
         for n in decendants:
-            sd, sorder = self._get_node_selector(n)
+            sd, sorder = self._get_node_selector(n, True)
             choices.append((sorder or 0, -n.bounds.area, sd, sorder)) # add area to sort
         choices.sort()
 
