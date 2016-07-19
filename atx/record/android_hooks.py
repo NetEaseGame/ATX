@@ -106,6 +106,9 @@ class Event(object):
 class KeyEvent(Event):
     def __init__(self, time, msg, key):
         super(KeyEvent, self).__init__(time, msg)
+        # convert to KEYCODE_xxx for 'adb input keyevent xxx'
+        if key.startswith('KEY_'):
+            key = 'KEYCODE_' + key[4:]
         self.key = key
 
 class TouchEvent(Event):
@@ -513,6 +516,7 @@ class RegexpGestureRecognizer(GestureRecognizer):
                 self.tracks[i] = []
             elif _MULTI_TAP_NUM == 1 and re.match('^DM?$', s):
                 self.handle_gesture(HC.GST_TAP, self.tracks[i][:])
+                self.tracks[i] = []
             elif _MULTI_TAP_NUM > 1 and re.match('^(DM?U){%d}DM?$' % (_MULTI_TAP_NUM-1,), s):
                 self.handle_gesture(HC.GST_MULTI_TAP, self.tracks[i][:])
                 self.tracks[i] = []

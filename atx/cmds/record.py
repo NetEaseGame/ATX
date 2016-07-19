@@ -14,7 +14,6 @@ import win32con
 import win32gui
 
 from atx.device.android import AndroidDevice
-from atx.device.android_minicap import AndroidDeviceMinicap
 from atx.device.windows import WindowsDevice
 from atx.record.android import AndroidRecorder
 from atx.record.windows import WindowsRecorder
@@ -250,7 +249,7 @@ class RecorderGUI(object):
             print "init recorder", type(self._device)
             if isinstance(self._device, WindowsDevice):
                 record_class = WindowsRecorder
-            elif isinstance(self._device, (AndroidDevice, AndroidDeviceMinicap)):
+            elif isinstance(self._device, (AndroidDevice, )):
                 record_class = AndroidRecorder
             else:
                 print "Unknown device type", type(self._device)

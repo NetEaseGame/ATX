@@ -14,13 +14,21 @@ import xml.dom.minidom
 import numpy as np
 
 from atx.device import Bounds
-UINode = collections.namedtuple('UINode', [
+__UINode = collections.namedtuple('UINode', [
     'xml', 'children', 'depth',
     'index', 'text', 'resourceId',
     'className', 'packageName', 'description',
     'checkable', 'checked', 'clickable', 'enabled', 'focusable', 'focused',
     'scrollable', 'longClickable', 'password', 'selected',
     'bounds'])
+# make it hashable
+class UINode(__UINode):
+    parent=None
+    def __hash__(self):
+        return id(self)
+
+# ignore text/description contains punctuation
+txt_pat = re.compile(ur'^[a-zA-Z0-9 \u4e00-\u9fa5]+$')
 
 def parse_bounds(text):
     m = re.match(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', text)
@@ -32,6 +40,7 @@ def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 def convstr(v):
+    return v
     return v.encode('utf-8')
 
 class AndroidLayout(object):
@@ -39,40 +48,33 @@ class AndroidLayout(object):
         self.tree = None
         self.nodes = []
         self.rotation = 0
-        self.focused_node = None
 
-    def find_clickable_rect(self, x, y):
-        def _find(node, x, y):
-            if node.enabled and node.bounds.is_inside(x, y):
-                for n in node.children[::-1]:
-                    subnode = _find(n, x, y)
-                    if subnode and subnode.clickable:
-                        return subnode
-                return node
-        return _find(self.tree, x, y)
+    def find_node(self, x, y):
+        for n in self.nodes:
+            if n.enabled and n.bounds.is_inside(x, y):
+                return n
 
-    def find_minimal_clickable_rect(self, x, y):
+    def find_clickable_node(self, x, y):
         for n in self.nodes:
             if n.enabled and n.clickable and n.bounds.is_inside(x, y):
                 return n
 
-    def find_scrollable_rect(self, x, y):
+    def find_scrollable_node(self, x, y):
         for n in self.nodes:
             if n.enabled and n.scrollable and n.bounds.is_inside(x, y):
                 return n
 
-    def display(self):
+    def display(self, showall=False):
         if not self.tree or not self.nodes:
             return
         b = self.tree.bounds
         l, t = b.left, b.top
         w, h = b.right - b.left, b.bottom - b.top
         img = np.zeros((h, w, 3), np.uint8)
-        # highlight = np.zeros((h, w, 3), np.uint8)
 
         i = 0
-        for n in self.nodes:
-            if not n.clickable and not n.scrollable: continue
+        for n in self.nodes[::-1]:
+            if not showall and not n.clickable and not n.scrollable: continue
             b = n.bounds
             cv2.rectangle(img, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (83, min(255, i*5), 18), 2)
             i += 1
@@ -126,7 +128,6 @@ class AndroidLayout(object):
         dom = xml.dom.minidom.parseString(xmldata)
         root = dom.documentElement
         self.rotation = int(root.getAttribute('rotation'))
-        self.focused_node = None
 
         def walk(node, ui_nodes, depth=0):
             while len(node.childNodes) == 1 and node.getAttribute('bounds') == '':
@@ -137,36 +138,193 @@ class AndroidLayout(object):
                 sub = walk(n, ui_nodes, depth+1)
                 if sub is not None:
                     uinode.children.append(sub)
+                    sub.parent = uinode
             ui_nodes.append(uinode)
-            if uinode.focused:
-                if self.focused_node is not None:
-                    print 'Errorrrrrrr, more than one focused node.'
-                self.focused_node = uinode
             return uinode
 
         self.nodes = []
         self.tree = walk(root, self.nodes)
-        # self.nodes.sort(key=lambda x: x.depth, reverse=True)
         self.nodes.sort(key=lambda x: x.bounds.area)
+        # self.nodes.sort(key=lambda x: x.depth, reverse=True)
 
-    def find_exclusive_features(self, node):
+    def find_selector(self, node):
+        return self.__find_selector_by_structure(node)
+        # return self.__find_selector_by_attrbutes(node)
+        # return self.__find_selector_by_score(node)
+
+    def _filter_nodes(self, cond, nodes=None):
+        if nodes is None:
+            nodes = self.nodes
+        res = []
+        for n in nodes:
+            match = True
+            for k, v in cond.iteritems():
+                attr = getattr(n, k)
+                if isinstance(v, re._pattern_type) and \
+                    isinstance(attr, basestring) and v.match(attr) is None:
+                    match = False
+                    break
+                elif attr != v:
+                    match = False
+                    break
+            if match:
+                res.append(n)
+        return res
+
+    def _get_node_selector(self, n):
+        d = {'className':n.className}
+        nodes = self._filter_nodes(d)
+        if len(nodes) == 1:
+            return d, None
+        if n.resourceId:
+            d['resourceId'] = n.resourceId
+            nodes = self._filter_nodes(d, nodes)
+            if len(nodes) == 1:
+                return d, None
+        if n.text and txt_pat.match(n.text):
+            d['text'] = n.text
+            nodes = self._filter_nodes(d, nodes)
+            if len(nodes) == 1:
+                return d, None
+        if n.description and txt_pat.match(n.description):
+            d['description'] = n.description
+            nodes = self._filter_nodes(d, nodes)
+            if len(nodes) == 1:
+                return d, None
+        if n.index:
+            d['index'] = n.index
+            nodes = self._filter_nodes(d, nodes)
+            if len(nodes) == 1:
+                return d, None
+        return d, nodes.index(n)
+
+    def __find_selector_by_structure(self, node):
         '''find condition for locate a node'''
-        '''
-        text
-        className
-        description
-        checkable
-        checked
-        clickable
-        longClickable
-        scrollable
-        enabled
-        focusable
-        focused
-        selected
-        packageName
-        resourceId
-        '''
+        # try itself
+        d, order = self._get_node_selector(node)
+        if order is None:
+            return d, None
+
+        # try its non-clickable children
+        decendants = []
+        def walk(n):
+            for c in n.children:
+                if c.clickable: continue
+                decendants.append(c)
+                walk(c)
+        walk(node)
+
+        choices = []
+        for n in decendants:
+            sd, sorder = self._get_node_selector(n)
+            choices.append((sorder or 0, -n.bounds.area, sd, sorder)) # add area to sort
+        choices.sort()
+
+        if choices:
+            return choices[0][2], choices[0][3]
+
+        # TODO
+        # # try if its non-clickable parent
+        # def is_decendant(n1, n2):
+        #     '''check if n1 is decandant of n2'''
+        #     for c in n2.children:
+        #         if c == n1 or is_decendant(n1, c):
+        #             return True
+        #     return False
+        #
+        # p = node.parent
+        # while p and not p.clickable:
+        #     pd, porder = self._get_node_selector(p)
+        #     if porder is None:
+        #         print 'parent node', p.className
+        #         for i in range(len(p.children)):
+        #             c = p.children[i]
+        #             if c == node or is_decendant(node, c):
+        #                 print 'child', i, c==node, c.className, c.resourceId, c.text
+        #         return pd, porder
+        #     p = p.parent
+
+        return d, order
+
+    def __find_selector_by_attrbutes(self, node):
+        '''avoid repeat over same attr'''
+
+        # ignore clickable subnodes
+        def attrs(n, name):
+            res = set()
+            v = getattr(n, name)
+            if v: res.add(v)
+            for subn in n.children:
+                if subn.clickable: continue
+                res.update(attrs(subn, name))
+            return res
+
+        def is_decendant(n1, n2):
+            '''check if n1 is decandant of n2'''
+            for c in n2.children:
+                if c == n1 or is_decendant(n1, c):
+                    return True
+            return False
+
+        candidates = {}
+        def try_attr(top, attr, ignore_filter=None):
+            for value in attrs(top, attr):
+                if ignore_filter and ignore_filter(value):
+                    continue
+                tmp = self._filter_nodes({attr:value})
+                if len(tmp) == 1:
+                    return True, {attr:value}
+                # save candidates
+                for n in tmp:
+                    if n == top or is_decendant(n, top):
+                        candidates.setdefault(n, {})[attr] = len(tmp)
+            return False, None
+
+        # try className
+        ok, cond = try_attr(node, 'className')
+        if ok:
+            return cond, None
+
+        # try anything with a resourceId
+        ok, cond = try_attr(node, 'resourceId')
+        if ok:
+            return cond, None
+
+        # try anything with a text
+        ok, cond = try_attr(node, 'text', lambda s: txt_pat.match(s) is None)
+        if ok:
+            return cond, None
+
+        # try anything with a description
+        ok, cond = try_attr(node, 'description', lambda s: txt_pat.match(s) is None)
+        if ok:
+            return cond, None
+
+        print 'candidates:', candidates.values()
+
+        # try combinations
+
+        #
+        return self._get_node_selector(node)
+
+    def __find_selector_by_score(self, node):
+
+        # find candidate selectors and give a score
+        candidates = {}
+
+        def walk(n):
+            info = {'depth': n.depth-node.depth}
+            d, o = self._get_node_selector(n)
+            info['selector'] = d
+            info['order'] = o
+            info['score'] = 0
+            candidates[n] = info
+            for c in n.children:
+                if c.clickable: continue
+                walk(c)
+        walk(node)
+
+        # get top score selector
 
 
 if __name__ == '__main__':
@@ -177,6 +335,9 @@ if __name__ == '__main__':
 
     import time
     import traceback
+    import locale
+
+    encoding = locale.getpreferredencoding()
 
     from uiautomator import device
     device.dump()
@@ -215,26 +376,31 @@ if __name__ == '__main__':
         highlight = np.zeros((h, w, 3), np.uint8)
 
         if downpos and ismove: # drag
-            node = layout.find_scrollable_rect(x*2+l, y*2+t)
+            node = layout.find_scrollable_node(x*2+l, y*2+t)
             print 'scroll to', x*2, y*2
             if node:
                 b = node.bounds
-                print 'scrolled node', b, node.index, node.className,
+                print 'scrollable node', b, node.index, node.className,
                 print 'resource_id:', node.resourceId,
-                print 'text:', node.text,
-                print 'desc:', node.description
+                print 'text:', node.text.encode(encoding, 'ignore'),
+                print 'desc:', node.description.encode(encoding, 'ignore')
                 cv2.rectangle(highlight, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (0,255,255), 4)
         else:
-            # node = layout.find_clickable_rect(x*2, y*2)
-            node = layout.find_minimal_clickable_rect(x*2+l, y*2+t)
+            node = layout.find_clickable_node(x*2+l, y*2+t)
             if node:
                 b = node.bounds
-                print 'scrolled node', b, node.index, node.className,
+                print 'clickable node', b, node.index, node.className,
                 print 'resource_id:', node.resourceId,
-                print 'text:', node.text,
-                print 'desc:', node.description
+                print 'text:', node.text.encode(encoding, 'ignore'),
+                print 'desc:', node.description.encode(encoding, 'ignore')
                 print device(className=node.className, index=node.index).info
                 cv2.rectangle(highlight, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (0,0,255), 4)
+                cond, order = layout.find_selector(node)
+                if cond:
+                    print 'selector', cond, order
+                    subnode = layout._filter_nodes(cond)[order or 0]
+                    b = subnode.bounds
+                    cv2.rectangle(highlight, (b.left-l, b.top-t), (b.right-l, b.bottom-t), (0,180,255), 4)
 
         param[0].highlight = highlight
         param[1], param[2] = None, False
@@ -259,6 +425,11 @@ if __name__ == '__main__':
             h, w = img.shape[:2]
             img = cv2.resize(img, (w/2, h/2))
             cv2.imshow('layout', img)
+            # key = cv2.waitKey(10)
+            # if key == 115:
+            #     with open('%d-%s.xml' % (count, package), 'w') as f:
+            #         print 'saved', count, package
+            #         f.write(xmldata)
             cv2.waitKey(1)
             count += 1
     except:
@@ -266,4 +437,7 @@ if __name__ == '__main__':
 
     toc = time.time()
     t = toc - tic
-    print 'get %d dumps in %f seconds (%f each)' % (count, t, t/count)
+    if count > 0:
+        print 'get %d dumps in %f seconds (%f each)' % (count, t, t/count)
+    else:
+        print 'get nothing.'

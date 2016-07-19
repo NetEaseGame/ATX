@@ -28,6 +28,7 @@ class BaseRecorder(object):
 
         self.thread = None
         self.frames = []  # for backup
+        self.last_frame_time = None
         self.case_draft = []  # for analyze draft
         self.input_queue = Queue.Queue()
         self.input_index = 0
@@ -114,6 +115,11 @@ class BaseRecorder(object):
         idx, event, status = frame
         meta = {'index':idx}
         meta['event'] = self.serialize_event(event)
+        if self.last_frame_time is None:
+            meta['waittime'] = 0
+        else:
+            meta['waittime'] = event.time - self.last_frame_time
+        self.last_frame_time = event.time
 
         # save frames.
         # print 'saving...'
@@ -207,7 +213,7 @@ class BaseRecorder(object):
             'def test(d):',
         ]
         for row in self.case_draft:
-            content.append(' '*4 + row['pyscript'])
+            content.append(' '*4 + row['pyscript'].encode('utf-8', 'ignore'))
             content.append(' '*4 + 'time.sleep(1)')
         content.extend([
             '',

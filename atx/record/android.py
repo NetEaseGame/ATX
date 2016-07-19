@@ -142,20 +142,22 @@ class AdbStatusAddon(object):
             package, activity = self.device.adb_device.current_app()
             return package + '/' + activity
         except:
-            traceback.print_exc()
+            # traceback.print_exc()
             return
 
 class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
     def __init__(self, *args, **kwargs):
         self.hm = HookManager()
+        self.uilayout = AndroidLayout()
+        self.nonui_activities = set()
+        self.scene_detector = kwargs.pop('scene_detector', None)
+
         super(AndroidRecorder, self).__init__(*args, **kwargs)
         self.hm.register(HC.KEY_ANY, self.on_key)
         self.hm.register(HC.GST_TAP, self.input_event)
         self.hm.register(HC.GST_SWIPE, self.input_event)
         self.hm.register(HC.GST_DRAG, self.input_event)
 
-        self.uilayout = AndroidLayout()
-        self.nonui_activities = set()
 
     def attach(self, device):
         if self.device is not None:
@@ -223,12 +225,16 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         if event.msg == HC.GST_TAP:
             x, y = event.points[0]
             if analyze_ui:
-                node = self.uilayout.find_clickable_rect(x, y)
+                node = self.uilayout.find_clickable_node(x, y)
                 if node:
+                    selector, order = self.uilayout.find_selector(node)
                     print node.bounds, x, y
                     d['action'] = 'click_ui'
-                    d['args'] = (node.class_name, node.resource_id, node.index)
-                    d['pyscript'] = 'd(className="%s", resourceId="%s", index="%s").click()' % d['args']
+                    d['args'] = (selector, order)
+                    if order is None:
+                        d['pyscript'] = 'd(%s).click()' % (','.join(['%s=u"%s"' % item for item in selector.iteritems()]))
+                    else:
+                        d['pyscript'] = 'd(%s)[%d].click()' % (','.join(['%s=u"%s"' % item for item in selector.iteritems()]), order)
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)
@@ -262,15 +268,17 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
         self.case_draft.append(d)
 
-
 def find_clicked_img(img, x, y):
     bounds = Bounds(0, 0, 100, 100)
     return img, bounds
 
 if __name__ == '__main__':
+    # from atx.record.scene_detector import SceneDetector
     set_multitap(1)
+
     def test():
         d = RecordDevice()
+        # detector = SceneDetector('txxscene')
         rec = AndroidRecorder(d, 'testcase', realtime_analyze=True)
         rec.add_nonui_activity('com.netease.txx.mi/com.netease.txx.Client')
         rec.start()
