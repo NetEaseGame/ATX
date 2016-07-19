@@ -71,13 +71,14 @@ class IOSDevice(DeviceMixin):
         # subprocess.check_output([self._bootstrap, 'reset'], env=self._env)
         # 2. start instruments
         self._proc = subprocess.Popen([self._bootstrap, 'instruments'], env=self._env, stdout=subprocess.PIPE)
-        time.sleep(3.0)
+        self.sleep(5.0)
         self._wait_instruments()
 
     def _wait_instruments(self):
-        if self._run('1') != 1:
-            print 'Instruments stdout:\n' + self._proc.stdout.read()
-            raise RuntimeError('Instruments start failed.')
+        ret = self._run('1')
+        if ret != 1:
+            log.error('Instruments stdout:\n' + self._proc.stdout.read())
+            raise RuntimeError('Instruments start failed, expect 1 but got %s' % (ret,))
 
     def _run(self, code):
         # print self._proc.poll()

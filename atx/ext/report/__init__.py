@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import atexit
+import argparse
 import os
 import time
 import json
@@ -9,6 +10,7 @@ import warnings
 
 from atx import consts
 from atx import errors
+from atx.base import nameddict
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +20,15 @@ class ExtDeprecationWarning(DeprecationWarning):
     pass
 
 warnings.simplefilter('always', ExtDeprecationWarning)
+
+def json2obj(data):
+    data['this'] = data.pop('self', None)
+    return nameddict('X', data.keys())(**data)
+
+def center(bounds):
+    x = (bounds['left'] + bounds['right'])/2
+    y = (bounds['top'] + bounds['bottom'])/2
+    return (x, y)
 
 
 class Report(object):
@@ -36,8 +47,29 @@ class Report(object):
         self.save_dir = save_dir
         self.steps = []
         self.result = None
-        # listen(self.d, self.save_dir)
+        self.__uia_last_position = None
         self.start_record()
+
+    def _uia_listener(self, evtjson):
+        evt = json2obj(evtjson)
+        if evt.name != '_click':
+            return
+        if evt.is_before:
+            self.d.screenshot()
+            self.__uia_last_position = center(evt.this.bounds)
+        else:
+            screen_before = self._save_screenshot(self.d.last_screenshot)
+            # FIXME: maybe need sleep for a while
+            screen_after = self._save_screenshot()
+            (x, y) = self.__uia_last_position
+            self.add_step('click',
+                screen_before=screen_before,
+                screen_after=screen_after,
+                position={'x': x, 'y': y})
+
+    def patch_uiautomator(self):
+        import uiautomator
+        uiautomator.add_listener('atx-report', self._uia_listener)
 
     def start_record(self):
         self.start_time = time.time()
@@ -52,7 +84,7 @@ class Report(object):
             start_timestamp=time.time(),
         ), steps=self.steps)
 
-        self.d.add_listener(self.listener, consts.EVENT_ALL ^ consts.EVENT_SCREENSHOT)
+        self.d.add_listener(self._listener, consts.EVENT_ALL ^ consts.EVENT_SCREENSHOT)
         atexit.register(self._finish)
 
     def _finish(self):
@@ -93,58 +125,74 @@ class Report(object):
             step['screenshot'] = screen_path
         self.steps.append(step)
 
-    def listener(self, evt):
+    # def add_click(self, x, y, screen=None):
+    #     if screen is None:
+    #         screen = self.d.screenshot()
+
+    def add_step(self, action, **kwargs):
+        kwargs['success'] = kwargs.pop('success', True)
+        kwargs['time'] = round(kwargs.pop('time', time.time()-self.start_time), 1)
+        kwargs['action'] = action
+        self.steps.append(kwargs)
+
+    def _save_screenshot(self, screen=None):
+        if screen is None:
+            screen = self.d.screenshot()
+        abspath = 'images/before_%d.png' % time.time()
+        relpath = os.path.join(self.save_dir, abspath)
+        screen.save(relpath)
+        return abspath
+
+    def _listener(self, evt):
         d = self.d
-        start_time = self.start_time
         screen_before = 'images/before_%d.png' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
+        if evt.depth > 1: # base depth is 1
+            return
+
+        if evt.is_before: # call before function
+            if evt.flag == consts.EVENT_CLICK:
+                d.screenshot()
+            return
+
         if evt.flag == consts.EVENT_CLICK:
-            if evt.depth > 1: # base depth is 1
-                return
             if d.last_screenshot: # just in case
                 d.last_screenshot.save(screen_before_abspath)
             screen_after = 'images/after_%d.png' % time.time()
             d.screenshot(os.path.join(self.save_dir, screen_after))
 
             (x, y) = evt.args
-            self.steps.append({
-                'time': '%.1f' % (time.time()-start_time,),
-                'action': 'click',
-                'screen_before': screen_before,
-                'screen_after': screen_after,
-                'position': {'x': x, 'y': y},
-                'success': True,
-            })
+            self.add_step('click',
+                screen_before=screen_before,
+                screen_after=screen_after,
+                position={'x': x, 'y': y})
         elif evt.flag == consts.EVENT_CLICK_IMAGE:
-            step = {
-                'time': '%.1f' % (time.time()-start_time,),
-                'action': 'click_image',
+            kwargs = {
                 'success': evt.traceback is None,
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
             }
             # not record if image not found
-            if evt.retval is None:
+            if evt.retval is None and evt.traceback is None:
                 return
             
             if d.last_screenshot:
                 d.last_screenshot.save(screen_before_abspath)
-                step['screen_before'] = screen_before
+                kwargs['screen_before'] = screen_before
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
                 target = 'images/target_%d.png' % time.time()
                 target_abspath = os.path.join(self.save_dir, target)
                 pattern = d.pattern_open(evt.args[0])
                 pattern.save(target_abspath)
-                step['target'] = target
+                kwargs['target'] = target
             if evt.traceback is None:
                 screen_after = 'images/after_%d.png' % time.time()
                 d.screenshot(os.path.join(self.save_dir, screen_after))
-                step['screen_after'] = screen_after
-                step['confidence'] = evt.retval.confidence
+                kwargs['screen_after'] = screen_after
+                kwargs['confidence'] = evt.retval.confidence
                 (x, y) = evt.retval.pos
-                step['position'] = {'x': x, 'y': y}
-
-            self.steps.append(step)
+                kwargs['position'] = {'x': x, 'y': y}
+            self.add_step('click_image', **kwargs)
 
 
 def listen(d, save_dir='report'):

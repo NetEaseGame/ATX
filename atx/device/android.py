@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import collections
+import base64
 import os
 import re
 import sys
@@ -33,11 +34,14 @@ from atx.device.mixin import DeviceMixin, hook_wrap
 from atx import adbkit
 
 
-DISPLAY_RE = re.compile(
+_DISPLAY_RE = re.compile(
     r'.*DisplayViewport{valid=true, .*orientation=(?P<orientation>\d+), .*deviceWidth=(?P<width>\d+), deviceHeight=(?P<height>\d+).*')
 
-PROP_PATTERN = re.compile(
+_PROP_PATTERN = re.compile(
     r'\[(?P<key>.*?)\]:\s*\[(?P<value>.*)\]')
+
+_INPUT_METHOD_RE = re.compile(
+    r'mCurMethodId=([-_./\w]+)')
 
 UINode = collections.namedtuple('UINode', [
     'xml',
@@ -147,7 +151,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             return self.__display
         w, h = (0, 0)
         for line in self.adb_shell('dumpsys display').splitlines():
-            m = DISPLAY_RE.search(line, 0)
+            m = _DISPLAY_RE.search(line, 0)
             if not m:
                 continue
             w = int(m.group('width'))
@@ -323,7 +327,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         '''
         props = {}
         for line in self.adb_shell(['getprop']).splitlines():
-            m = PROP_PATTERN.match(line)
+            m = _PROP_PATTERN.match(line)
             if m:
                 props[m.group('key')] = m.group('value')
         return props
@@ -335,14 +339,16 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Args:
             package_name: string like com.example.app1
 
-        Returns:
-            None
+        Returns time used (unit second), if activity is not None
         '''
+        _pattern = re.compile(r'TotalTime: (\d+)')
         if activity is None:
             self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
         else:
-            self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
-        return self
+            output = self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
+            m = _pattern.search(output)
+            if m:
+                return int(m.group(1))/1000.0
 
     def stop_app(self, package_name, clear=False):
         '''
@@ -444,8 +450,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             ui_nodes.append(self._parse_xml_node(node))
         return ui_nodes
 
-    def _escape_text(self, s):
-        return s.replace(' ', '%s')
+    def _escape_text(self, s, utf7=False):
+        s = s.replace(' ', '%s')
+        if utf7:
+            s = s.encode('utf-7')
+        return s
 
     def keyevent(self, keycode):
         """call adb shell input keyevent ${keycode}
@@ -463,7 +472,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         "Hi world" maybe spell into "H iworld"
 
         Args:
-            - text: string (text to input)
+            - text: string (text to input), better to be unicode
             - enter(bool): input enter at last
 
         The android source code show that
@@ -472,17 +481,56 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         android source code can be found here.
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
-        first = True
-        for s in text.split('%s'):
-            if s == '':
-                continue
-            estext = self._escape_text(s)
-            if first:
-                first = False
-            else:
-                self.adb_shell(['input', 'text', '%'])
-                estext = 's' + estext
-            self.adb_shell(['input', 'text', estext])
+        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
+        if is_utf7ime:
+            estext = base64.b64encode(text.encode('utf-7'))
+            self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
+        else:
+            first = True
+            for s in text.split('%s'):
+                if first:
+                    first = False
+                else:
+                    self.adb_shell(['input', 'text', '%'])
+                    s = 's' + s
+                if s == '':
+                    continue
+                estext = self._escape_text(s)
+                self.adb_shell(['input', 'text', estext])
 
         if enter:
             self.keyevent('KEYCODE_ENTER')
+
+    def clear_text(self, count=100):
+        """Clear text
+        Args:
+            - count (int): send KEY_DEL count
+        """
+        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
+        if not is_utf7ime:
+            raise RuntimeError("Input method must be 'android.unicode.ime'")
+        self.keyevent('KEYCODE_MOVE_END')
+        self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
+
+    def input_methods(self):
+        """
+        Get all input methods
+
+        Return example: ['com.sohu.inputmethod.sogou/.SogouIME', 'android.unicode.ime/.Utf7ImeService']
+        """
+        imes = []
+        for line in self.adb_shell(['ime', 'list', '-s', '-a']).splitlines():
+            line = line.strip()
+            if re.match('^.+/.+$', line):
+                imes.append(line)
+        return imes
+
+    def current_ime(self):
+        ''' Get current input method '''
+        dumpout = self.adb_shell(['dumpsys', 'input_method'])
+        m = _INPUT_METHOD_RE.search(dumpout)
+        if m:
+            return m.group(1)
+
+        # Maybe no need to raise error
+        # raise RuntimeError("Canot detect current input method")

@@ -48,7 +48,6 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 * 支持dir(dev) 查看元素已有的方法（-_-! 之前代码写的不好，并不支持）
 * 更稳定的依赖库控制，与travis持续集成，可在代码更新后自动发布到pypi
 * 移除性能监控功能(目前性能测试使用第三方工具 腾讯GT)
-* 暂时移除iOS支持(in progress ...) 
 * 图像匹配默认使用模版匹配，将SIFT匹配改为可选
 
 [更多More](CHANGELOG)
@@ -107,9 +106,12 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 3. Install `ADB` (Android Debug Bridge)
 
-	If already installed, just skip the part. recommend version `1.0.32`
+	If already installed, just skip the part. recommend version `1.0.36`, you can download from [github release](https://github.com/codeskyblue/AutomatorX/releases/download/1.0.12/adb-1.0.36.zip)
 
-	下载adb安装到电脑上，推荐下载地址 <http://adbshell.com/>
+	* Download address 1: <https://developer.android.com/studio/index.html>
+	* Download address 2: <http://adbshell.com> (this site update not too fast)
+
+	Mac can install adb use `brew` which is eaiser.
 
 4. Show atx version
 
@@ -119,6 +121,17 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	Remember the atx version in case if you want to rollback.
 
+Some may still failed the installation. There are some ways which may help you.
+
+1. Uninstall your python, and reinstall from <https://python.org>
+2. Mac user may found install numpy error
+
+    Reference: <http://blog.csdn.net/hqzxsc2006/article/details/51602654>
+
+3. Windows user may found install pyyaml failed.
+
+    Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
+    
 ## IOS Documentation
 该部分记录的内容灵活性比较大，有可能会有大的改动，也有可能以后会删掉。
 
@@ -129,10 +142,10 @@ iOS自动化必须一台Mac，所以请准备好硬件
 ## Quick start
 * [iOS Quick Start](README_IOS_QUICKSTART.md)
 
-## Windows Quick start
-1. 连接一台安卓手机 (4.1+)
+## Windows Quick start (Android)
+1. Connect an Android phone (`sdk>=4.1`) to PC
 
-	打开windows命令行，执行 `adb devices`, 请确保看到类似输出, 没有其他的错误
+	Open terminal, execute `adb devices`, make sure you see your device.
 
 	```bash
 	$ adb devices
@@ -152,11 +165,11 @@ iOS自动化必须一台Mac，所以请准备好硬件
 
 	运行 `python test.py`
 
-3. 截图
+3. Take screenshot
 
-	命令行运行 `python -matx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
+	命令行运行 `python -m atx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
 
-	![tkide](images/tkide.png)
+	![gui](images/atx-gui.gif)
 
 	_PS: 这里其实有个好的IDE截图的最好了，现在是用Tkinter做的，比较简洁，但是可以跨平台，效果也还可以_
 
@@ -240,7 +253,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 		print 'founded'
 
 	# take screenshot
-	d.screenshot('screen.1920x1080.png') # 保存屏幕截图
+	d.screenshot('screen.1920x1080.png') # Save screenshot as file
 
 	# click position
 	d.click(50, 100) # 模拟点击 x, y
@@ -262,11 +275,21 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# 文件名添加截图手机的分辨率
 	d.click_image("button.1920x1080.png")
 
+	# 文件名中添加偏移量, 格式为 <L|R><number><T|B><number>.png
+	# 其中 L: Left, R: Right, T: Top, B: Bottom
+	# number为百分比
+	# 所以 R20T50代表，点击为止从图片中心向右偏移20%并且向上偏移50%
+	d.click_image("button.R20T50.png")
+
+
 	# 不等待的图片点击, 如果图片不存在直接返回None
 	d.click_nowait('button.1920x1080.png')
 
 	# click offset image
-	d.click_image(atx.Pattern('button.png', offset=(100, 20))) # 带有偏移量的点击
+	d.click_image(atx.Pattern('button.png', offset=(100, -20))) # 带有偏移量的点击
+	# TODO(ssx)
+	d.click_image('button.p100n20.png') # 带有偏移量的点击, offset = 100, -20
+	
 
 	# 指定截图时手机的分辨率是 1920x1080 以便脚本运行在其他分辨率的手机上时可以自动适应
 	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
@@ -382,7 +405,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	```
 
 ## ATX Extentions
-该部分属于atx的扩展插件实现的功能，参考了flask.ext的实现
+该部分属于atx的扩展插件实现的功能
 
 插件说明
 
@@ -541,27 +564,13 @@ python -m atx --help
 
 	市面上大部分的手机都是 16:9 还有一部分是 4:3,5:3,8:5 其他比例的似乎寥寥。而游戏中元素的大小，在屏幕变化的时候，也会等比例的去缩放。16:9到4:3的缩放比例似乎也有规律可循，暂时不研究啦。
 
-	**16:9**的的常见分辨率
+	| W/H | Display |
+	|-----|---------|
+	|16/9 | 540x960, 720x1280, 1080x1920, 1440x2560 |
+	|8/5  | 800x1280, 1200x1920, 1600x2560 |
+	|5/3  | 1152x1920, 1080x1800 |
+	|4/3  | 1536x2048 |
 
-	* 540x960
-	* 720x1280
-	* 1080x1920
-	* 1440x2560
-
-	**4:3**
-
-	* 1536x2048
-
-	**5:3**
-
-	* 1152x1920
-	* 1080x1800
-
-	**8:5**
-
-	* 800x1280
-	* 1200x1920
-	* 1600x2560
 
 	所以通常只需要找个分辨率高点的设备，然后截个图。同样宽高比的手机就可以一次拿下。
 
@@ -606,20 +615,20 @@ python -m atx --help
 
 7. 解决输入法遇到的问题
 
-	可以使用日本友人开发的输入法 utf7ime, 其源码地址在 <https://github.com/sumio/uiautomator-unicode-input-helper>
+	可以专门为自动化开发的Utf7Ime的输入法 [源码地址](https://github.com/macacajs/android-unicode)
 
 	启动方法
 
-	```
+	```sh
 	python -m atx install utf7ime
-	adb shell ime enable jp.jun_nama.test.utf7ime/.Utf7ImeService # optional
-	adb shell ime set jp.jun_nama.test.utf7ime/.Utf7ImeService
+	adb shell ime enable android.unicode.ime/.Utf7ImeService
+	adb shell ime set android.unicode.ime/.Utf7ImeService
 	```
 
 	关闭方法
 
 	```
-	adb shell ime disable jp.jun_nama.test.utf7ime/.Utf7ImeService
+	adb shell ime disable android.unicode.ime/.Utf7ImeService
 	```
 
 ## 代码导读
@@ -627,7 +636,7 @@ python -m atx --help
 
 图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还凑合能用吧
 
-每个平台相关的库都放到了 目录 `atx/device`下，公用的方法在`atx/device/device_mixin.py`里实现。
+每个平台相关的库都放到了 目录 `atx/device`下，公用的方法在`atx/device/device_mixin.py`里实现。第三方扩展位于`atx/ext`目录下。
 
 ## 相关的项目
 1. 基于opencv的图像识别库 <https://github.com/netease/aircv>
@@ -635,6 +644,7 @@ python -m atx --help
 
 	- <https://github.com/codeskyblue/android-uiautomator-server>
 	- <https://github.com/codeskyblue/atx-uiautomator>
+3. Android input method <https://github.com/macacajs/android-unicode>
 3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 4. Blockly <https://github.com/codeskyblue/blockly>
 

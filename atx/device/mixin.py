@@ -7,33 +7,23 @@ from __future__ import absolute_import
 
 import collections
 import copy
-import os
-import re
-import sys
-import subprocess
-import time
-import tempfile
-import traceback
-import warnings
 import functools
-import logging
-import uuid
 import inspect
-import xml.dom.minidom
+import os
+import sys
+import time
+import traceback
 
 import cv2
-import numpy as np
 import aircv as ac
 from uiautomator import AutomatorDeviceObject
-from PIL import Image
 
+from atx import base
 from atx import consts
 from atx import errors
-from atx import patch
-from atx import base
-from atx import logutils
-from atx import strutils
 from atx import imutils
+from atx import logutils
+from atx.base import nameddict
 from atx.device import Pattern, Bounds, FindPoint
 
 
@@ -219,7 +209,7 @@ class Watcher(object):
 
 
 Traceback = collections.namedtuple('Traceback', ['stack', 'exception'])
-HookEvent = collections.namedtuple('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth'])
+HookEvent = nameddict('HookEvent', ['flag', 'args', 'kwargs', 'retval', 'traceback', 'depth', 'is_before'])
 
 def hook_wrap(event_type):
     def wrap(fn):
@@ -227,21 +217,28 @@ def hook_wrap(event_type):
         def _inner(*args, **kwargs):
             func_args = inspect.getcallargs(fn, *args, **kwargs)
             self = func_args.get('self')
+            self._depth += 1
+
+            def trigger(event):
+                for (f, event_flag) in self._listeners:
+                    if event_flag & event_type:
+                        event.args = args[1:]
+                        event.kwargs = kwargs
+                        event.flag = event_type
+                        event.depth = self._depth
+                        f(event)
             
             _traceback = None
             _retval = None
             try:
-                self._depth += 1
+                trigger(HookEvent(is_before=True))
                 _retval = fn(*args, **kwargs)
                 return _retval
             except Exception as e:
                 _traceback = Traceback(traceback.format_exc(), e)
                 raise
             finally:
-                if self and hasattr(self, '_listeners'):
-                    for (f, event_flag) in self._listeners:
-                        if event_flag & event_type:
-                            f(HookEvent(event_type, args[1:], kwargs, _retval, _traceback, self._depth)) # remove self from args
+                trigger(HookEvent(is_before=False, retval=_retval, traceback=_traceback))
                 self._depth -= 1
         return _inner
     return wrap
@@ -255,6 +252,8 @@ class DeviceMixin(object):
         self._listeners = []
         self._depth = 0 # used for hook_wrap
         self.image_path = ['.']
+        self.__last_screen = None
+        self.__keep_screen = False
 
     @property
     def resolution(self):
@@ -383,7 +382,12 @@ class DeviceMixin(object):
         screen = screen or self.region_screenshot()
         threshold = threshold or pattern.threshold or self.image_match_threshold
 
-        dx, dy = pattern.offset
+        dx, dy = pattern.offset or (0, 0)
+        # handle offset if percent, ex (0.2, 0.8)
+        if 0 < dx <= 5:
+            dx = pattern.image.shape[1] * dx # opencv object width
+        if 0 < dy <= 5:
+            dx = pattern.image.shape[0] * dy # opencv object height
         dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
 
         # image match
@@ -431,17 +435,32 @@ class DeviceMixin(object):
         if not isinstance(bounds, Bounds):
             raise TypeError("region param bounds must be isinstance of Bounds")
         _d = copy.copy(self)
-        _d._bounds = bounds
+        _d._bounds = Bounds(bounds)
         return _d
 
+    def keep_screen(self):
+        """
+        Freese screenshot, so all image functions will not take images, until call free_screen()
+        """
+        self.__last_screen = self.screenshot()
+        self.__keep_screen = True
+        return self
+        
+    def free_screen(self):
+        """
+        Unlock keep_screen()
+        """
+        self.__keep_screen = False
+        return self
+
     def region_screenshot(self, filename=None):
-        if self._bounds is None:
-            return self.screenshot(filename)
-        screen = self.screenshot()
-        screen_crop = screen.crop(self.bounds)
+        """ take part of the screenshot """
+        screen = self.__last_screen if self.__keep_screen else self.screenshot()
+        if self.bounds:
+            screen = screen.crop(self.bounds)
         if filename:
-            screen_crop.save(filename)
-        return screen_crop
+            screen.save(filename)
+        return screen
 
     def touch_image(self, *args, **kwargs):
         """ALias for click_image"""

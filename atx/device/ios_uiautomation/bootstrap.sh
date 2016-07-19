@@ -36,7 +36,7 @@ case "$1" in
 		TASK_ID=$($QUEUE post "$1")
 		if test -z "$NOWAIT"
 		then
-			exec $QUEUE delete "$TASK_ID"
+			exec $QUEUE retr "$TASK_ID"
 		fi
 		;;
 	get)
@@ -53,7 +53,7 @@ case "$1" in
 	reset)
 		# todo, maybe quit too much
 		# $QUEUE quit
-		echo "FIXME: maybe not needed"
+		$QUEUE clean
 		;;
 	test)
 		$0 run '{"command": 1}'

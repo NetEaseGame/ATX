@@ -40,7 +40,7 @@ class Bounds(__boundstuple):
 
 
 class Pattern(object):
-    def __init__(self, name, image=None, offset=(0, 0), anchor=0, rsl=None, resolution=None, th=None, threshold=None):
+    def __init__(self, name, image=None, offset=None, anchor=0, rsl=None, resolution=None, th=None, threshold=None):
         """
         Args:
             name: image filename
@@ -62,11 +62,23 @@ class Pattern(object):
 
         # search format name.1080x1920.png
         if self._resolution is None:
-            m = re.search(r'\.(\d+)x(\d+)\.png$', self._name)
+            m = re.search(r'\.(\d+)x(\d+)\.', self._name)
             if m:
                 (w, h) = sorted(map(int, (m.group(1), m.group(2))))
                 # TODO(ssx): gcd(w, h), make sure the biggest < 20
                 self._resolution = (w, h)
+
+        if self._offset is None:
+            m = re.search(r'\.([LRTB])(\d+)([LRTB])(\d+)\.', self._name)
+            if m:
+                offx, offy = 0, 0
+                for i in (1, 3):
+                    flag, number = m.group(i), int(m.group(i+1))
+                    if flag in ('L', 'R'):
+                        offx = number/100.0 * (1 if flag == 'R' else -1)
+                    if flag in ('T', 'B'):
+                        offy = number/100.0 * (1 if flag == 'B' else -1)
+                self._offset = (offx, offy)
 
     def __str__(self):
         return 'Pattern(name: {}, offset: {})'.format(strutils.encode(self._name), self.offset)

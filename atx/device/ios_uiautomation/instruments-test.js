@@ -73,27 +73,29 @@ while (true) {
   // $.message("delay 1s")
   // $.delay(1)
 
-  if (result.exitCode == 0) {
-    try {
-      var req = JSON.parse(result.stdout);
-      if (!req.id){
-        $.warn("Reqest need ID");
-        continue
-      }
-      var rawRes = eval(req.data.command);
-      if (req.data.nowait) {
-        continue;
-      }
-
-      var res = JSON.stringify(rawRes);
-      $.debug("Result: " + res);
-      var ret = $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
-      $.debug("Result exitCode: " + ret.exitCode);
-      $.debug("Result stdout: " + ret.stdout);
-      $.debug("Result stderr: " + ret.stderr);
-    } catch (err) {
-      $.error("Error: " + err.message);
-      // $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
+  if (result.exitCode !== 0) {
+    continue
+  }
+  
+  try {
+    var req = JSON.parse(result.stdout);
+    if (!req.id){
+      $.warn("Reqest need ID");
+      continue
     }
+    var rawRes = eval(req.data.command);
+    if (req.data.nowait) {
+      continue;
+    }
+
+    var res = JSON.stringify(rawRes);
+    $.debug("Result: " + res);
+    var ret = $.cmd('./bootstrap.sh', ['put', req.id, res], 5);
+    $.debug("Result exitCode: " + ret.exitCode);
+    $.debug("Result stdout: " + ret.stdout);
+    $.debug("Result stderr: " + ret.stderr);
+  } catch (err) {
+    $.error("Error: " + err.message);
+    // $.cmd('./bootstrap.sh', ['put', req.id, JSON.stringify("error:" + err.message)], 5);
   }
 }
