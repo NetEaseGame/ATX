@@ -103,7 +103,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
 	```
 
-3. Other dependencies (eg: ADB)
+3. **Other dependencies** (eg: ADB, Xcode)
 
 	* [Windows](INSTALL_WINDOWS.md)
 	* [Mac](INSTALL_MAC.md)
@@ -127,10 +127,7 @@ Some may still failed the installation. There are some ways which may help you.
 
     Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
 
-## iOS Quick start
-* [iOS Quick Start](README_IOS_QUICKSTART.md)
-
-## Windows Quick start (Android and iOS)
+## Quick start (Android and iOS)
 1. Connect an device
 
 	* Android
