@@ -75,6 +75,11 @@ class IOSDevice(DeviceMixin):
         self._session.close()
         self._session = None
 
+    def __call__(self, *args, **kwargs):
+        if self._session is None:
+            raise RuntimeError("Need to call start_app before")
+        return self._session(*args, **kwargs)
+
     def status(self):
         """ Check if connection is ok """
         return self._wda.status()
@@ -103,6 +108,10 @@ class IOSDevice(DeviceMixin):
             self.__scale = self.display.width / int(round(min(raw_size['width'], raw_size['height'])))
         rx, ry = x/self.__scale, y/self.__scale
         self._session.tap(rx, ry)
+
+    def home(self):
+        """ Return to homescreen """
+        return self._wda.home()
 
     def screenshot(self, filename=None):
         """Take a screenshot

@@ -103,15 +103,10 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
 	```
 
+3. Other dependencies (eg: ADB)
 
-3. Install `ADB` (Android Debug Bridge)
-
-	If already installed, just skip the part. recommend version `1.0.36`, you can download from [github release](https://github.com/codeskyblue/AutomatorX/releases/download/1.0.12/adb-1.0.36.zip)
-
-	* Download address 1: <https://developer.android.com/studio/index.html>
-	* Download address 2: <http://adbshell.com> (this site update not too fast)
-
-	Mac can install adb use `brew` which is eaiser.
+	* [Windows](INSTALL_WINDOWS.md)
+	* [Mac](INSTALL_MAC.md)
 
 4. Show atx version
 
@@ -131,43 +126,55 @@ Some may still failed the installation. There are some ways which may help you.
 3. Windows user may found install pyyaml failed.
 
     Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
-    
-## IOS Documentation
-该部分记录的内容灵活性比较大，有可能会有大的改动，也有可能以后会删掉。
 
-iOS自动化必须一台Mac，所以请准备好硬件
-
-* [iOS需要安装的软件](README_IOS.md)
-
-## Quick start
+## iOS Quick start
 * [iOS Quick Start](README_IOS_QUICKSTART.md)
 
-## Windows Quick start (Android)
-1. Connect an Android phone (`sdk>=4.1`) to PC
+## Windows Quick start (Android and iOS)
+1. Connect an device
 
-	Open terminal, execute `adb devices`, make sure you see your device.
+	* Android
 
-	```bash
-	$ adb devices
-	List of devices attached
-	EP7333W7XB      device
-	```
+		Android phone (`sdk>=4.1`) to PC
 
-2. 创建一个python文件 `test.py`, 内容如下
+		Open terminal, execute `adb devices`, make sure you see your device.
 
-	```python
-	# coding: utf-8
-	import atx
+		```bash
+		$ adb devices
+		List of devices attached
+		EP7333W7XB      device
+		```
 
-	d = atx.connect() # 如果多个手机连接电脑，则需要填入对应的设备号
-	d.screenshot('screen.png') # 截图
-	```
+		创建一个python文件 `test.py`, 内容如下
 
-	运行 `python test.py`
+		```python
+		# coding: utf-8
+		import atx
 
-3. Take screenshot
+		d = atx.connect() # 如果多个手机连接电脑，则需要填入对应的设备号
+		d.screenshot('screen.png') # 截图
+		```
 
-	命令行运行 `python -m atx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
+		运行 `python test.py`
+
+	* iOS
+
+		WDA运行完之后，准备好`DEVICE_URL`, 如 `http://localhost:8100`
+
+		python代码可以这样写
+
+		```python
+		# coding: utf-8
+		import atx
+
+		d = atx.connect('http://localhost:8100', platform='ios')
+		print d.status()
+		```
+
+
+2. Take screenshot
+
+	命令行运行 `python -m atx gui`, 如果是iOS用该命令`python -m atx gui --platform ios`. 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
 
 	![gui](images/atx-gui.gif)
 
@@ -177,7 +184,7 @@ iOS自动化必须一台Mac，所以请准备好硬件
 
 	重新运行 `python test.py`, 此时差不多可以看到代码可以点击那个按钮了
 
-4. 更多
+3. 更多
 
 	可以使用的接口还有很多，请接着往下看
 
@@ -226,7 +233,8 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	package_name = 'com.example.game'
 
 	d.stop_app(package_name)
-	# d.stop_app(package_name, clear=True) # stop and remove app data
+
+	# d.stop_app(package_name, clear=True) # stop and remove app data (only Android)
 	d.start_app(package_name)
 	```
 
@@ -307,7 +315,9 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 原生UI操作
 
-	如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
+	- Android 如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
+	- iOS如何点击UI元素参考 <https://github.com/codeskyblue/python-wda>
+
 	里面的API是直接通过继承的方式支持的。
 
 	```py
@@ -316,7 +326,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d(text='Enter').sibling(className='android.widget.ImageView').click()
 	```
 
-* 文本的输入
+* 文本的输入 (only Android)
 
 	```py
 	d.type("hello world")
