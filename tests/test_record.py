@@ -6,7 +6,6 @@ import time
 
 from atx.device.windows import WindowsDevice, find_process_id
 from atx.device.android import AndroidDevice
-from atx.device.android_minicap import AndroidDeviceMinicap
 from atx.cmds.record import RecorderGUI
 
 def get_calc_win():
@@ -30,15 +29,10 @@ def get_android_dev():
     print 'android devcie', dev._serial
     return dev
 
-def get_android_dev_minicap():
-    dev = AndroidDeviceMinicap()
-    print 'android devcie', dev._serial
-    return dev
-
 if len(sys.argv) > 1 and sys.argv[1] == 'win':
     get_device = get_calc_win
 else:
-    get_device = get_android_dev_minicap
+    get_device = get_android_dev
 
 def main():
     dev = get_device()

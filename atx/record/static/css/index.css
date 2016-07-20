@@ -1,0 +1,158 @@
+body {
+  background-color: #F3F3F3;
+  font-family: monospace;
+}
+ul {
+  padding: 0px;
+}
+li {
+  list-style: none;
+}
+select {
+  border-radius: 3px;
+  /*box-shadow: 0px 1px 1px #aaa;*/
+  padding: 1px 3px;
+}
+.action {
+  background-color: white;
+  margin: 6px;
+  padding: 6px;
+  border-radius: 5px;
+}
+.action > div.left > img {
+  vertical-align: middle;
+}
+.left {
+  float: left;
+}
+.right {
+  float: right;
+}
+.clear-fix {
+  *overflow: hidden;
+  *zoom: 1;
+}
+.clear-fix::after {
+  display: table;
+  content: "";
+  width: 0;
+  clear: both;
+}
+button.skip{
+  opacity: 0;
+  background: url("../imgs/remove.png");
+  width: 20px;
+  height: 20px;
+  border: 0px;
+}
+button.skip:hover{
+  opacity: 1;
+}
+.skipped {
+  height: 6px;
+  padding: 0px;
+}
+.skipped > .left, .skipped > .right {
+  display: none;
+}
+.wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-flow: row nowrap;
+}
+.left-panel {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+.right-panel {
+  flex-basis: 300px;
+}
+.v-slider {
+  position: relative;
+  vertical-align: middle;
+}
+.v-slider-bar {
+  background-color: #333;
+  position: absolute;
+}
+.v-slider-point {
+  background-color: #bbb;
+  position: absolute;
+}
+.highlight {
+  background: none repeat scroll 0 0 #FFFFE0;
+  border: 1px solid #E6DB55;
+}
+#ui-overlap {
+  position: relative;
+}
+#ui-overlap > div {
+  position: absolute;
+}
+.uibox {
+  position: absolute;
+  border: 1px solid #ff0000;
+}
+@keyframes breath {
+  0% {
+    opacity: 1;
+    box-shadow: 0 0 10px 10px #DC143C;
+  }
+  50%  {
+    opacity: 0.4;
+    box-shadow: 0 0 1px 1px #DC143C;
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 10px 10px #DC143C;
+  }
+}
+.point {
+  animation: breath 2s ease-in-out infinite;
+  background-color: #fff;
+  border: 1px solid #f00;
+  /*box-shadow: 0 0 5px rgba(81, 203, 238, 1);*/
+  position: absolute;
+}
+.chop {
+  display: inline-block;
+  vertical-align: middle;
+}
+.rect {
+  position: absolute;
+  border: 1px solid #ff0000;
+}
+.full {
+  width: 100%;
+  height: 100%;
+}
+.resizer {
+  position:absolute;
+  right:0px;
+  bottom:0px;
+  height:5px;
+  width:5px;
+  border: 1px solid #f00;
+}
+.resizer:hover {
+  cursor: se-resize;
+}
+.nav {
+  margin-left: 12px;
+}
+.nav > li {
+  float: left;
+  margin-right: 8px;
+  line-height: 22px;
+}
+.toolbar {
+  flex-basis: 60px;
+}
+.tool {
+  margin: 5px;
+}
+
+.tool img {
+  width: 30px;
+  height: 30px;
+}

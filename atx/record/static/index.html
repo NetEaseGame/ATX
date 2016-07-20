@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/jquery-ui-smoothness.css">
+    <link rel="stylesheet" href="css/index.css">
+  </head>
+  <body class="wrapper">
+    <div id="toolbar" class="toolbar" v-bind:style="{'display':visible?'block':'none'}">
+      <div class="tool" v-for="t in tools">
+        <button type="button" @click="click($key)">
+          <img v-bind:src="t.icon" alt="{{$key}}" />
+        </button>
+      </div>
+    </div>
+    <div class="wrapper" id="container">
+      <div class="left-panel">
+        <div>
+          <ul class="nav clear-fix">
+            <li><button @click="toggleToolbar">ToggleToobar</button></li>
+            <li><button @click="saveCase">Save</button></li>
+            <li>Current Frame: {{current+1}}/{{total_frames}}</li>
+          </ul>
+        </div>
+        <div>
+          <!-- need to scroll -->
+          <ul>
+            <li v-for="idx in total_frames">
+              <div is="frame" v-bind:idx="idx" v-bind:scale="scale" v-bind></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="right-panel">
+        <canvas id="canvas" width="300" height="300"></canvas>
+        <div is="slider" min="1" v-bind:max="total_frames" v-bind:value.sync="current"></div>
+      </div>
+    </div>
+    <script type="x/template" id="v-slider-template">
+      <div class="v-slider" v-bind:style="{'height': barsize+'px'}" @mousedown="startDrag" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
+        <div class="v-slider-bar" v-bind:style="sliderbarstyle"></div>
+        <div class="v-slider-point" v-bind:style="sliderpointstyle"></div>
+      </div>
+    </script>
+    <script type="x/template" id="frame-template">
+      <div class="action clear-fix" v-bind:class="frameclass" @click="showMe">
+        <div class="left">
+          <img v-bind:src="icon"/>
+          <b>{{action | camel}}</b>
+          <span v-if="(action=='keyevent')">{{key}}</span>
+          <template v-if="(action=='click_ui')">
+            <select v-model="selected_ui">
+              <option v-for="opt in options" value="{{$key}}">{{opt}}</option>
+            </select>
+            <label>Selected: {{selected_ui}}</label>
+          </template>
+          <template v-if="(action=='click_image')">
+            <div class="chop" v-bind:style="chopstyle"></div>
+            <label>({{imgbound.width}}x{{imgbound.height}})@({{imgbound.left}}, {{imgbound.top}})</label>
+          </template>
+          <span v-if="(action=='click')">({{point.left}}, {{point.top}})</span>
+          <template v-if="(action=='swipe')">
+            <span>From ({{swipepoints.start.left}}, {{swipepoints.start.top}}) To ({{swipepoints.end.left}}, {{swipepoints.end.top}})</span>
+          </template>
+        </div>
+        <div class="right">
+          <button class="skip" @click="skip"></button>
+        </div>
+        <div class="uioverlap" v-bind:style="overlapstyle">
+          <template v-if="(action=='click_ui')">
+            <div class="full" @click="selectUi">
+              <div class="uibox" v-bind:style="uiboxstyle"></div>
+            </div>
+          </template>
+          <template v-if="action=='click'">
+            <div class="full" @click="changePoint">
+              <div class="point" v-bind:style="pointstyle"></div>
+            </div>
+          </template>
+          <template v-if="(action=='click_image')">
+            <div class="full" @mousedown="startRect" @mouseup="stopRect" @mouseout="outRect" @mousemove="drawRect">
+              <div class="rect" v-bind:style="rectstyle">
+                <div class="resizer" @mousedown="startResize"></div>
+              </div>
+            </div>
+          </template>
+          <template v-if="(action=='swipeeee')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+              <defs>
+                <linearGradient id="swipestroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:rgb(255,0,0);stop-opacity:0.5;"/>
+                  <stop offset="100%" style="stop-color:rgb(255,227,132);stop-opacity:0;"/>
+                </linearGradient>
+                <filter id="swipefilter" x="0" y="0" width="100%" height="100%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+                </filter>
+              </defs>
+              <line x1="{{swipepoints.start.left*scale}}" y1="{{swipepoints.start.top*scale}}"
+                x2="{{swipepoints.end.left*scale}}" y2="{{swipepoints.end.top*scale}}"
+                style="stroke:url(#swipestroke);stroke-width:20;stroke-linecap:round" />
+            </svg>
+          </template>
+        </div>
+      </div>
+    </script>
+    <script type="text/javascript" src="js/jquery-3.0.0.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/vue.min.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript">
+      $(document).keydown(function(event) {
+        switch (event.keyCode) {
+          case 37: //left
+            vm.prevFrame();
+            return false;
+          case 39: //right
+            vm.nextFrame();
+            return false;
+        }
+      });
+
+      // $(document).bind('mousewheel', function(event){
+      //   var delta = event.originalEvent.wheelDelta;
+      //   if (delta > 0) {
+      //     vm.prevFrame();
+      //   } else {
+      //     vm.nextFrame();
+      //   }
+      // });
+
+    </script>
+  </body>
+</html>

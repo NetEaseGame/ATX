@@ -5,11 +5,11 @@ import cv2
 import os
 import pickle
 import Queue
-import shutil
+import sys
 import threading
 import time
 import traceback
-import yaml
+import json
 
 from collections import namedtuple
 
@@ -22,13 +22,14 @@ class BaseRecorder(object):
         self.device_info = {}
         self.running = False
         self.setup_workdir(workdir)
-        
+
         if device is not None:
             self.attach(device)
         self.realtime_analyze = realtime_analyze
 
         self.thread = None
         self.frames = []  # for backup
+        self.last_frame_time = None
         self.case_draft = []  # for analyze draft
         self.input_queue = Queue.Queue()
         self.input_index = 0
@@ -47,15 +48,13 @@ class BaseRecorder(object):
         # setup direcoties
         self.workdir = workdir
 
-        self.draftdir = os.path.join(workdir, 'draft')
-        if os.path.exists(self.draftdir):
-            shutil.rmtree(self.draftdir)
-        os.makedirs(self.draftdir)
+        self.casedir = os.path.join(workdir, 'case')
+        if not os.path.exists(self.casedir):
+            os.makedirs(self.casedir)
 
         self.framedir = os.path.join(workdir, 'frames')
-        if os.path.exists(self.framedir):
-            shutil.rmtree(self.framedir)
-        os.makedirs(self.framedir)
+        if not os.path.exists(self.framedir):
+            os.makedirs(self.framedir)
 
     def update_device_info(self):
         if self.device is None:
@@ -102,6 +101,7 @@ class BaseRecorder(object):
             self.analyze_all()
         self.save()
         print 'recorder stopped.'
+        sys.exit()
 
     def input_event(self, event):
         '''should be called when user input events happens (from hook)'''
@@ -116,7 +116,12 @@ class BaseRecorder(object):
         # print 'handle frame'
         idx, event, status = frame
         meta = {'index':idx}
-        meta['event'] = {}
+        meta['event'] = self.serialize_event(event)
+        if self.last_frame_time is None:
+            meta['waittime'] = 0
+        else:
+            meta['waittime'] = event.time - self.last_frame_time
+        self.last_frame_time = event.time
 
         # save frames.
         # print 'saving...'
@@ -130,10 +135,13 @@ class BaseRecorder(object):
 
         # analyze
         if self.realtime_analyze:
-            self.analyze_frame(idx, event, status)
+            self.analyze_frame(idx, event, status, meta['waittime'])
         self.frames.append(meta)
 
-    def analyze_frame(self, idx, event, status):
+    def serialize_event(self, event):
+        return {}
+
+    def analyze_frame(self, idx, event, status, waittime):
         '''analyze status and generate draft code'''
         # Example:
         #
@@ -144,7 +152,7 @@ class BaseRecorder(object):
         #          'screen' : ('xxxx.png', 'xxx.png'),
         #          'screen_orientation' : 0,
         #          'uixml' : {'package': 'com.netease.txx', 'class_name' : 'android.widget.EditText', ...}
-        #     }, 
+        #     },
         #     'pyscript' : 'd.click(100, 100)',
         # }
         #
@@ -165,21 +173,23 @@ class BaseRecorder(object):
                     continue
                 func = self.addons[name][2]
                 status[name] = func(self.framedir, data)
-            self.analyze_frame(idx, event, status)
+            self.analyze_frame(idx, event, status, meta['waittime'])
 
     @classmethod
     def analyze_frames(cls, workdir):
         '''generate draft from recorded frames'''
         record = cls(None, workdir)
-        obj = yaml.load(os.path.join(workdir, 'frames', 'info.yml'))
-        record.device_info = obj['info']
+        obj = {}
+        with open(os.path.join(workdir, 'frames', 'frames.json')) as f:
+            obj = json.load(f)
+        record.device_info = obj['device']
         record.frames = obj['frames']
         record.analyze_all()
         record.save()
 
     def save(self):
         # save frames info, do not overwrite.
-        filepath = os.path.join(self.framedir, 'info.yml')
+        filepath = os.path.join(self.framedir, 'frames.json')
         if not os.path.exists(filepath):
             obj = {
                 'ctime' : time.ctime(),
@@ -187,18 +197,35 @@ class BaseRecorder(object):
                 'frames' : self.frames,
             }
             with open(filepath, 'w') as f:
-                f.write(yaml.dump(obj, default_flow_style=False))
+                json.dump(obj, f, indent=2)
 
         # save draft info
-        filepath = os.path.join(self.draftdir, 'info.yml')
-        obj = {}
+        filepath = os.path.join(self.casedir, 'draft.json')
+        obj = {'skips':[], 'actions': self.case_draft}
         with open(filepath, 'w') as f:
-            f.write(yaml.dump(obj, default_flow_style=False))
+            json.dump(obj, f, indent=2)
+
         # save draft pyscript
-        filepath = os.path.join(self.draftdir, 'script.py')
-        content = ['#-*- encoding: utf-8 -*-', '# Generated by recorder.', '']
+        filepath = os.path.join(self.casedir, 'script.py')
+        content = [
+            '#-*- encoding: utf-8 -*-', '# Generated by recorder.',
+            '',
+            'import time',
+            '',
+            'def test(d):',
+        ]
         for row in self.case_draft:
-            content.append(row['pyscript'])
+            script = row['pyscript'].encode('utf-8', 'ignore')
+            for line in script.split('\n'):
+                content.append(' '*4 + line)
+            # content.append(' '*4 + 'time.sleep(1)')
+        content.extend([
+            '',
+            'if __name__ == "__main__":',
+            '   import atx',
+            '   d = atx.connect()',
+            '   test(d)',
+        ])
         with open(filepath, 'w') as f:
             f.write('\n'.join(content))
 
@@ -284,7 +311,7 @@ class ScreenAddon(object):
                 time.sleep(self.__capture_interval)
                 if not self.running or self.device is None:
                     continue
-                tic = time.time()
+                # tic = time.time()
                 img = self.device.screenshot_cv2()
                 # print '--capturing.. cost', time.time() - tic
                 self.__capture_cache.append(CaptureRecord(time.time(), img))
@@ -342,7 +369,7 @@ class UixmlAddon(object):
                 time.sleep(self.__uidump_interval)
                 if not self.running or self.device is None:
                     continue
-                tic = time.time()
+                # tic = time.time()
                 xmldata = self.device.dumpui()
                 xmldata = xmldata.encode('utf-8')
                 # print 'dumping ui.. cost', time.time() - tic
