@@ -277,27 +277,19 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# click image with long click
 	d.click_image("button.png", action='long_click')
 
-	# 文件名添加截图手机的分辨率
+	# 不等待的图片点击, 如果图片不存在直接返回None
+	d.click_nowait('button.png')
+
+	# 文件名添加截图手机的分辨率, 脚本运行在其他分辨率的手机上时可以自动适应
 	d.click_image("button.1920x1080.png")
+	# 等价于
+	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
 
 	# 文件名中添加偏移量, 格式为 <L|R><number><T|B><number>.png
 	# 其中 L: Left, R: Right, T: Top, B: Bottom
 	# number为百分比
 	# 所以 R20T50代表，点击为止从图片中心向右偏移20%并且向上偏移50%
 	d.click_image("button.R20T50.png")
-
-
-	# 不等待的图片点击, 如果图片不存在直接返回None
-	d.click_nowait('button.1920x1080.png')
-
-	# click offset image
-	d.click_image(atx.Pattern('button.png', offset=(100, -20))) # 带有偏移量的点击
-	# TODO(ssx)
-	d.click_image('button.p100n20.png') # 带有偏移量的点击, offset = 100, -20
-	
-
-	# 指定截图时手机的分辨率是 1920x1080 以便脚本运行在其他分辨率的手机上时可以自动适应
-	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
 
 	# if image not show in 10s, ImageNotFoundError will raised
 	try:
