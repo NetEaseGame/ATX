@@ -148,6 +148,7 @@ class Device(object):
         """
         Return:
             PIL.Image
+            
         Raises:
             EnvironmentError
         """

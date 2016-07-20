@@ -9,8 +9,9 @@ from atx.ext.report import Report # report lib
 
 d = atx.connect()
 rp = Report(d, save_dir='report')
-rp.info("Test started")
+rp.patch_uiautomator() # for android UI test record (optional)
 
+rp.info("Test started")
 d.click(200, 200)
 
 # keep screenshot when test fails

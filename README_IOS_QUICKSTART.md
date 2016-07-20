@@ -32,18 +32,7 @@
 
 4. 创建一个文件
 
-	命令为 `runtest.py`, 内容
-
-	```py
-	import atx
-
-	bundle_id = 'com.netease.demo'
-	udid = None
-	d = atx.connect(bundle_id, udid=udid, platform='ios') # need wait for nearly 10s
-	d.click('button.png')
-	```
-
-	运行 `python runtest.py`
+	这部分请跳转到 [WDA入门](README_IOS_WDA.md)
 
 到此如果问题不大，入门教程完成，更多接口，需要查看README.md
 

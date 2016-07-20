@@ -43,8 +43,8 @@ def connect(*args, **kwargs):
         devcls = __import__('atx.device.windows')
         cls = devcls.device.windows.WindowsDevice
     elif platform == 'ios':
-        devcls = __import__('atx.device.ios_uiautomation')
-        cls = devcls.device.ios_uiautomation.IOSDevice
+        devcls = __import__('atx.device.ios_webdriveragent')
+        cls = devcls.device.ios_webdriveragent.IOSDevice
     elif platform == 'dummy': # for py.test use
         devcls = __import__('atx.device.dummy')
         cls = devcls.device.dummy.DummyDevice

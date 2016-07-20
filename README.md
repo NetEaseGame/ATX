@@ -193,7 +193,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 文档可以等下在看，先看一些例子
 
 
-* Initial device connect
+* Initial android device connect (Only Android)
 
 	```py
 	import atx
@@ -230,7 +230,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.start_app(package_name)
 	```
 
-* Execute shell command
+* Execute shell command (Only Android)
 	
 	```py
 	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
