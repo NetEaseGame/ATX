@@ -103,15 +103,10 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
 	```
 
+3. **Other dependencies** (eg: ADB, Xcode)
 
-3. Install `ADB` (Android Debug Bridge)
-
-	If already installed, just skip the part. recommend version `1.0.36`, you can download from [github release](https://github.com/codeskyblue/AutomatorX/releases/download/1.0.12/adb-1.0.36.zip)
-
-	* Download address 1: <https://developer.android.com/studio/index.html>
-	* Download address 2: <http://adbshell.com> (this site update not too fast)
-
-	Mac can install adb use `brew` which is eaiser.
+	* [Windows](INSTALL_WINDOWS.md)
+	* [Mac](INSTALL_MAC.md)
 
 4. Show atx version
 
@@ -131,43 +126,52 @@ Some may still failed the installation. There are some ways which may help you.
 3. Windows user may found install pyyaml failed.
 
     Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
-    
-## IOS Documentation
-该部分记录的内容灵活性比较大，有可能会有大的改动，也有可能以后会删掉。
 
-iOS自动化必须一台Mac，所以请准备好硬件
+## Quick start (Android and iOS)
+1. Connect an device
 
-* [iOS需要安装的软件](README_IOS.md)
+	* Android
 
-## Quick start
-* [iOS Quick Start](README_IOS_QUICKSTART.md)
+		Android phone (`sdk>=4.1`) to PC
 
-## Windows Quick start (Android)
-1. Connect an Android phone (`sdk>=4.1`) to PC
+		Open terminal, execute `adb devices`, make sure you see your device.
 
-	Open terminal, execute `adb devices`, make sure you see your device.
+		```bash
+		$ adb devices
+		List of devices attached
+		EP7333W7XB      device
+		```
 
-	```bash
-	$ adb devices
-	List of devices attached
-	EP7333W7XB      device
-	```
+		创建一个python文件 `test.py`, 内容如下
 
-2. 创建一个python文件 `test.py`, 内容如下
+		```python
+		# coding: utf-8
+		import atx
 
-	```python
-	# coding: utf-8
-	import atx
+		d = atx.connect() # 如果多个手机连接电脑，则需要填入对应的设备号
+		d.screenshot('screen.png') # 截图
+		```
 
-	d = atx.connect() # 如果多个手机连接电脑，则需要填入对应的设备号
-	d.screenshot('screen.png') # 截图
-	```
+		运行 `python test.py`
 
-	运行 `python test.py`
+	* iOS
 
-3. Take screenshot
+		WDA运行完之后，准备好`DEVICE_URL`, 如 `http://localhost:8100`
 
-	命令行运行 `python -m atx gui`, 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
+		python代码可以这样写
+
+		```python
+		# coding: utf-8
+		import atx
+
+		d = atx.connect('http://localhost:8100', platform='ios')
+		print d.status()
+		```
+
+
+2. Take screenshot
+
+	命令行运行 `python -m atx gui`, 如果是iOS用该命令`python -m atx gui --platform ios`. 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
 
 	![gui](images/atx-gui.gif)
 
@@ -177,7 +181,7 @@ iOS自动化必须一台Mac，所以请准备好硬件
 
 	重新运行 `python test.py`, 此时差不多可以看到代码可以点击那个按钮了
 
-4. 更多
+3. 更多
 
 	可以使用的接口还有很多，请接着往下看
 
@@ -193,7 +197,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 文档可以等下在看，先看一些例子
 
 
-* Initial device connect
+* Initial android device connect (Only Android)
 
 	```py
 	import atx
@@ -226,11 +230,12 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	package_name = 'com.example.game'
 
 	d.stop_app(package_name)
-	# d.stop_app(package_name, clear=True) # stop and remove app data
+
+	# d.stop_app(package_name, clear=True) # stop and remove app data (only Android)
 	d.start_app(package_name)
 	```
 
-* Execute shell command
+* Execute shell command (Only Android)
 	
 	```py
 	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
@@ -272,27 +277,19 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# click image with long click
 	d.click_image("button.png", action='long_click')
 
-	# 文件名添加截图手机的分辨率
+	# 不等待的图片点击, 如果图片不存在直接返回None
+	d.click_nowait('button.png')
+
+	# 文件名添加截图手机的分辨率, 脚本运行在其他分辨率的手机上时可以自动适应
 	d.click_image("button.1920x1080.png")
+	# 等价于
+	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
 
 	# 文件名中添加偏移量, 格式为 <L|R><number><T|B><number>.png
 	# 其中 L: Left, R: Right, T: Top, B: Bottom
 	# number为百分比
 	# 所以 R20T50代表，点击为止从图片中心向右偏移20%并且向上偏移50%
 	d.click_image("button.R20T50.png")
-
-
-	# 不等待的图片点击, 如果图片不存在直接返回None
-	d.click_nowait('button.1920x1080.png')
-
-	# click offset image
-	d.click_image(atx.Pattern('button.png', offset=(100, -20))) # 带有偏移量的点击
-	# TODO(ssx)
-	d.click_image('button.p100n20.png') # 带有偏移量的点击, offset = 100, -20
-	
-
-	# 指定截图时手机的分辨率是 1920x1080 以便脚本运行在其他分辨率的手机上时可以自动适应
-	d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
 
 	# if image not show in 10s, ImageNotFoundError will raised
 	try:
@@ -307,7 +304,9 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 * 原生UI操作
 
-	如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
+	- Android 如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
+	- iOS如何点击UI元素参考 <https://github.com/codeskyblue/python-wda>
+
 	里面的API是直接通过继承的方式支持的。
 
 	```py
@@ -316,7 +315,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d(text='Enter').sibling(className='android.widget.ImageView').click()
 	```
 
-* 文本的输入
+* 文本的输入 (only Android)
 
 	```py
 	d.type("hello world")

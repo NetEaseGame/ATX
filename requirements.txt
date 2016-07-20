@@ -9,3 +9,4 @@ PyYAML==3.11
 numpy>=1.11.0
 Pillow>=2.7.0
 requests>=2.9.1
+facebook-wda==0.0.2.dev3

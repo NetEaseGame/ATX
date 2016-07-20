@@ -23,7 +23,7 @@ import tkFileDialog
 from Queue import Queue
 
 import atx
-from atx import logutils
+from atx import logutils, ioskit
 from PIL import Image, ImageTk
 
 log = logutils.getLogger('tkgui')
@@ -402,7 +402,8 @@ def main(serial, host='127.0.0.1', port=5037, platform='android'):
         d = atx.connect(serial, host=host, port=port)
         serial = d.serial
     elif platform == 'ios':
-        d = atx.connect(udid=serial, platform='ios')
+        d = ioskit.Device(udid=serial)
+        # d = atx.connect(udid=serial, platform='ios')
         serial = d.udid
     gui = CropIDE('ATX GUI SN: %s' % serial, device=d)
     gui.mainloop()
