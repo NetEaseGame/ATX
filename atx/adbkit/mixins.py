@@ -33,7 +33,10 @@ class RotationWatcherMixin(object):
         out = self.raw_cmd('shell', 'pm', 'list', 'packages', stdout=subprocess.PIPE).communicate()[0]
         if package_name not in out:
             apkpath = os.path.join(__dir__, '..', 'vendor', 'RotationWatcher.apk')
-            self.raw_cmd('install', '-rt', apkpath)
+            print 'install rotationwatcher...', apkpath
+            if 0 != self.raw_cmd('install', '-rt', apkpath).wait():
+                print 'install rotationwatcher failed.'
+                return
 
         if self.__watcher_process is not None:
             self.__watcher_process.kill()
@@ -65,7 +68,10 @@ class RotationWatcherMixin(object):
         t.start()
 
         def listener(value):
-            self.__rotation = int(value)/90
+            try:
+                self.__rotation = int(value)/90
+            except:
+                return
             if callable(on_rotation_change):
                 on_rotation_change(self.__rotation)
 
@@ -103,7 +109,7 @@ class MinicapStreamMixin(object):
 
     def __install_minicap(self):
         # install minicap & minitouch
-        subprocess.call('python', '-m', 'atx', 'minicap')
+        os.system('python -m atx minicap')
 
     def open_minicap_stream(self, port=1313):
         # ensure minicap installed
@@ -130,6 +136,7 @@ class MinicapStreamMixin(object):
         w, h, r = map(int, m.groups())
         w, h = min(w, h), max(w, h)
         params = '{x}x{y}@{x}x{y}/{r}'.format(x=w, y=h, r=r)
+        print 'starting minicap', params
 
         p = self.raw_cmd('shell', 
                     'LD_LIBRARY_PATH=/data/local/tmp', 
@@ -216,7 +223,7 @@ class MinitouchStreamMixin(object):
 
     def __install_minitouch(self):
         # install minicap & minitouch
-        subprocess.call('python', '-m', 'atx', 'minicap')
+        os.system('python -m atx minicap')
 
     def open_minitouch_stream(self, port=1111):
         if self.__touch_queue is None:
