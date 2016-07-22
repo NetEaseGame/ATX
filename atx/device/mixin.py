@@ -435,7 +435,7 @@ class DeviceMixin(object):
         if not isinstance(bounds, Bounds):
             raise TypeError("region param bounds must be isinstance of Bounds")
         _d = copy.copy(self)
-        _d._bounds = Bounds(bounds)
+        _d._bounds = bounds
         return _d
 
     def keep_screen(self):

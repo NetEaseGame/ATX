@@ -21,6 +21,7 @@ class DummyDevice(DeviceMixin):
         self._display = Display(1280, 720)
         self._rotation = 1
         self.last_click = None
+        self.serial = '1234'
 
     @hook_wrap(consts.EVENT_SCREENSHOT)
     def screenshot(self, filename=None):

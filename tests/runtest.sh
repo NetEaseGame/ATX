@@ -9,4 +9,7 @@ fi
 
 
 cd $(dirname $0)
-python -mpytest -v test_dummy.py test_base.py "$@"
+python -mpytest -v \
+	test_ext_report.py \
+	test_dummy.py \
+	test_base.py "$@"
