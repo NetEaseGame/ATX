@@ -201,7 +201,7 @@ class BaseRecorder(object):
 
         # save draft info
         filepath = os.path.join(self.casedir, 'draft.json')
-        obj = {'skips':[], 'actions': self.case_draft}
+        obj = dict(enumerate(self.case_draft))
         with open(filepath, 'w') as f:
             json.dump(obj, f, indent=2)
 

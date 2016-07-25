@@ -189,10 +189,10 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
     def serialize_event(self, event):
         e = event
         if e.msg & HC.KEY_ANY:
-            return {'action':'keyevent', 'args':(e.key,)}
+            return {'action':'key_event', 'args':(e.key,)}
         if e.msg == HC.GST_TAP:
             x, y = e.points[0]
-            return {'action':'touch', 'args':(x, y)}
+            return {'action':'click', 'args':(x, y)}
         if e.msg in (HC.GST_SWIPE, HC.GST_DRAG):
             sx, sy = e.points[0]
             ex, ey = e.points[1]
@@ -202,7 +202,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         e = event
         if e.msg & HC.KEY_ANY:
             d = {
-                'action' : 'keyevent',
+                'action' : 'key_event',
                 'args' : (e.key,),
                 'pyscript' : 'd.keyevent("%s")' % (e.key,)
             }
@@ -228,7 +228,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 if node:
                     selector, order = self.uilayout.find_selector(node)
                     d['action'] = 'click_ui'
-                    d['args'] = (selector, order)
+                    d['args'] = (x, y, selector, order)
                     if order is None:
                         d['pyscript'] = 'd(%s).click(timeout=%d)' %\
                             (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
@@ -245,7 +245,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 imgname = '%d-click.png' % (idx,)
                 imgpath = os.path.join(self.draftdir, imgname)
                 cv2.imwrite(imgpath, img)
-                d['args'] = ((x, y), tuple(bounds))
+                d['args'] = (x, y, tuple(bounds))
                 d['pyscript'] = 'd.click_image("%s")' % (imgname,)
             else:
                 d['action'] = 'click'
@@ -256,8 +256,8 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             sx, sy = e.points[0]
             ex, ey = e.points[1]
             d['action'] = 'swipe'
-            d['args'] = (sx, sy, ex, ey)
-            d['pyscript'] = 'd.swipe(%s, %s, %s, %s, 10)' % (sx, sy, ex, ey)
+            d['args'] = (sx, sy, ex, ey, waittime)
+            d['pyscript'] = 'd.swipe(%s, %s, %s, %s, 10)\ntime.sleep(%.2f)' % (sx, sy, ex, ey, waittime)
 
         elif event.msg == HC.GST_PINCH_IN:
             #TODO

@@ -399,7 +399,7 @@ var vm = new Vue({
     })
 
     // get case info after frames.
-    $.getJSON("case/draft.json", function(data){
+    $.getJSON("frames/case.json", function(data){
       for (var i = 0, f; i < data["skips"].length; i++) {
         f = self.frames[data["skips"][i]];
         if (f != undefined) {
