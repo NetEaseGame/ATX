@@ -48,7 +48,13 @@ class Report(object):
         self.steps = []
         self.result = None
         self.__uia_last_position = None
+        self.__last_screenshot = None
+        self.__closed = False
         self.start_record()
+
+    @property
+    def last_screenshot(self):
+        return self.__last_screenshot
 
     def _uia_listener(self, evtjson):
         evt = json2obj(evtjson)
@@ -58,7 +64,7 @@ class Report(object):
             self.d.screenshot()
             self.__uia_last_position = center(evt.this.bounds)
         else:
-            screen_before = self._save_screenshot(self.d.last_screenshot)
+            screen_before = self._save_screenshot(self.last_screenshot)
             # FIXME: maybe need sleep for a while
             screen_after = self._save_screenshot()
             (x, y) = self.__uia_last_position
@@ -68,6 +74,7 @@ class Report(object):
                 position={'x': x, 'y': y})
 
     def patch_uiautomator(self):
+        """ record steps of uiautomator """
         import uiautomator
         uiautomator.add_listener('atx-report', self._uia_listener)
 
@@ -84,10 +91,14 @@ class Report(object):
             start_timestamp=time.time(),
         ), steps=self.steps)
 
-        self.d.add_listener(self._listener, consts.EVENT_ALL ^ consts.EVENT_SCREENSHOT)
-        atexit.register(self._finish)
+        self.d.add_listener(self._listener, consts.EVENT_ALL) # ^ consts.EVENT_SCREENSHOT)
 
-    def _finish(self):
+        atexit.register(self.close)
+
+    def close(self):
+        if self.__closed:
+            return
+
         save_dir = self.save_dir
         data = json.dumps(self.result)
         tmpl_path = os.path.join(__dir__, 'index.tmpl.html')
@@ -102,6 +113,7 @@ class Report(object):
 
         with open(save_path, 'wb') as f:
             f.write(html_content)
+        self.__closed = True
 
     def info(self, text):
         self.steps.append({
@@ -124,10 +136,6 @@ class Report(object):
             screenshot.save(screen_abspath)
             step['screenshot'] = screen_path
         self.steps.append(step)
-
-    # def add_click(self, x, y, screen=None):
-    #     if screen is None:
-    #         screen = self.d.screenshot()
 
     def add_step(self, action, **kwargs):
         kwargs['success'] = kwargs.pop('success', True)
@@ -157,8 +165,8 @@ class Report(object):
             return
 
         if evt.flag == consts.EVENT_CLICK:
-            if d.last_screenshot: # just in case
-                d.last_screenshot.save(screen_before_abspath)
+            if self.last_screenshot: # just in case
+                self.last_screenshot.save(screen_before_abspath)
             screen_after = 'images/after_%d.png' % time.time()
             d.screenshot(os.path.join(self.save_dir, screen_after))
 
@@ -167,6 +175,9 @@ class Report(object):
                 screen_before=screen_before,
                 screen_after=screen_after,
                 position={'x': x, 'y': y})
+        elif evt.flag == consts.EVENT_SCREENSHOT:
+            # keep last screenshot
+            self.__last_screenshot = evt.retval
         elif evt.flag == consts.EVENT_CLICK_IMAGE:
             kwargs = {
                 'success': evt.traceback is None,
@@ -176,8 +187,8 @@ class Report(object):
             if evt.retval is None and evt.traceback is None:
                 return
             
-            if d.last_screenshot:
-                d.last_screenshot.save(screen_before_abspath)
+            if self.last_screenshot:
+                self.last_screenshot.save(screen_before_abspath)
                 kwargs['screen_before'] = screen_before
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
                 target = 'images/target_%d.png' % time.time()
