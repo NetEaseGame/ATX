@@ -271,7 +271,13 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         elif d['action'] == 'click':
             return 'd.click({}, {})'.format(*d['args'])
         elif d['action'] == 'click_ui':
-            selector, order = d['extra']
+            if 'extra' in d:
+                selector, order = d['extra']
+            else:
+                uixml = open(os.path.join(self.framedir, frame['status']['uixml'])).read()
+                self.uilayout.parse_xmldata(uixml)
+                pnode = self.uilayout.nodes[d['args'][2]]
+                selector, order = self.uilayout._get_node_selector(pnode)
             if order is None:
                 return 'd(%s).click(timeout=%d)' %\
                     (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
@@ -307,7 +313,6 @@ def find_clicked_bound(img, x, y, size=200):
         t = 0
     elif b > maxy:
         t = maxy-size
-    print 111, (x, y), (l, t)
     return Bounds(l, t, size, size)
 
 def get_point_desc(x, y, bounds):
