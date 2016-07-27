@@ -205,11 +205,11 @@ class AndroidLayout(object):
                 return d, None
 
         ## try resourceId, but on some phone the resourceId may not be available
-        # if n.resourceId:
-        #     d['resourceId'] = n.resourceId
-        #     nodes = self._filter_nodes(d, nodes)
-        #     if len(nodes) == 1:
-        #         return d, None
+        if n.resourceId:
+            d['resourceId'] = n.resourceId
+            nodes = self._filter_nodes(d, nodes)
+            if len(nodes) == 1:
+                return d, None
 
         # return order in selected nodes under condition d.
         return d, nodes.index(n)

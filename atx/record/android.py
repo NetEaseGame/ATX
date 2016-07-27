@@ -232,7 +232,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                     found_ui = True
                     pnode, selector, order = self.uilayout.find_selector(node)
                     d['action'] = 'click_ui'
-                    d['args'] = (x, y, pnode.iterindex)
+                    d['args'] = (pnode.iterindex, )
                     d['extra'] = (selector, order)
 
             # try image first when uinode not found.
@@ -263,8 +263,8 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
     def process_draft(self, d):
         if not d:
             return ''
-        idx = d['frameidx']
-        frame = self.frames[idx - self.frames[0]['index']]
+        idx = int(d['frameidx'])
+        frame = self.frames[idx]
         waittime = frame['waittime']
         if d['action'] == 'key_event':
             return 'd.keyevent("{}")'.format(*d['args'])
@@ -276,7 +276,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             else:
                 uixml = open(os.path.join(self.framedir, frame['status']['uixml'])).read()
                 self.uilayout.parse_xmldata(uixml)
-                pnode = self.uilayout.get_index_node(d['args'][2])
+                pnode = self.uilayout.get_index_node(int(d['args'][0]))
                 selector, order = self.uilayout.get_node_selector(pnode)
             if order is None:
                 return 'd(%s).click(timeout=%d)' %\
@@ -286,6 +286,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                     (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)), order)
         elif d['action'] == 'click_image':
             x, y, bounds = d['args']
+            x, y, bounds = int(x), int(y), map(int, bounds)
             desc = get_point_desc(x, y, bounds)
             screen = cv2.imread(os.path.join(self.framedir, frame['status']['screen']))
             l, t, w, h = bounds

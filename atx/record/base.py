@@ -110,8 +110,8 @@ class BaseRecorder(object):
             return
         # print 'input_event', event.time
         status = self.get_device_status(event.time)
-        self.input_index += 1
         self.input_queue.put((self.input_index, event, status))
+        self.input_index += 1
 
     def handle_frame(self, frame):
         # print 'handle frame'
@@ -198,14 +198,9 @@ class BaseRecorder(object):
         record.device_info = obj['device']
         record.frames = obj['frames']
 
-        obj = {}
         casedir = os.path.join(workdir, 'case')
         with open(os.path.join(casedir, 'case.json')) as f:
-            obj = json.load(f)
-        keys = map(int, obj.keys())
-        for i in range(min(keys), max(keys)+1):
-            d = obj.get(str(i))
-            record.case_draft.append(d)
+            record.case_draft = json.load(f)
 
         # remove old files
         for f in os.listdir(casedir):
@@ -228,13 +223,12 @@ class BaseRecorder(object):
 
         # save draft info
         filepath = os.path.join(self.framedir, 'draft.json')
-        obj = dict(enumerate(self.case_draft))
         with open(filepath, 'w') as f:
-            json.dump(obj, f, indent=2)
+            json.dump(self.case_draft, f, indent=2)
         # make a copy at casedir
         filepath = os.path.join(self.casedir, 'case.json')
         with open(filepath, 'w') as f:
-            json.dump(obj, f, indent=2)
+            json.dump(self.case_draft, f, indent=2)
 
         # generate_script
         self.generate_script()

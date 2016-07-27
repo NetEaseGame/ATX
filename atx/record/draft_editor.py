@@ -20,21 +20,27 @@ class MainHandler(tornado.web.RequestHandler):
 class CaseHandler(tornado.web.RequestHandler):
     def initialize(self, casedir):
         self.casedir = casedir
-        self.case = {}
-        casepath = os.path.join(casedir, 'case.json')
-        draftpath = os.path.join(casedir, 'draft.json')
-        if os.path.exists(casepath):
-            with open(casepath) as f:
-                self.case = json.load(f)
-        elif os.path.exists(draftpath):
-            with open(draftpath) as f:
+        self.casepath = os.path.join(casedir, 'case.json')
+        self.case = []
+        if os.path.exists(self.casepath):
+            with open(self.casepath) as f:
                 self.case = json.load(f)
 
-    def get(self):
-        self.write(self.case)
+    def get(self, *args):
+        self.write(json.dumps(self.case))
         self.finish()
 
-    def post(self):
+    def post(self, *args):
+        data = self.request.arguments
+        with open(self.casepath, 'w') as f:
+            json.dump(data, f)
+        self.write(json.dumps({'success': True}))
+
+class CaseRunnerHandler(tornado.web.RequestHandler):
+    def initialize(self, casedir):
+        pass
+
+    def get(self, *args):
         pass
 
 def get_valid_port():
@@ -49,8 +55,9 @@ def run(basedir):
     application = tornado.web.Application([
         (r'/', MainHandler),
         (r'/frames/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(basedir, 'frames')}),
-        (r'/case', CaseHandler, {'casedir':os.path.join(basedir, 'case')}),
-        (r'/(.*)', tornado.web.StaticFileHandler, {'path':'static'}),
+        (r'/case(.*)', CaseHandler, {'casedir':os.path.join(basedir, 'case')}),
+        (r'/run(.*)', CaseRunnerHandler, {'casedir': os.path.join(basedir, 'case')}),
+        (r'/(.*)', tornado.web.StaticFileHandler, {'path':'site'}),
     ], autoreload=True, static_hash_cache=False)
 
     # port = get_valid_port()
