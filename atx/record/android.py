@@ -82,7 +82,7 @@ class AndroidAtomRecorder(BaseRecorder):
             return
         self.case_draft.append(d)
 
-    def generate_code(self, d):
+    def process_draft(self, d):
         tmpl = {
             'touch_move' : 'd.touch_move({:d}, {:d}, {:d})',
             'touch_down' : 'd.touch_down({:d}, {:d}, {:d})',
@@ -224,24 +224,26 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
         if event.msg == HC.GST_TAP:
             x, y = event.points[0]
+
+            found_ui = False
             if analyze_ui:
                 node = self.uilayout.find_clickable_node(x, y)
                 if node:
+                    found_ui = True
                     pnode, selector, order = self.uilayout.find_selector(node)
                     d['action'] = 'click_ui'
                     d['args'] = (x, y, self.uilayout.nodes.index(pnode))
                     d['extra'] = (selector, order)
+
+            # try image first when uinode not found.
+            if not found_ui:
+                if screen is not None:
+                    bounds = find_clicked_bound(screen, x, y)
+                    d['action'] = 'click_image'
+                    d['args'] = (x, y, tuple(bounds))
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)
-            elif screen is not None:
-                d['action'] = 'click_image'
-                img, bounds = find_clicked_img(screen, x, y)
-                d['args'] = (x, y, tuple(bounds))
-                d['extra'] = (img,)
-            else:
-                d['action'] = 'click'
-                d['args'] = (x, y)
 
         elif event.msg in (HC.GST_SWIPE, HC.GST_DRAG):
             sx, sy = e.points[0]
@@ -258,10 +260,12 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
         self.case_draft.append(d)
 
-    def generate_code(self, d):
+    def process_draft(self, d):
+        if not d:
+            return ''
         idx = d['frameidx']
-        idx_0 = self.frames[0]['index']
-        waittime = self.frames[idx-idx_0]['waittime']
+        frame = self.frames[idx - self.frames[0]['index']]
+        waittime = frame['waittime']
         if d['action'] == 'key_event':
             return 'd.keyevent("{}")'.format(*d['args'])
         elif d['action'] == 'click':
@@ -275,11 +279,13 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 return 'objs = d(%s)\nif objs.wait.exists(timeout=%d):\n    objs[%d].click()'  %\
                     (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)), order)
         elif d['action'] == 'click_image':
-            img = d['extra']
             x, y, bounds = d['args']
             desc = get_point_desc(x, y, bounds)
+            screen = cv2.imread(os.path.join(self.framedir, frame['status']['screen']))
+            l, t, w, h = bounds
+            img = screen[t:t+h, l:l+w]
             imgname = '%d-click.%dx%d.%s.png' % (idx, self.device_info['width'], self.device_info['height'], desc)
-            imgpath = os.path.join(self.draftdir, imgname)
+            imgpath = os.path.join(self.casedir, imgname)
             cv2.imwrite(imgpath, img)
             return 'd.click_image("%s")' % (imgname,)
         elif d['action'] == 'swipe':
@@ -289,9 +295,20 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             print 'unsupported action', d['action']
             return ''
 
-def find_clicked_img(img, x, y):
-    bounds = Bounds(0, 0, 100, 100)
-    return img, bounds
+def find_clicked_bound(img, x, y, size=200):
+    maxy, maxx = img.shape[:2]
+    size = min(size, maxx, maxy)
+    l, r, t, b = x-size/2, x+size/2, y-size/2, y+size/2
+    if l < 0:
+        l = 0
+    elif r > maxx:
+        l = maxx-size
+    if t < 0:
+        t = 0
+    elif b > maxy:
+        t = maxy-size
+    print 111, (x, y), (l, t)
+    return Bounds(l, t, size, size)
 
 def get_point_desc(x, y, bounds):
     l, t, w, h = bounds
@@ -326,7 +343,9 @@ if __name__ == '__main__':
                 break
         rec.stop()
 
-    if os.path.exists(os.path.join('testcase', 'frames', 'frames.json')):
+    if os.path.exists(os.path.join('testcase', 'case', 'case.json')):
+        AndroidRecorder.process_casefile('testcase')
+    elif os.path.exists(os.path.join('testcase', 'frames', 'frames.json')):
         AndroidRecorder.analyze_frames('testcase')
     else:
         test()
