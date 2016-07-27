@@ -21,9 +21,10 @@ __UINode = collections.namedtuple('UINode', [
     'checkable', 'checked', 'clickable', 'enabled', 'focusable', 'focused',
     'scrollable', 'longClickable', 'password', 'selected',
     'bounds'])
-# make it hashable
+# make it hashable & traceble
 class UINode(__UINode):
     parent=None
+    iterindex = None
     def __hash__(self):
         return id(self)
 
@@ -41,7 +42,6 @@ def str2bool(v):
 
 def convstr(v):
     return v
-    return v.encode('utf-8')
 
 class AndroidLayout(object):
     def __init__(self):
@@ -129,11 +129,14 @@ class AndroidLayout(object):
         root = dom.documentElement
         self.rotation = int(root.getAttribute('rotation'))
 
+        idx = [0]
         def walk(node, ui_nodes, depth=0):
             while len(node.childNodes) == 1 and node.getAttribute('bounds') == '':
                 node = node.childNodes[0]
                 depth += 1
             uinode = self._parse_xml_node(node, depth)
+            uinode.iterindex = idx[0]
+            idx[0] += 1
             for n in node.childNodes:
                 sub = walk(n, ui_nodes, depth+1)
                 if sub is not None:
@@ -145,7 +148,7 @@ class AndroidLayout(object):
         self.nodes = []
         self.tree = walk(root, self.nodes)
         self.nodes.sort(key=lambda x: x.bounds.area)
-        # self.nodes.sort(key=lambda x: x.depth, reverse=True)
+        self.node_index = [n.iterindex for n in self.nodes]
 
     def find_selector(self, node):
         '''find condition for locate a node, return (postion_node, condition, order)'''
@@ -172,7 +175,12 @@ class AndroidLayout(object):
                 res.append(n)
         return res
 
-    def _get_node_selector(self, n, sub=False):
+    def get_index_node(self, idx):
+        '''get node with iterindex `idx`'''
+        idx = self.node_index.index(idx)
+        return self.nodes[idx]
+
+    def get_node_selector(self, n, sub=False):
         d = {}
         nodes = self.nodes
 
@@ -208,7 +216,7 @@ class AndroidLayout(object):
 
     def __find_selector_by_structure(self, node):
         # try itself
-        d, order = self._get_node_selector(node)
+        d, order = self.get_node_selector(node)
         if order is None:
             return node, d, None
 
@@ -223,7 +231,7 @@ class AndroidLayout(object):
 
         choices = []
         for n in decendants:
-            sd, sorder = self._get_node_selector(n, True)
+            sd, sorder = self.get_node_selector(n, True)
             choices.append((sorder or 0, -n.bounds.area, sorder, sd, n)) # add area to sort
         choices.sort()
 
@@ -241,7 +249,7 @@ class AndroidLayout(object):
         #
         # p = node.parent
         # while p and not p.clickable:
-        #     pd, porder = self._get_node_selector(p)
+        #     pd, porder = self.get_node_selector(p)
         #     if porder is None:
         #         print 'parent node', p.className
         #         for i in range(len(p.children)):
@@ -311,7 +319,7 @@ class AndroidLayout(object):
 
         # try combinations
 
-        return node, self._get_node_selector(node)
+        return node, self.get_node_selector(node)
 
     def __find_selector_by_score(self, node):
         # TODO
@@ -320,7 +328,7 @@ class AndroidLayout(object):
 
         def walk(n):
             info = {'depth': n.depth-node.depth}
-            d, o = self._get_node_selector(n)
+            d, o = self.get_node_selector(n)
             info['selector'] = d
             info['order'] = o
             info['score'] = 0

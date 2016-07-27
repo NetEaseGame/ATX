@@ -232,7 +232,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                     found_ui = True
                     pnode, selector, order = self.uilayout.find_selector(node)
                     d['action'] = 'click_ui'
-                    d['args'] = (x, y, self.uilayout.nodes.index(pnode))
+                    d['args'] = (x, y, pnode.iterindex)
                     d['extra'] = (selector, order)
 
             # try image first when uinode not found.
@@ -276,8 +276,8 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             else:
                 uixml = open(os.path.join(self.framedir, frame['status']['uixml'])).read()
                 self.uilayout.parse_xmldata(uixml)
-                pnode = self.uilayout.nodes[d['args'][2]]
-                selector, order = self.uilayout._get_node_selector(pnode)
+                pnode = self.uilayout.get_index_node(d['args'][2])
+                selector, order = self.uilayout.get_node_selector(pnode)
             if order is None:
                 return 'd(%s).click(timeout=%d)' %\
                     (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
