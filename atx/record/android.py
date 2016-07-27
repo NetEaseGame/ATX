@@ -56,36 +56,41 @@ class AndroidAtomRecorder(BaseRecorder):
             d = {
                 'action' : 'touch_move',
                 'args' : (e.slotid, e.x, e.y),
-                'pyscript' : 'd.touch_move(%d, %d, %d)' % (e.slotid, e.x, e.y),
             }
         elif e.msg == HC.TOUCH_DOWN:
             d = {
                 'action' : 'touch_down',
                 'args' : (e.slotid, e.x, e.y),
-                'pyscript' : 'd.touch_down(%d, %d, %d)' % (e.slotid, e.x, e.y),
             }
         elif e.msg == HC.TOUCH_UP:
             d = {
                 'action' : 'touch_up',
                 'args' : (e.slotid, e.x, e.y),
-                'pyscript' : 'd.touch_up(%d, %d, %d)' % (e.slotid, e.x, e.y),
             }
         elif e.msg & HC.KEY_ANY:
             if e.msg & 0x01:
                 d = {
                     'action' : 'key_down',
                     'args' : (e.key,),
-                    'pyscript' : 'd.key_down("%s")' % (e.key,)
                 }
             else:
                 d = {
                     'action' : 'key_up',
                     'args' : (e.key,),
-                    'pyscript' : 'd.key_up("%s")' % (e.key,)
                 }
         else:
             return
         self.case_draft.append(d)
+
+    def generate_code(self, d):
+        tmpl = {
+            'touch_move' : 'd.touch_move({:d}, {:d}, {:d})',
+            'touch_down' : 'd.touch_down({:d}, {:d}, {:d})',
+            'touch_up' : 'd.touch_up({:d}, {:d}, {:d})',
+            'key_down' : 'd.key_down("{}")',
+            'key_up' : 'd.key_up("{}")',
+        }
+        return tmpl[d['action']].format(*d['args'])
 
 class AdbStatusAddon(object):
     __addon_name = 'adbstatus'
@@ -157,7 +162,6 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         self.hm.register(HC.GST_SWIPE, self.input_event)
         self.hm.register(HC.GST_DRAG, self.input_event)
 
-
     def attach(self, device):
         if self.device is not None:
             self.detach()
@@ -198,14 +202,12 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             ex, ey = e.points[1]
             return {'action':'swipe', 'args':(sx, sy, ex, ey)}
 
-    def analyze_frame(self, idx, event, status, waittime):
+    def analyze_frame(self, idx, event, status):
         e = event
+        d = {'frameidx': idx}
         if e.msg & HC.KEY_ANY:
-            d = {
-                'action' : 'key_event',
-                'args' : (e.key,),
-                'pyscript' : 'd.keyevent("%s")' % (e.key,)
-            }
+            d['action'] = 'key_event'
+            d['args'] = (e.key,)
             self.case_draft.append(d)
             return
 
@@ -220,44 +222,32 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                 self.uilayout.parse_xmldata(uixml)
                 analyze_ui = True
 
-        d = {}
         if event.msg == HC.GST_TAP:
             x, y = event.points[0]
             if analyze_ui:
                 node = self.uilayout.find_clickable_node(x, y)
                 if node:
-                    selector, order = self.uilayout.find_selector(node)
+                    pnode, selector, order = self.uilayout.find_selector(node)
                     d['action'] = 'click_ui'
-                    d['args'] = (x, y, selector, order)
-                    if order is None:
-                        d['pyscript'] = 'd(%s).click(timeout=%d)' %\
-                            (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
-                    else:
-                        d['pyscript'] = 'objs = d(%s)\nif objs.wait.exists(timeout=%d):\n    objs[%d].click()'  %\
-                            (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)), order)
+                    d['args'] = (x, y, self.uilayout.nodes.index(pnode))
+                    d['extra'] = (selector, order)
                 else:
                     d['action'] = 'click'
                     d['args'] = (x, y)
-                    d['pyscript'] = 'd.click(%s, %s)' % (x, y)
             elif screen is not None:
                 d['action'] = 'click_image'
                 img, bounds = find_clicked_img(screen, x, y)
-                imgname = '%d-click.png' % (idx,)
-                imgpath = os.path.join(self.draftdir, imgname)
-                cv2.imwrite(imgpath, img)
                 d['args'] = (x, y, tuple(bounds))
-                d['pyscript'] = 'd.click_image("%s")' % (imgname,)
+                d['extra'] = (img,)
             else:
                 d['action'] = 'click'
                 d['args'] = (x, y)
-                d['pyscript'] = 'd.click(%s, %s)' % (x, y)
 
         elif event.msg in (HC.GST_SWIPE, HC.GST_DRAG):
             sx, sy = e.points[0]
             ex, ey = e.points[1]
             d['action'] = 'swipe'
-            d['args'] = (sx, sy, ex, ey, waittime)
-            d['pyscript'] = 'd.swipe(%s, %s, %s, %s, 10)\ntime.sleep(%.2f)' % (sx, sy, ex, ey, waittime)
+            d['args'] = (sx, sy, ex, ey)
 
         elif event.msg == HC.GST_PINCH_IN:
             #TODO
@@ -268,12 +258,59 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
 
         self.case_draft.append(d)
 
+    def generate_code(self, d):
+        idx = d['frameidx']
+        idx_0 = self.frames[0]['index']
+        waittime = self.frames[idx-idx_0]['waittime']
+        if d['action'] == 'key_event':
+            return 'd.keyevent("{}")'.format(*d['args'])
+        elif d['action'] == 'click':
+            return 'd.click({}, {})'.format(*d['args'])
+        elif d['action'] == 'click_ui':
+            selector, order = d['extra']
+            if order is None:
+                return 'd(%s).click(timeout=%d)' %\
+                    (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)))
+            else:
+                return 'objs = d(%s)\nif objs.wait.exists(timeout=%d):\n    objs[%d].click()'  %\
+                    (', '.join(['%s=u"%s"' % item for item in selector.iteritems()]), 100*(int(waittime*10)), order)
+        elif d['action'] == 'click_image':
+            img = d['extra']
+            x, y, bounds = d['args']
+            desc = get_point_desc(x, y, bounds)
+            imgname = '%d-click.%dx%d.%s.png' % (idx, self.device_info['width'], self.device_info['height'], desc)
+            imgpath = os.path.join(self.draftdir, imgname)
+            cv2.imwrite(imgpath, img)
+            return 'd.click_image("%s")' % (imgname,)
+        elif d['action'] == 'swipe':
+            sx, sy, ex, ey = d['args']
+            return 'd.swipe(%s, %s, %s, %s, 10)\ntime.sleep(%.2f)' % (sx, sy, ex, ey, waittime)
+        else:
+            print 'unsupported action', d['action']
+            return ''
+
 def find_clicked_img(img, x, y):
     bounds = Bounds(0, 0, 100, 100)
     return img, bounds
 
+def get_point_desc(x, y, bounds):
+    l, t, w, h = bounds
+    cx, cy = l+w/2, t+h/2
+    desc = ''
+    if x < cx:
+        desc += 'L%d' % int((cx-x+0.0)*100/w)
+    else:
+        desc += 'R%d' % int((x-cx+0.0)*100/w)
+    if y < cy:
+        desc += 'T%d' % int((cy-y+0.0)*100/h)
+    else:
+        desc += 'B%d' % int((y-cy+0.0)*100/h)
+    return desc
+
 if __name__ == '__main__':
     # from atx.record.scene_detector import SceneDetector
+
+    # disable multitap
     set_multitap(1)
 
     def test():

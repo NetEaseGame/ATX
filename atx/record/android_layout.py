@@ -148,6 +148,7 @@ class AndroidLayout(object):
         # self.nodes.sort(key=lambda x: x.depth, reverse=True)
 
     def find_selector(self, node):
+        '''find condition for locate a node, return (postion_node, condition, order)'''
         return self.__find_selector_by_structure(node)
         # return self.__find_selector_by_attrbutes(node)
         # return self.__find_selector_by_score(node)
@@ -172,39 +173,46 @@ class AndroidLayout(object):
         return res
 
     def _get_node_selector(self, n, sub=False):
-        '''text in subnode cannot be all numbers'''
         d = {}
         nodes = self.nodes
+
+        # try text, text in subnode cannot be all numbers
         if n.text and txt_pat.match(n.text) and not (sub and n.text.isdigit()):
             d['text'] = n.text
             nodes = self._filter_nodes(d, nodes)
             if len(nodes) == 1:
                 return d, None
 
+        # try className, which is never blank
         d['className'] = n.className
         nodes = self._filter_nodes(d, nodes)
         if len(nodes) == 1:
             return d, None
-        # if n.resourceId:
-        #     d['resourceId'] = n.resourceId
-        #     nodes = self._filter_nodes(d, nodes)
-        #     if len(nodes) == 1:
-        #         return d, None
+
+        # try description, like text
         if n.description and txt_pat.match(n.description) and not (sub and n.description.isdigit()):
             d['description'] = n.description
             nodes = self._filter_nodes(d, nodes)
             if len(nodes) == 1:
                 return d, None
+
+        ## try resourceId, but on some phone the resourceId may not be available
+        # if n.resourceId:
+        #     d['resourceId'] = n.resourceId
+        #     nodes = self._filter_nodes(d, nodes)
+        #     if len(nodes) == 1:
+        #         return d, None
+
+        # return order in selected nodes under condition d.
         return d, nodes.index(n)
 
     def __find_selector_by_structure(self, node):
-        '''find condition for locate a node'''
         # try itself
         d, order = self._get_node_selector(node)
         if order is None:
-            return d, None
+            return node, d, None
 
-        # try its non-clickable children
+        # try its non-clickable decendants
         decendants = []
         def walk(n):
             for c in n.children:
@@ -216,11 +224,11 @@ class AndroidLayout(object):
         choices = []
         for n in decendants:
             sd, sorder = self._get_node_selector(n, True)
-            choices.append((sorder or 0, -n.bounds.area, sd, sorder)) # add area to sort
+            choices.append((sorder or 0, -n.bounds.area, sorder, sd, n)) # add area to sort
         choices.sort()
 
         if choices:
-            return choices[0][2], choices[0][3]
+            return choices[0][-1], choices[0][-2], choices[0][-3]
 
         # TODO
         # # try if its non-clickable parent
@@ -243,13 +251,13 @@ class AndroidLayout(object):
         #         return pd, porder
         #     p = p.parent
 
-        return d, order
+        return node, d, order
 
     def __find_selector_by_attrbutes(self, node):
-        '''avoid repeat over same attr'''
+        # avoid repeat over same attr
 
-        # ignore clickable subnodes
         def attrs(n, name):
+            '''get node attribute values'''
             res = set()
             v = getattr(n, name)
             if v: res.add(v)
@@ -272,42 +280,41 @@ class AndroidLayout(object):
                     continue
                 tmp = self._filter_nodes({attr:value})
                 if len(tmp) == 1:
-                    return True, {attr:value}
+                    return tmp[0], {attr:value}
                 # save candidates
                 for n in tmp:
                     if n == top or is_decendant(n, top):
                         candidates.setdefault(n, {})[attr] = len(tmp)
-            return False, None
+            return None, None
 
         # try className
-        ok, cond = try_attr(node, 'className')
-        if ok:
-            return cond, None
+        n, cond = try_attr(node, 'className')
+        if n:
+            return n, cond, None
 
         # try anything with a resourceId
-        ok, cond = try_attr(node, 'resourceId')
-        if ok:
-            return cond, None
+        n, cond = try_attr(node, 'resourceId')
+        if n:
+            return n, cond, None
 
         # try anything with a text
-        ok, cond = try_attr(node, 'text', lambda s: txt_pat.match(s) is None)
-        if ok:
-            return cond, None
+        n, cond = try_attr(node, 'text', lambda s: txt_pat.match(s) is None)
+        if n:
+            return n, cond, None
 
         # try anything with a description
-        ok, cond = try_attr(node, 'description', lambda s: txt_pat.match(s) is None)
-        if ok:
-            return cond, None
+        n, cond = try_attr(node, 'description', lambda s: txt_pat.match(s) is None)
+        if n:
+            return n, cond, None
 
         print 'candidates:', candidates.values()
 
         # try combinations
 
-        #
-        return self._get_node_selector(node)
+        return node, self._get_node_selector(node)
 
     def __find_selector_by_score(self, node):
-
+        # TODO
         # find candidate selectors and give a score
         candidates = {}
 
@@ -324,7 +331,6 @@ class AndroidLayout(object):
         walk(node)
 
         # get top score selector
-
 
 if __name__ == '__main__':
     # import subprocess

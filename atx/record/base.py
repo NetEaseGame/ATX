@@ -60,7 +60,8 @@ class BaseRecorder(object):
         if self.device is None:
             return
         # TODO: define general device info
-        self.device_info = {}
+        w, h = self.device.display
+        self.device_info = {"width":w, "height":h}
 
     def start(self):
         '''start running in background.'''
@@ -135,13 +136,13 @@ class BaseRecorder(object):
 
         # analyze
         if self.realtime_analyze:
-            self.analyze_frame(idx, event, status, meta['waittime'])
+            self.analyze_frame(idx, event, status)
         self.frames.append(meta)
 
     def serialize_event(self, event):
         return {}
 
-    def analyze_frame(self, idx, event, status, waittime):
+    def analyze_frame(self, idx, event, status):
         '''analyze status and generate draft code'''
         # Example:
         #
@@ -173,7 +174,7 @@ class BaseRecorder(object):
                     continue
                 func = self.addons[name][2]
                 status[name] = func(self.framedir, data)
-            self.analyze_frame(idx, event, status, meta['waittime'])
+            self.analyze_frame(idx, event, status)
 
     @classmethod
     def analyze_frames(cls, workdir):
@@ -215,10 +216,9 @@ class BaseRecorder(object):
             'def test(d):',
         ]
         for row in self.case_draft:
-            script = row['pyscript'].encode('utf-8', 'ignore')
+            script = self.generate_code(row).encode('utf-8', 'ignore')
             for line in script.split('\n'):
                 content.append(' '*4 + line)
-            # content.append(' '*4 + 'time.sleep(1)')
         content.extend([
             '',
             'if __name__ == "__main__":',
