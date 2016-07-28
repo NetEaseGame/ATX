@@ -396,10 +396,10 @@ class CropIDE(object):
         self._root.mainloop()
         
 
-def main(serial, host='127.0.0.1', port=5037, platform='android'):
+def main(serial, host='127.0.0.1', platform='android'):
     log.debug("gui starting ...")
     if platform == 'android':
-        d = atx.connect(serial, host=host, port=port)
+        d = atx.connect(serial, host=host)
         serial = d.serial
     elif platform == 'ios':
         d = ioskit.Device(udid=serial)
