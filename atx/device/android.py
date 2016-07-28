@@ -56,10 +56,14 @@ UINode = collections.namedtuple('UINode', [
 log = logutils.getLogger(__name__)
 
 
-def getenv(name, default_value=None, type=str):
-    value = os.getenv(name)
-    return type(value) if value else default_value
+# def getenv(name, default_value=None, type=str):
+#     value = os.getenv(name)
+#     return type(value) if value else default_value
 
+def getenvs(*names):
+    for name in names:
+        if os.getenv(name):
+            return os.getenv(name)
 
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
@@ -74,9 +78,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             EnvironmentError
         """
         self.__display = None
-        serialno = serialno or getenv('ATX_ADB_SERIALNO', None)
-        self._host = kwargs.get('host', getenv('ATX_ADB_HOST', '127.0.0.1'))
-        self._port = kwargs.get('port', getenv('ATX_ADB_PORT', 5037, type=int))
+        serialno = serialno or getenvs('ATX_ADB_SERIALNO', 'ANDROID_SERIAL')
+        self._host = kwargs.get('host', getenvs('ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1')
+        self._port = int(kwargs.get('port', getenvs('ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037))
 
         self._adb_client = adbkit.Client(self._host, self._port)
         self._adb_device = self._adb_client.device(serialno)
