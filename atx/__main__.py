@@ -10,7 +10,6 @@ import json
 import sys
 import inspect
 from contextlib import contextmanager
-
 import atx.androaxml as apkparse
 
 from atx.cmds import run
