@@ -116,9 +116,11 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	Remember the atx version in case if you want to rollback.
 
-5. Install ATX Assistant (Only android)
+5. Install ATX Assistant into you phone (Only android)
 
-	use command line
+	To make sure device connected, use command `adb devices`
+
+	Install via command line
 
 	```sh
 	python -m atx install atx-assistant
