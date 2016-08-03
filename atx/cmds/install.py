@@ -21,8 +21,10 @@ from atx.cmds import utils
 
 log = logutils.getLogger('install')
 DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
-__apks = dict(
-    utf7ime='http://o8oookdsx.qnssl.com/android_unicode_ime-debug.apk')
+__apks = {
+    'utf7ime': 'http://o8oookdsx.qnssl.com/android_unicode_ime-debug.apk',
+    'atx-assistant': 'https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk',
+}
 
 
 def clean(tmpdir):

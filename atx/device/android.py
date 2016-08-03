@@ -485,7 +485,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         android source code can be found here.
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
-        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
+        is_utf7ime = (self.current_ime() in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
         if is_utf7ime:
             estext = base64.b64encode(text.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])

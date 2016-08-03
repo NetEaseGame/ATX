@@ -116,6 +116,26 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	Remember the atx version in case if you want to rollback.
 
+5. Install ATX Assistant (Only android)
+
+	use command line
+
+	```sh
+	python -m atx install atx-assistant
+	```
+
+	Or download and install <https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk>
+
+	This App provided ATX input method, Keep screen wake and some other good stuff. Recommend all user to install it.
+
+	目前该输入法需要手工启动，该输入法为ATX提供命令行的中文输入方法
+
+	```
+	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
+	```
+
+
+
 Some may still failed the installation. There are some ways which may help you.
 
 1. Uninstall your python, and reinstall from <https://python.org>
@@ -523,10 +543,6 @@ python -m atx --help
 	# Start app after installed.
 	```
 
-	另外install支持一些默认软件的安装，目前有 utf7ime
-
-	使用方法如 `python -matx install utf7ime`
-
 7. screencap
 	拥有超越`adb shell screencap`的速度以及兼容性，使用了PIL库，输出的格式根据文件的扩展名的自动确定
 
@@ -614,20 +630,20 @@ python -m atx --help
 
 7. 解决输入法遇到的问题
 
-	可以专门为自动化开发的Utf7Ime的输入法 [源码地址](https://github.com/macacajs/android-unicode)
+	可以专门为自动化开发的Utf7Ime的输入法, [源码地址](https://github.com/macacajs/android-unicode)
 
 	启动方法
 
 	```sh
-	python -m atx install utf7ime
-	adb shell ime enable android.unicode.ime/.Utf7ImeService
-	adb shell ime set android.unicode.ime/.Utf7ImeService
+	python -m atx install atx-assistant
+	adb shell ime enable com.netease.atx.assistant/.ime.Utf7ImeService
+	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
 	```
 
 	关闭方法
 
 	```
-	adb shell ime disable android.unicode.ime/.Utf7ImeService
+	adb shell ime disable com.netease.atx.assistant/.ime.Utf7ImeService
 	```
 
 ## 代码导读
