@@ -471,6 +471,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         self.adb_shell(['input', 'keyevent', keycode])
 
+    def _is_utf7ime(self):
+        return self.current_ime() in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService']
+
+    def _enable_utf7ime(self):
+        self.adb_shell(['ime', 'enable', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
+        self.adb_shell(['ime', 'set', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
+
     def type(self, text, enter=False):
         """Input some text, this method has been tested not very stable on some device.
         "Hi world" maybe spell into "H iworld"
@@ -485,8 +492,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         android source code can be found here.
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         """
-        is_utf7ime = (self.current_ime() in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
-        if is_utf7ime:
+        if self._is_utf7ime():
             estext = base64.b64encode(text.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
         else:
@@ -510,8 +516,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Args:
             - count (int): send KEY_DEL count
         """
-        is_utf7ime = (self.current_ime() == 'android.unicode.ime/.Utf7ImeService')
-        if not is_utf7ime:
+        if not self._is_utf7ime():
             raise RuntimeError("Input method must be 'android.unicode.ime'")
         self.keyevent('KEYCODE_MOVE_END')
         self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
