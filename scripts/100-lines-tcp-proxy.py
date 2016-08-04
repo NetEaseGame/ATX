@@ -12,8 +12,8 @@ import sys
 # But when buffer get to high or delay go too down, you can broke things
 buffer_size = 4096
 delay = 0.0001
-forward_to = ('127.0.0.1', 5037)
-forward_to = ('10.249.80.122', 57149)
+forward_to = ('127.0.0.1', 5555)
+#forward_to = ('10.249.80.122', 57149)
 
 class Forward:
     def __init__(self):
@@ -91,7 +91,7 @@ class TheServer:
         self.channel[self.s].send(data)
 
 if __name__ == '__main__':
-        server = TheServer('', 9090)
+        server = TheServer('', 5037)
         try:
             server.main_loop()
         except KeyboardInterrupt:

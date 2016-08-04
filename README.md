@@ -552,6 +552,8 @@ python -m atx --help
 	$ python -m atx screencap -o screen.png
 	```
 
+	如果需要复制到剪贴板，需要在额外安装一个库 `pip install pypiwin32`
+
 8. screenrecord （仅限android）
 
 	录制视频功能，需要预先安装minicap
