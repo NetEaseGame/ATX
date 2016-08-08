@@ -79,9 +79,11 @@ class Client(object):
     def raw_cmd(self, *args, **kwargs):
         '''adb command. return the subprocess.Popen object.'''
         cmds = [self.adb_path()] + self._host_port_args + list(args)
+        kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
+        kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
         # if os.name != "nt":
         #     cmd_line = [" ".join(cmd_line)]
-        return subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=kwargs.get('stderr', subprocess.STDOUT))
+        return subprocess.Popen(cmds, **kwargs)
 
     def run_cmd(self, *args, **kwargs):
         p = self.raw_cmd(*args, **kwargs)

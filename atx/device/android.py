@@ -84,6 +84,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
         self._adb_client = adbkit.Client(self._host, self._port)
         self._adb_device = self._adb_client.device(serialno)
+        self._adb_shell_timeout = 30.0 # max adb shell exec time
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
@@ -287,9 +288,12 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         return screen
 
     def raw_cmd(self, *args, **kwargs):
+        '''
+        Return subprocess.Process instance
+        '''
         return self.adb_device.raw_cmd(*args, **kwargs)
 
-    def adb_cmd(self, command):
+    def adb_cmd(self, command, **kwargs):
         '''
         Run adb command, for example: adb(['pull', '/data/local/tmp/a.png'])
 
@@ -299,11 +303,12 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Returns:
             command output
         '''
+        kwargs['timeout'] = kwargs.get('timeout', self._adb_shell_timeout)
         if isinstance(command, list) or isinstance(command, tuple):
-            return self.adb_device.run_cmd(*list(command))
-        return self.adb_device.run_cmd(command)
+            return self.adb_device.run_cmd(*list(command), **kwargs)
+        return self.adb_device.run_cmd(command, **kwargs)
 
-    def adb_shell(self, command):
+    def adb_shell(self, command, **kwargs):
         '''
         Run adb shell command
 
@@ -314,9 +319,9 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             command output
         '''
         if isinstance(command, list) or isinstance(command, tuple):
-            return self.adb_cmd(['shell'] + list(command))
+            return self.adb_cmd(['shell'] + list(command), **kwargs)
         else:
-            return self.adb_cmd(['shell'] + [command])
+            return self.adb_cmd(['shell'] + [command], **kwargs)
 
     @property
     def properties(self):
@@ -341,7 +346,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Start application
 
         Args:
-            package_name: string like com.example.app1
+            - package_name (string): like com.example.app1
+            - activity (string): optional, activity name
 
         Returns time used (unit second), if activity is not None
         '''

@@ -260,7 +260,7 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 * Execute shell command (Only Android)
 	
 	```py
-	d.adb_cmd(['pull', '/data/local/tmp/hi.txt'])
+	d.adb_cmd(['pull', '/data/local/tmp/hi.txt']) # default timeout 30s, use timeout=None to set unlimited time
 	d.adb_shell(['uptime'])
 	
 	# forward device port to localhost

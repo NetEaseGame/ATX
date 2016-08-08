@@ -39,21 +39,25 @@ class Device(object):
     
     def raw_cmd(self, *args, **kwargs):
         args = ['-s', self._serial] + list(args)
-        return self._client.raw_cmd(*args)
+        return self._client.raw_cmd(*args, **kwargs)
 
-    def run_cmd(self, *args):
+    def run_cmd(self, *args, **kwargs):
         """
         Unix style output, already replace \r\n to \n
-        """
-        p = self.raw_cmd(*args)
-        return p.communicate()[0].replace('\r\n', '\n')
 
-    def shell(self, *args):
+        Args:
+            - timeout (float): timeout for a command exec
+        """
+        timeout = kwargs.pop('timeout', None)
+        p = self.raw_cmd(*args, **kwargs)
+        return p.communicate(timeout=timeout)[0].replace('\r\n', '\n')
+
+    def shell(self, *args, **kwargs):
         """
         Run command `adb shell`
         """
         args = ['shell'] + list(args)
-        return self.run_cmd(*args)
+        return self.run_cmd(*args, **kwargs)
 
     def keyevent(self, key):
         ''' Call: adb shell input keyevent $key '''
