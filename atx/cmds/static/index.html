@@ -116,7 +116,7 @@
             </h4>
             <pre class='console'></pre>
           </div>
-          
+
         </div>
       </div>
     </div>
@@ -124,18 +124,7 @@
     <xml id="toolbox" style="display: none">
       <category name="ATX" colour="160">
         <block type="atx_connect"></block>
-        <block type="atx_click">
-          <value name="X">
-            <block type="math_number">
-              <field name="NUM">0</field>
-            </block>
-          </value>
-          <value name="Y">
-            <block type="math_number">
-              <field name="NUM">0</field>
-            </block>
-          </value>
-        </block>
+        <block type="atx_click"></block>
         <block type="atx_screenshot">
           <value name="FILENAME">
             <block type="text">
@@ -150,22 +139,24 @@
           </value>
         </block>
         <block type="atx_click_image">
-          <value name="ATX_PATTERN">
-            <block type="atx_image_pattern">
-              <value name="FILENAME">
-                <block type="atx_image_file">
-                </block>
-              </value>
-              <value name="THRESHOLD">
-                <block type="math_number">
-                  <field name="NUM">0.8</field>
-                </block>
+        </block>
+        <block type="atx_image_file">
+        </block>
+        <block type="atx_image_pattern">
+          <value name="FILENAME">
+            <block type="atx_image_crop_preview">
+              <value name="IMAGE_CROP">
+                <block type="atx_image_crop"></block>
               </value>
             </block>
           </value>
         </block>
-        <block type="atx_image_file">
+        <block type="atx_image_crop_preview">
+          <value name="IMAGE_CROP">
+            <block type="atx_image_crop"></block>
+          </value>
         </block>
+        <block type="atx_blank"></block>
       </category>
       <category name="逻辑" colour="200">
         <block type="controls_if"></block>
@@ -201,14 +192,18 @@
     <script src="//gohttp.nie.netease.com/automatorx/notify.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="//gohttp.nie.netease.com/automatorx/blockly/blockly_compressed.js"></script>
+    <!-- <script src="//gohttp.nie.netease.com/automatorx/blockly/blockly_compressed.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/blocks_compressed.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/msg/js/en.js"></script>
-    <script src="//gohttp.nie.netease.com/automatorx/blockly/python_compressed.js"></script>
+    <script src="//gohttp.nie.netease.com/automatorx/blockly/python_compressed.js"></script> -->
+    <script src="//127.0.0.1:8000/blockly_compressed.js"></script>
+    <script src="//127.0.0.1:8000/blocks_compressed.js"></script>
+    <script src="//127.0.0.1:8000/msg/js/en.js"></script>
+    <script src="//127.0.0.1:8000/python_compressed.js"></script>
 
     <script src="{{static_url('js/vue.min.js')}}"></script>
     <script src="{{static_url('js/index.js')}}"></script>
-    
+
     <!-- Google Analytics Code -->
     <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
