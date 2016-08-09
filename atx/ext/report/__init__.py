@@ -11,6 +11,7 @@ import warnings
 from atx import consts
 from atx import errors
 from atx.base import nameddict
+from atx.ext.report import patch as pt
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +78,17 @@ class Report(object):
         """ record steps of uiautomator """
         import uiautomator
         uiautomator.add_listener('atx-report', self._uia_listener)
+
+    def patch_wda(self):
+        """ record steps of webdriveragent """
+        import wda
+
+        def _click(self):
+            print 'clicked', self.bounds
+            orig_click = pt.get_original(wda.Selector, 'click')
+            return orig_click(self)
+
+        pt.patch_item(wda.Selector, 'click', _click)
 
     def start_record(self):
         self.start_time = time.time()
@@ -156,12 +168,16 @@ class Report(object):
         screen_before = 'images/before_%d.png' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
+        # keep screenshot for every call
+        if not evt.is_before and evt.flag == consts.EVENT_SCREENSHOT:
+            self.__last_screenshot = evt.retval
+
         if evt.depth > 1: # base depth is 1
             return
 
         if evt.is_before: # call before function
             if evt.flag == consts.EVENT_CLICK:
-                d.screenshot()
+                self.__last_screenshot = d.screenshot() # Maybe no need to set value here.
             return
 
         if evt.flag == consts.EVENT_CLICK:
@@ -175,13 +191,11 @@ class Report(object):
                 screen_before=screen_before,
                 screen_after=screen_after,
                 position={'x': x, 'y': y})
-        elif evt.flag == consts.EVENT_SCREENSHOT:
-            # keep last screenshot
-            self.__last_screenshot = evt.retval
         elif evt.flag == consts.EVENT_CLICK_IMAGE:
             kwargs = {
                 'success': evt.traceback is None,
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
+                'description': evt.kwargs.get('desc'),
             }
             # not record if image not found
             if evt.retval is None and evt.traceback is None:

@@ -287,11 +287,16 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 
 	# long click
 	d.long_click(50, 100) # only works on android for now
+	```
 
 * click_image函数
 
+	```py
 	# click image, if "button.png" not found, exception will be raise.
 	d.click_image("button.png")
+
+	# add description (also used for report generate)
+	d.click_image("button.png", desc="I love click")
 
 	# click image, if "button.png" not found, will return None
 	d.click_image("button.png", safe=True)
