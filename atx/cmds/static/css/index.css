@@ -16,3 +16,18 @@ pre.console {
 	height: 10em;
 	overflow: auto;
 }
+
+.point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+  border: 1px solid red;
+  pointer-events: none;
+}
+
+.image-rect, .ui-rect {
+  position: absolute;
+  border: 2px solid red;
+  pointer-events: none;
+}
