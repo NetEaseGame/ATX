@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 import atexit
 import argparse
 import os
@@ -98,7 +100,7 @@ class Report(object):
             w, h = h, w
         self.result = dict(device=dict(
             display=dict(width=w, height=h),
-            serial=self.d.serial,
+            serial=getattr(self.d, 'serial', ''),
             start_time=time.strftime("%Y-%m-%d %H:%M:%S"),
             start_timestamp=time.time(),
         ), steps=self.steps)

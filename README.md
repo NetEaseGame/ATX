@@ -340,7 +340,11 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# click by UI component
 	d(text='Enter').click()
 	d(text='Enter').sibling(className='android.widget.ImageView').click()
-	```
+
+	# swipe from (sx, sy) to (ex, ey)
+	d.swipe(sx, sy, ex, ey)
+	# swipe from (sx, sy) to (ex, ey) with 10 steps
+	d.swipe(sx, sy, ex, ey, steps=10)
 
 * 文本的输入 (only Android)
 

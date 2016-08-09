@@ -21,6 +21,19 @@ from atx.errors import *
 from atx.device import Pattern, Bounds
 
 
+def _detect_platform(*args):
+    if os.getenv('ATX_PLATFORM'):
+        return os.getenv('ATX_PLATFORM')
+
+    if len(args) == 0:
+        return 'android'
+    elif args[0].startswith('http://'): # WDA use http url as connect str
+        return 'ios'
+    else:
+        # default android
+        return 'android'
+
+
 def connect(*args, **kwargs):
     """Connect to a device, and return its object
     Args:
@@ -32,7 +45,7 @@ def connect(*args, **kwargs):
     Raises:
         SyntaxError, EnvironmentError
     """
-    platform = kwargs.pop('platform', os.getenv('ATX_PLATFORM') or 'android')
+    platform = kwargs.pop('platform', _detect_platform(*args))
 
     cls = None
     if platform == 'android':

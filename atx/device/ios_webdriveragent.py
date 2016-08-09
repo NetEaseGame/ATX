@@ -51,11 +51,6 @@ class IOSDevice(DeviceMixin):
         #         time.sleep(5.0)
         #         break
 
-    # def __del__(self):
-    #     if self._xcproc:
-    #         print 'Terminate xcodebuild'
-    #         self._xcproc.terminate()
-
     def start_app(self, bundle_id):
         """Start an application
         Args:
@@ -93,8 +88,9 @@ class IOSDevice(DeviceMixin):
 
     @property
     def rotation(self):
-        raise NotImplementedError()
-        return self._wda.rotation
+        # raise NotImplementedError()
+        # print self._wda.orientation
+        return 0
 
     def click(self, x, y):
         """Simulate click operation
