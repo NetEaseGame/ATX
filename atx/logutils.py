@@ -10,6 +10,8 @@ import time
 import threading
 import datetime
 
+from atx import strutils
+
 
 class Logger(object):
     __alias = {
@@ -55,8 +57,8 @@ class Logger(object):
             message=message,
         )
         props['levelname'] = Logger.__alias.get(levelname, levelname)
-        output = '{asctime} {levelname:<5s} [{name}:{lineno:>4}] {message}'.format(**props)
-        self._write(output)
+        output = u'{asctime} {levelname:<5s} [{name}:{lineno:>4}] {message}'.format(**props)
+        self._write(strutils.encode(output, 'utf-8'))
 
     def debug(self, *args, **kwargs):
         self._level_write(logging.DEBUG, *args, **kwargs)

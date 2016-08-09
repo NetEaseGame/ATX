@@ -36,7 +36,7 @@ def connect(*args, **kwargs):
 
     cls = None
     if platform == 'android':
-        os.environ['JSONRPC_TIMEOUT'] = "10" # default is 90s which is too long.
+        os.environ['JSONRPC_TIMEOUT'] = "60" # default is 90s which is too long.
         devcls = __import__('atx.device.android')
         cls = devcls.device.android.AndroidDevice
     elif platform == 'windows':

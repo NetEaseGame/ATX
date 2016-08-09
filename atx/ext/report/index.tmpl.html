@@ -10,7 +10,6 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.6/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.min.css">
-  
   <!-- 
   <link rel="stylesheet" href="http://gohttp.nie.netease.com/qard-libs/libs/bootstrap/3.3.5/css/bootstrap.min.css">
   <link rel="stylesheet" href="http://gohttp.nie.netease.com/qard-libs/libs/fancybox/2.1.5/jquery.fancybox.min.css">
@@ -112,7 +111,7 @@
             </a>
             <ul class="dropdown-menu" role="menu">
               <li v-for="step in steps">
-                <a href="#{{step.time}}">{{step.time}} {{step.action}}</a>
+                <a href="#{{step.time}}">{{step.time}} {{step.action}}  {{step.description}}</a>
               </li>
             </ul>
           </li>
@@ -149,7 +148,7 @@
       <div v-for="step in steps" class="panel" v-bind:class="step.success ? 'panel-success': 'panel-danger'">
         <div class="panel-heading">
           <a class="anchor" href="#{{step.time}}" name="{{step.time}}">$</a>
-          <i>{{step.time}}s</i> {{step.action}}
+          <i>{{step.time}}s</i> {{step.action}} {{step.description}}
         </div>
         <div class="panel-body">
           <template v-if="step.action == 'click'">
@@ -236,7 +235,6 @@
 <script src="https://cdn.jsdelivr.net/fancybox/2.1.5/jquery.fancybox.pack.js"></script>
 <script src="https://cdn.jsdelivr.net/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/vue/1.0.24/vue.min.js"></script>
-
 <!--
 <script src="http://gohttp.nie.netease.com/qard-libs/libs/jquery/1.11.3/jquery.min.js"></script>
 <script src="http://gohttp.nie.netease.com/qard-libs/libs/mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
@@ -281,15 +279,22 @@ $(function() {
 })
 </script>
 <!-- Google Analytics -->
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+<!-- <script>
+(function(i, s, o, g, r, a, m) {
+  i['GoogleAnalyticsObject'] = r;
+  i[r] = i[r] || function() {
+    (i[r].q = i[r].q || []).push(arguments)
+  }, i[r].l = 1 * new Date();
+  a = s.createElement(o),
+    m = s.getElementsByTagName(o)[0];
+  a.async = 1;
+  a.src = g;
+  m.parentNode.insertBefore(a, m)
+})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
-  ga('create', 'UA-55124209-8', 'auto');
-  ga('send', 'pageview');
-</script>
+ga('create', 'UA-55124209-8', 'auto');
+ga('send', 'pageview');
+</script> -->
 <!-- <script src="/_d/js"></script> -->
 
 </html>
