@@ -79,8 +79,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         self.__display = None
         serialno = serialno or getenvs('ATX_ADB_SERIALNO', 'ANDROID_SERIAL')
-        self._host = kwargs.get('host', getenvs('ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1')
-        self._port = int(kwargs.get('port', getenvs('ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037))
+        self._host = kwargs.get('host') or getenvs('ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1'
+        self._port = int(kwargs.get('port') or getenvs('ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037)
 
         self._adb_client = adbkit.Client(self._host, self._port)
         self._adb_device = self._adb_client.device(serialno)
