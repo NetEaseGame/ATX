@@ -20,7 +20,7 @@ __dir__ = os.path.dirname(os.path.abspath(__file__))
 
 
 class IOSDevice(DeviceMixin):
-    def __init__(self, device_url): #udid=None):
+    def __init__(self, device_url, bundle_id=None):
         DeviceMixin.__init__(self)
         self.__device_url = device_url
         self.__display = None
@@ -28,6 +28,10 @@ class IOSDevice(DeviceMixin):
         
         self._wda = wda.Client(device_url)
         self._session = None
+        self._bundle_id = None
+
+        if bundle_id:
+            self.start_app(bundle_id)
         # ioskit.Device.__init__(self, udid)
 
         # # xcodebuild -project  -scheme WebDriverAgentRunner -destination "id=1002c0174e481a651d71e3d9a89bd6f90d253446" test
@@ -61,6 +65,7 @@ class IOSDevice(DeviceMixin):
         """
         # if self._session is not None:
         #     self.stop_app()
+        self._bundle_id = bundle_id
         self._session = self._wda.session(bundle_id)
         return self._session
 
@@ -69,6 +74,7 @@ class IOSDevice(DeviceMixin):
             return
         self._session.close()
         self._session = None
+        self._bundle_id = None
 
     def __call__(self, *args, **kwargs):
         if self._session is None:
@@ -86,6 +92,20 @@ class IOSDevice(DeviceMixin):
             self.screenshot()
         return self.__display
 
+    @property
+    def bundle_id(self):
+        return self._bundle_id
+
+    @property
+    def scale(self):
+        if self.__scale:
+            return self.__scale
+        if self._session is None:
+            raise RuntimeError("Need to call start_app before")
+        wsize = self._session.window_size()
+        self.__scale = min(self.display) / min(wsize)
+        return self.__scale
+    
     @property
     def rotation(self):
         # raise NotImplementedError()

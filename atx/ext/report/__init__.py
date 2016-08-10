@@ -76,6 +76,20 @@ class Report(object):
                 screen_after=screen_after,
                 position={'x': x, 'y': y})
 
+    def add_step(self, action, **kwargs):
+        kwargs['success'] = kwargs.pop('success', True)
+        kwargs['time'] = round(kwargs.pop('time', time.time()-self.start_time), 1)
+        kwargs['action'] = action
+        self.steps.append(kwargs)
+
+    def _save_screenshot(self, screen=None):
+        if screen is None:
+            screen = self.d.screenshot()
+        abspath = 'images/before_%d.png' % time.time()
+        relpath = os.path.join(self.save_dir, abspath)
+        screen.save(relpath)
+        return abspath
+
     def patch_uiautomator(self):
         """ record steps of uiautomator """
         import uiautomator
@@ -85,10 +99,17 @@ class Report(object):
         """ record steps of webdriveragent """
         import wda
 
-        def _click(self):
-            print 'clicked', self.bounds
+        def _click(that):
+            rawx, rawy = that.bounds.center
+            x, y = self.d.scale*rawx, self.d.scale*rawy
+            screen_before = self._save_screenshot()
             orig_click = pt.get_original(wda.Selector, 'click')
-            return orig_click(self)
+            screen_after = self._save_screenshot()
+            self.add_step('click',
+                screen_before=screen_before,
+                screen_after=screen_after,
+                position={'x': x, 'y': y})
+            return orig_click(that)
 
         pt.patch_item(wda.Selector, 'click', _click)
 
@@ -150,20 +171,6 @@ class Report(object):
             screenshot.save(screen_abspath)
             step['screenshot'] = screen_path
         self.steps.append(step)
-
-    def add_step(self, action, **kwargs):
-        kwargs['success'] = kwargs.pop('success', True)
-        kwargs['time'] = round(kwargs.pop('time', time.time()-self.start_time), 1)
-        kwargs['action'] = action
-        self.steps.append(kwargs)
-
-    def _save_screenshot(self, screen=None):
-        if screen is None:
-            screen = self.d.screenshot()
-        abspath = 'images/before_%d.png' % time.time()
-        relpath = os.path.join(self.save_dir, abspath)
-        screen.save(relpath)
-        return abspath
 
     def _listener(self, evt):
         d = self.d

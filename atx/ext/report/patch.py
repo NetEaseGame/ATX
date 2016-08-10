@@ -66,7 +66,7 @@ _NONE = object()
 def patch_item(module, attr, newitem):
     olditem = getattr(module, attr, _NONE)
     if olditem is not _NONE:
-        saved.setdefault(module.__name__, {}).setdefault(attr, olditem)
+        saved.setdefault(module, {}).setdefault(attr, olditem)
     setattr(module, attr, newitem)
 
 
@@ -74,5 +74,5 @@ def remove_item(module, attr):
     olditem = getattr(module, attr, _NONE)
     if olditem is _NONE:
         return
-    saved.setdefault(module.__name__, {}).setdefault(attr, olditem)
+    saved.setdefault(module, {}).setdefault(attr, olditem)
     delattr(module, attr) 
