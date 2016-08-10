@@ -1,5 +1,6 @@
 #-*- encoding: utf-8 -*-
 
+import os
 import os.path
 import time
 
@@ -8,14 +9,18 @@ from atx.record.draft_editor import run as run_draft_editor
 
 def main(serial=None, host=None, port=None, workdir=".", nonui_activities=None):
     workdir = os.path.abspath(workdir)
+    if not os.path.exists(workdir):
+        os.makedirs(workdir)
+
     d = RecordDevice(serialno=serial, host=host, port=port)
+
     rec = AndroidRecorder(d, workdir)
     if nonui_activities:
-        print nonui_activities
         for a in nonui_activities:
             rec.add_nonui_activity(a)
+
     rec.start()
-    time.sleep(5)
+    time.sleep(4)
     print '-'*20 + ' STARTED ' + '-'*20
     print 'Please operate on the phone. Press Ctrl+C to stop.'
 
