@@ -212,14 +212,13 @@ class BaseRecorder(object):
     def save(self):
         # save frames info, do not overwrite.
         filepath = os.path.join(self.framedir, 'frames.json')
-        if not os.path.exists(filepath):
-            obj = {
-                'ctime' : time.ctime(),
-                'device' : self.device_info,
-                'frames' : self.frames,
-            }
-            with open(filepath, 'w') as f:
-                json.dump(obj, f, indent=2)
+        obj = {
+            'ctime' : time.ctime(),
+            'device' : self.device_info,
+            'frames' : self.frames,
+        }
+        with open(filepath, 'w') as f:
+            json.dump(obj, f, indent=2)
 
         # save draft info
         filepath = os.path.join(self.framedir, 'draft.json')

@@ -82,6 +82,9 @@ def main():
         p.set_defaults(func=load_main('tkgui'))
 
     with add_parser('record') as p:
+        p.add_argument('-d', '--workdir', default='.', help='workdir where case & frame files are saved.')
+        p.add_argument('-a', '--nonui-activity', action='append', dest='nonui_activities',
+            required=False, help='nonui-activities for which the recorder will analyze screen image instead of uixml.')
         p.set_defaults(func=load_main('record'))
 
     with add_parser('minicap') as p:
@@ -100,7 +103,7 @@ def main():
         p.set_defaults(func=load_main('install'))
 
     with add_parser('screen') as p:
-        p.add_argument('-s', '--scale', required=False, default=0.5, help='image scale')
+        p.add_argument('--scale', required=False, type=float, default=1.0, help='image scale')
         p.add_argument('--simple', action='store_true', help='disable interact controls')
         p.set_defaults(func=load_main('screen'))
 

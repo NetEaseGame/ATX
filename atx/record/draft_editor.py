@@ -50,24 +50,28 @@ def get_valid_port():
     s.close()
     return port
 
-def run(basedir):
+def run(basedir, port=8000):
     basedir = os.path.abspath(basedir)
     application = tornado.web.Application([
         (r'/', MainHandler),
         (r'/frames/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(basedir, 'frames')}),
         (r'/case(.*)', CaseHandler, {'casedir':os.path.join(basedir, 'case')}),
         (r'/run(.*)', CaseRunnerHandler, {'casedir': os.path.join(basedir, 'case')}),
-        (r'/(.*)', tornado.web.StaticFileHandler, {'path':'site'}),
+        (r'/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(__dir__, 'site')}),
     ], autoreload=True, static_hash_cache=False)
 
-    # port = get_valid_port()
-    # webbrowser.open('http://127.0.0.1:%s' % port, new=2)
-    port = 8000
+    if port is None:
+        port = get_valid_port()
+    webbrowser.open('http://127.0.0.1:%s' % port, new=2)
 
     application.listen(port)
     print 'Listen on', port
     print 'CaseDir:', basedir
-    tornado.ioloop.IOLoop.instance().start()
+    print 'Press Ctrl+C to stop...'
+    try:
+        tornado.ioloop.IOLoop.instance().start()
+    except:
+        print 'Done'
 
 if __name__ == '__main__':
     run('testcase')
