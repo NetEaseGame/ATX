@@ -21,6 +21,8 @@ pre.console {
   position: absolute;
   width: 10px;
   height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
   border-radius: 10px;
   border: 1px solid red;
   pointer-events: none;

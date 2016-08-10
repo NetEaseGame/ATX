@@ -366,14 +366,13 @@ $(function(){
       update: function(data){
         var p1 = getCanvasPos(data.x1, data.y1),
             p2 = getCanvasPos(data.x2, data.y2),
-            c = getCanvasPos(data.c.x, data.c.y),
             width = p2.left - p1.left,
             height = p2.top - p1.top;
         this.$el.css('left', p1.left+'px')
                 .css('top', p1.top+'px')
                 .css('width', width+'px')
                 .css('height', height+'px');
-        this.$el.children().css('left', c.left+'px').css('top', c.top+'px');
+        this.$el.children().css('left', (data.c.x+50)+'%').css('top', (data.c.y+50)+'%');
       },
     },
     "atx_click_ui" : {
@@ -454,29 +453,25 @@ $(function(){
     if (crop_conn == null) { return;}
     var crop_blk = crop_conn.sourceBlock_,
         start_pos = getMousePos(this, rect_bounds.start),
-        end_pos = getMousePos(this, rect_bounds.end),
-        ox = (start_pos.x + end_pos.x)/2,
-        oy = (start_pos.y + end_pos.y)/2;
+        end_pos = getMousePos(this, rect_bounds.end);
     crop_blk.setFieldValue(start_pos.x, 'LEFT');
     crop_blk.setFieldValue(start_pos.y, 'TOP');
     crop_blk.setFieldValue(end_pos.x - start_pos.x, 'WIDTH');
     crop_blk.setFieldValue(end_pos.y - start_pos.y, 'HEIGHT');
-    pat_blk.setFieldValue(ox, 'OX');
-    pat_blk.setFieldValue(oy, 'OY');
+    pat_blk.setFieldValue(0, 'OX');
+    pat_blk.setFieldValue(0, 'OY');
 
     // update image-rect position
     var $rect = overlays['atx_click_image'].$el,
         left = rect_bounds.start.pageX,
         top = rect_bounds.start.pageY,
         width = Math.max(rect_bounds.end.pageX - left, 10),
-        height = Math.max(rect_bounds.end.pageY - top, 10),
-        cx = width/2,
-        cy = height/2;
+        height = Math.max(rect_bounds.end.pageY - top, 10);
     $rect.css('left', left+'px')
          .css('top', top+'px')
          .css('width', width+'px')
          .css('height', height+'px');
-    $rect.children().css('left', cx+'px').css('top', cy+'px');
+    $rect.children().css('left', '50%').css('top', '50%');
   });
   canvas.addEventListener('mouseup', function(evt){
     var blk = Blockly.selected;
@@ -505,13 +500,22 @@ $(function(){
     var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
     if (pat_conn == null) { return;}
     var pat_blk = pat_conn.sourceBlock_;
-    var pos = getMousePos(this, evt);
-    pat_blk.setFieldValue(pos.x, 'OX');
-    pat_blk.setFieldValue(pos.y, 'OY');
 
     // update image-rect point position
-    var $point = overlays['atx_click_image'].$el.children();
-    $point.css('left', '50%').css('top', '50%');
+    var $rect = overlays['atx_click_image'].$el,
+        pos = $rect.position(),
+        x = pos.left,
+        y = pos.top,
+        w = $rect.width(),
+        h = $rect.height(),
+        cx = x + w/2,
+        cy = y + h/2,
+        ox = parseInt((evt.pageX - cx)/w * 100),
+        oy = parseInt((evt.pageY - cy)/h * 100),
+        $point = $rect.children();
+    pat_blk.setFieldValue(ox, 'OX');
+    pat_blk.setFieldValue(oy, 'OY');
+    $point.css('left', (50+ox)+'%').css('top', (50+oy)+'%');
   });
 
   // TODO selected is atx_click_ui
