@@ -104,7 +104,7 @@ def main():
         p.set_defaults(func=load_main('install'))
 
     with add_parser('screen') as p:
-        p.add_argument('--scale', required=False, type=float, default=1.0, help='image scale')
+        p.add_argument('--scale', required=False, type=float, default=0.5, help='image scale')
         p.add_argument('--simple', action='store_true', help='disable interact controls')
         p.set_defaults(func=load_main('screen'))
 

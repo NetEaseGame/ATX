@@ -16,7 +16,13 @@ from atx.adbkit.mixins import MinicapStreamMixin, RotationWatcherMixin, Minitouc
 class AdbWrapper(RotationWatcherMixin, MinicapStreamMixin, MinitouchStreamMixin, Device):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
-        self.open_rotation_watcher(on_rotation_change=lambda v: self.open_minicap_stream())
+
+        self._display = self.display
+        def on_rotation_change(v):
+            self.open_minicap_stream()
+            self._display = self.display
+
+        self.open_rotation_watcher(on_rotation_change=on_rotation_change)
         self.open_minitouch_stream()
 
     def send_touch(self, cmd):
@@ -92,8 +98,9 @@ def screen_with_controls(host, port, serial, scale=0.5):
             self.canvas = tk.Canvas(self.root, bg='black', bd=0, highlightthickness=0)
             self.canvas.pack()
 
-            def _screen2touch(w, h, o, x, y):
+            def screen2touch(x, y):
                 '''convert touch position'''
+                w, h, o = adb._display
                 if o == 0:
                     return x, y
                 elif o == 1: # landscape-right
@@ -101,12 +108,9 @@ def screen_with_controls(host, port, serial, scale=0.5):
                 elif o == 2: # upsidedown
                     return w-x, h-y
                 elif o == 3: # landscape-left
-                    return h-x, y
+                    return y, h-x
                 return x, y
             
-            w, h, o = adb.display
-            screen2touch = partial(_screen2touch, w, h, o)
-
             def on_mouse_down(event):
                 self.canvas.focus_set()
                 x, y = int(event.x/scale), int(event.y/scale)
