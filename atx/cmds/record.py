@@ -25,18 +25,19 @@ def main(serial=None, host=None, port=None, workdir=".", nonui_activities=None, 
             rec.add_nonui_activity(a)
 
     rec.start()
-    time.sleep(4)
-    print '-'*20 + ' STARTED ' + '-'*20
-    print 'Please operate on the phone. Press Ctrl+C to stop.'
 
-    while True:
-        try:
+    try:
+        time.sleep(4)
+        print '-'*20 + ' STARTED ' + '-'*20
+        print 'Please operate on the phone. Press Ctrl+C to stop.'
+        while True:
             time.sleep(1)
-        except:
-            break
+    except KeyboardInterrupt:
+        pass
+        
     rec.stop()
-
     print '-'*20 + ' STOPPED ' + '-'*20
+
     if len(rec.frames) > 0:
         print 'start web service to modify recorded case'
         run_draft_editor(workdir, None)
