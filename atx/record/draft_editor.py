@@ -7,7 +7,7 @@ import socket
 import webbrowser
 import tornado.ioloop
 import tornado.web
-import signal
+import traceback
 
 from tornado.web import StaticFileHandler
 
@@ -18,9 +18,9 @@ class MainHandler(tornado.web.RequestHandler):
         self.redirect('/index.html')
 
 class CaseHandler(tornado.web.RequestHandler):
-    def initialize(self, casedir):
-        self.casedir = casedir
-        self.casepath = os.path.join(casedir, 'case.json')
+    def initialize(self, basedir):
+        self.basedir = basedir
+        self.casepath = os.path.join(basedir, 'case', 'case.json')
         self.case = []
         if os.path.exists(self.casepath):
             with open(self.casepath) as f:
@@ -31,10 +31,19 @@ class CaseHandler(tornado.web.RequestHandler):
         self.finish()
 
     def post(self, *args):
-        data = self.request.arguments
+        data = self.request.arguments['data'][0] ## get the string 
         with open(self.casepath, 'w') as f:
-            json.dump(data, f)
-        self.write(json.dumps({'success': True}))
+            json.dump(json.loads(data), f, indent=2)
+
+        # generate code
+        from atx.record.android import AndroidRecorder
+        try:
+            AndroidRecorder.process_casefile(self.basedir)
+            self.write(json.dumps({'success': True}))
+        except:
+            traceback.print_exc()
+            self.write(json.dumps({'success':False}))
+
 
 class CaseRunnerHandler(tornado.web.RequestHandler):
     def initialize(self, casedir):
@@ -54,10 +63,10 @@ def run(basedir, port=8000):
     basedir = os.path.abspath(basedir)
     application = tornado.web.Application([
         (r'/', MainHandler),
-        (r'/frames/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(basedir, 'frames')}),
-        (r'/case(.*)', CaseHandler, {'casedir':os.path.join(basedir, 'case')}),
+        (r'/frames/(.*)', StaticFileHandler, {'path':os.path.join(basedir, 'frames')}),
+        (r'/case(.*)', CaseHandler, {'basedir': basedir}),
         (r'/run(.*)', CaseRunnerHandler, {'casedir': os.path.join(basedir, 'case')}),
-        (r'/(.*)', tornado.web.StaticFileHandler, {'path':os.path.join(__dir__, 'site')}),
+        (r'/(.*)', StaticFileHandler, {'path':os.path.join(__dir__, 'site')}),
     ], autoreload=True, static_hash_cache=False)
 
     if port is None:

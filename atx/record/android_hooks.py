@@ -194,13 +194,15 @@ class InputParser(object):
             elif _code == 'SYN_DROPPED':
                 self._touch_batch = []
             else:
-                print 'unknown syn code', _code
+                # print 'unknown syn code', _code
+                pass
         elif _type == 'EV_KEY':
             self.emit_key_event(_time, _code, _value)
         elif _type == 'EV_ABS':
             self._touch_batch.append((_time, _device, _type, _code, _value))
         else:
-            print 'unknown input event type', _type
+            # print 'unknown input event type', _type
+            pass
 
     def emit_key_event(self, _time, _code, _value):
         name = '%s_%s' % (_code, _value)

@@ -214,7 +214,7 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         uixml = status['uixml']
         screen = status['screen']
         adbstatus = status['adbstatus']
-        activity = adbstatus['activity']
+        activity = adbstatus and adbstatus['activity'] or None
 
         analyze_ui = False
         if activity is not None and activity not in self.nonui_activities:
