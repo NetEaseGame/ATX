@@ -27,6 +27,8 @@ def _detect_platform(*args):
 
     if len(args) == 0:
         return 'android'
+    elif not isinstance(args[0], basestring):
+        return 'android'
     elif args[0].startswith('http://'): # WDA use http url as connect str
         return 'ios'
     else:
