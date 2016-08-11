@@ -7,8 +7,13 @@ import time
 from atx.record.android import RecordDevice, AndroidRecorder
 from atx.record.draft_editor import run as run_draft_editor
 
-def main(serial=None, host=None, port=None, workdir=".", nonui_activities=None):
+def main(serial=None, host=None, port=None, workdir=".", nonui_activities=None, edit_mode=False):
     workdir = os.path.abspath(workdir)
+    
+    if edit_mode:
+        run_draft_editor(workdir, None)
+        return
+
     if not os.path.exists(workdir):
         os.makedirs(workdir)
 

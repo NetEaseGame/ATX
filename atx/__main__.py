@@ -83,6 +83,7 @@ def main():
 
     with add_parser('record') as p:
         p.add_argument('-d', '--workdir', default='.', help='workdir where case & frame files are saved.')
+        p.add_argument('-e', '--edit', action='store_true', dest='edit_mode', help='edit old records.')
         p.add_argument('-a', '--nonui-activity', action='append', dest='nonui_activities',
             required=False, help='nonui-activities for which the recorder will analyze screen image instead of uixml.')
         p.set_defaults(func=load_main('record'))
