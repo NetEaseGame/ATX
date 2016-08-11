@@ -14,11 +14,38 @@ from atx.record.base import BaseRecorder, ScreenAddon, UixmlAddon
 from atx.record.android_hooks import HookManager, HookConstants as HC, set_multitap
 from atx.record.android_layout import AndroidLayout
 
+class RotationAddon(object):
+    __addon_name = 'rotation'
+
+    def get_rotation(self, t):
+        if self.device is None:
+            return
+        idx = bisect.bisect(self.device._rotation_cache, (t, 0, 0))
+        if idx != 0:
+            return self.device._rotation_cache[idx-1][-1]
+
+    def save_rotation(self, data, dirpath, idx):
+        return data
+
+    def load_rotation(self, dirpath, data):
+        return data
+
 class RecordDevice(RotationWatcherMixin, MinicapStreamMixin, AndroidDevice):
 
     def __init__(self, *args, **kwargs):
         super(RecordDevice, self).__init__(*args, **kwargs)
-        self.open_rotation_watcher(on_rotation_change=lambda v: self.open_minicap_stream())
+
+        self._rotation_cache = []
+        def on_rotation_change(v):
+            self.open_minicap_stream()
+            # add idx for sort
+            if self._rotation_cache:
+                idx = self._rotation_cache[-1][1] + 1
+            else:
+                idx = 0
+            self._rotation_cache.append((time.time(), idx, v))
+
+        self.open_rotation_watcher(on_rotation_change=on_rotation_change)
 
     def dumpui(self):
         xmldata = self._uiauto.dump(pretty=False)
@@ -149,7 +176,7 @@ class AdbStatusAddon(object):
             # traceback.print_exc()
             return
 
-class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
+class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon, RotationAddon):
     def __init__(self, *args, **kwargs):
         self.hm = HookManager()
         self.uilayout = AndroidLayout()
@@ -215,15 +242,23 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
         screen = status['screen']
         adbstatus = status['adbstatus']
         activity = adbstatus and adbstatus['activity'] or None
+        rotation = status['rotation']
 
         analyze_ui = False
         if activity is not None and activity not in self.nonui_activities:
             if uixml is not None:
                 self.uilayout.parse_xmldata(uixml)
+                rotation = self.uilayout.rotation
                 analyze_ui = True
 
-        if event.msg == HC.GST_TAP:
-            x, y = event.points[0]
+        # default rotation
+        if rotation is None:
+            rotation = 0
+
+        w, h = self.device_info['width'], self.device_info['height']
+
+        if e.msg == HC.GST_TAP:
+            x, y = touch2screen(w, h, rotation, e.points[0][0], e.points[0][1])
 
             found_ui = False
             if analyze_ui:
@@ -245,13 +280,13 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
                     d['action'] = 'click'
                     d['args'] = (x, y)
 
-        elif event.msg in (HC.GST_SWIPE, HC.GST_DRAG):
-            sx, sy = e.points[0]
-            ex, ey = e.points[1]
+        elif e.msg in (HC.GST_SWIPE, HC.GST_DRAG):
+            sx, sy = touch2screen(w, h, rotation, e.points[0][0], e.points[0][1])
+            ex, ey = touch2screen(w, h, rotation, e.points[1][0], e.points[1][1])
             d['action'] = 'swipe'
             d['args'] = (sx, sy, ex, ey)
 
-        elif event.msg == HC.GST_PINCH_IN:
+        elif e.msg == HC.GST_PINCH_IN:
             #TODO
             pass
 
@@ -297,10 +332,24 @@ class AndroidRecorder(BaseRecorder, ScreenAddon, UixmlAddon, AdbStatusAddon):
             return 'd.click_image("%s")' % (imgname,)
         elif d['action'] == 'swipe':
             sx, sy, ex, ey = d['args']
-            return 'd.swipe(%s, %s, %s, %s, 10)\ntime.sleep(%.2f)' % (sx, sy, ex, ey, waittime)
+            if waittime == 0:
+                return 'd.swipe(%s, %s, %s, %s, 10)' % (sx, sy, ex, ey)
+            return 'time.sleep(%.2f)\nd.swipe(%s, %s, %s, %s, 10)' % (waittime, sx, sy, ex, ey)
         else:
             print 'unsupported action', d['action']
             return ''
+
+def touch2screen(w, h, o, x, y):
+    '''convert touch position'''
+    if o == 0:
+        return x, y
+    elif o == 1: # landscape-right
+        return y, w-x
+    elif o == 2: # upsidedown
+        return w-x, h-y
+    elif o == 3: # landscape-left
+        return h-y, x
+    return x, y
 
 def find_clicked_bound(img, x, y, size=200):
     maxy, maxx = img.shape[:2]

@@ -137,7 +137,7 @@ class GestureEvent(Event):
         else:
             es, ee = track[0], track[-1]
             ts, te = track[0].time, track[-1].time
-            print 'Gesture', HCREPR.get(msg, msg), ''.join([HCREPR.get(e.msg, e.msg) for e in track])
+            print 'Gesture', HCREPR.get(msg, msg), ''.join([HCREPR.get(e.msg, e.msg) for e in track]), (es.x, es.y), (ee.x, ee.y)
             if msg in (HC.GST_SWIPE, HC.GST_DRAG):
                 # TODO: check for corners for complicated trace
                 self.points = [(es.x, es.y), (ee.x, ee.y)]
