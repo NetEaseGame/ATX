@@ -1,6 +1,6 @@
 aircv==1.4.4
 futures==3.0.5
-atx-uiautomator==0.2.9
+atx-uiautomator==0.2.10
 tornado==4.3
 maproxy==0.0.12
 subprocess32==3.2.7
