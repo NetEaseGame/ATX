@@ -75,7 +75,7 @@ def run(basedir, port=8000):
 
     application.listen(port)
     print 'Listen on', port
-    print 'CaseDir:', basedir
+    print 'WorkDir:', basedir
     print 'Press Ctrl+C to stop...'
     try:
         tornado.ioloop.IOLoop.instance().start()
