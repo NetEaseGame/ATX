@@ -3,7 +3,7 @@
 import os
 import time
 
-from atx.device.windows import Window, FrozenWindow, WindowsDevice
+from atx.drivers.windows import Window, FrozenWindow, WindowsDevice
 
 
 # def _input_left_mouse(self, x, y):

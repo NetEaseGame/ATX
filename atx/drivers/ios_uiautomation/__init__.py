@@ -22,8 +22,8 @@ from atx import imutils
 from atx import strutils
 from atx import logutils
 from atx import ioskit
-from atx.device import Bounds, Display
-from atx.device.mixin import DeviceMixin, hook_wrap
+from atx.drivers import Bounds, Display
+from atx.drivers.mixin import DeviceMixin, hook_wrap
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))

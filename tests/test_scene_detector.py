@@ -3,7 +3,7 @@
 import cv2
 import time
 
-from atx.device.android_minicap import AndroidDeviceMinicap
+from atx.drivers.android_minicap import AndroidDeviceMinicap
 from atx.record.scene_detector import SceneDetector
 
 def test_detect():

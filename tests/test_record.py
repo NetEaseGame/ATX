@@ -4,8 +4,8 @@ import os
 import sys
 import time
 
-from atx.device.windows import WindowsDevice, find_process_id
-from atx.device.android import AndroidDevice
+from atx.drivers.windows import WindowsDevice, find_process_id
+from atx.drivers.android import AndroidDevice
 from atx.cmds.record import RecorderGUI
 
 def get_calc_win():

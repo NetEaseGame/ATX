@@ -28,9 +28,10 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
-2. 可是很好的支持安卓手机的测试，包括安卓模拟器
-3. 支持Windows应用的测试
-4. 对于游戏测试，可以使用图像缩放的方法适应不同分辨率的手机
+1. 可以很好的支持安卓手机的测试，包括安卓模拟器
+1. 支持iOS手机的测试
+1. 支持Windows应用的测试
+1. 对于游戏测试，可以使用图像缩放的方法适应不同分辨率的手机
 
 ## 历史起源
 该项目重构于过去写过一个项目 <https://github.com/netease/airtest>，
@@ -186,14 +187,19 @@ Some may still failed the installation. There are some ways which may help you.
 		# coding: utf-8
 		import atx
 
-		d = atx.connect('http://localhost:8100', platform='ios')
+		d = atx.connect('http://localhost:8100', platform='ios') # platform也可以不指定
 		print d.status()
 		```
 
 
 2. Take screenshot
 
-	命令行运行 `python -m atx gui`, 如果是iOS用该命令`python -m atx gui --platform ios`. 鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
+	- Android: `python -m atx gui`
+	- iOS: `python -m atx gui --serial http://localhost:8100`
+
+	更多命令可以通过`python -m atx gui --help` 查看。如果屏幕超过了整个屏幕可以通过调小 `--scale` 来调整
+
+	鼠标左键拖拽选择一个按钮或者图标, 按下`Save Cropped`截图保存退出. (按下`Refresh`可以重新刷新屏幕)
 
 	![gui](images/atx-gui.gif)
 

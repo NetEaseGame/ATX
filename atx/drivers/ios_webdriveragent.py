@@ -11,8 +11,8 @@ import subprocess32 as subprocess
 from PIL import Image
 from StringIO import StringIO
 
-from atx.device.mixin import DeviceMixin, hook_wrap
-from atx.device import Display
+from atx.drivers.mixin import DeviceMixin, hook_wrap
+from atx.drivers import Display
 from atx import consts
 from atx import ioskit
 
@@ -121,9 +121,10 @@ class IOSDevice(DeviceMixin):
             raise RuntimeError("Need to call start_app before")
         if not self.__scale:
             raw_size = self._session.window_size()
-            self.__scale = self.display.width / int(round(min(raw_size['width'], raw_size['height'])))
+            self.__scale = min(self.display) / min(raw_size)
         rx, ry = x/self.__scale, y/self.__scale
         self._session.tap(rx, ry)
+        return self
 
     def home(self):
         """ Return to homescreen """

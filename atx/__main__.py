@@ -78,7 +78,9 @@ def main():
         p.set_defaults(func=load_main('tcpproxy'))
 
     with add_parser('gui') as p:
-        p.add_argument('-p', '--platform', default='android', choices=('android', 'ios'), help='platform')
+        p.add_argument('-p', '--platform', default='auto', choices=('auto', 'android', 'ios'), help='platform')
+        p.add_argument('-s', '--serial', default=None, type=str, help='android serial or WDA device url')
+        p.add_argument('--scale', default=0.5, type=float, help='scale size')
         p.set_defaults(func=load_main('tkgui'))
 
     with add_parser('record') as p:

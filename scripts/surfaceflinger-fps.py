@@ -16,6 +16,7 @@ import subprocess
 nanoseconds_per_second = 1e9
 
 view = 'SurfaceView'
+view = 'com.netease.txx.baidu/com.netease.txx.Client'
 
 def init_frame_data():
     out = subprocess.check_output(['adb', 'shell', 'dumpsys', 'SurfaceFlinger', '--latency-clear', view])
@@ -65,7 +66,7 @@ def continue_collect_frame_data():
         timestamps = timestamps[:-2] + tss[last_index:]
         time.sleep(1.5)
         ajusted_timestamps = []
-        for seconds in timestamps[-4:]:
+        for seconds in timestamps[-10:]:
             seconds -= base_timestamp
             if seconds > 1e6: # too large, just ignore
                 continue

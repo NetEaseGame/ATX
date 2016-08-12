@@ -18,7 +18,7 @@ except pkg_resources.DistributionNotFound:
 
 from atx.consts import *
 from atx.errors import *
-from atx.device import Pattern, Bounds
+from atx.drivers import Pattern, Bounds
 
 
 def _detect_platform(*args):
@@ -52,17 +52,17 @@ def connect(*args, **kwargs):
     cls = None
     if platform == 'android':
         os.environ['JSONRPC_TIMEOUT'] = "60" # default is 90s which is too long.
-        devcls = __import__('atx.device.android')
-        cls = devcls.device.android.AndroidDevice
+        devcls = __import__('atx.drivers.android')
+        cls = devcls.drivers.android.AndroidDevice
     elif platform == 'windows':
-        devcls = __import__('atx.device.windows')
-        cls = devcls.device.windows.WindowsDevice
+        devcls = __import__('atx.drivers.windows')
+        cls = devcls.drivers.windows.WindowsDevice
     elif platform == 'ios':
-        devcls = __import__('atx.device.ios_webdriveragent')
-        cls = devcls.device.ios_webdriveragent.IOSDevice
+        devcls = __import__('atx.drivers.ios_webdriveragent')
+        cls = devcls.drivers.ios_webdriveragent.IOSDevice
     elif platform == 'dummy': # for py.test use
-        devcls = __import__('atx.device.dummy')
-        cls = devcls.device.dummy.DummyDevice
+        devcls = __import__('atx.drivers.dummy')
+        cls = devcls.drivers.dummy.DummyDevice
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)

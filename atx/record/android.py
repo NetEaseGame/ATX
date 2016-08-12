@@ -6,8 +6,8 @@ import os
 import threading
 import time
 
-from atx.device import Bounds
-from atx.device.android import AndroidDevice
+from atx.drivers import Bounds
+from atx.drivers.android import AndroidDevice
 from atx.adbkit.mixins import RotationWatcherMixin, MinicapStreamMixin
 
 from atx.record.base import BaseRecorder, ScreenAddon, UixmlAddon

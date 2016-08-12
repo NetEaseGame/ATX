@@ -1,21 +1,21 @@
 Public class
 --------------------------
 
-.. autoclass:: atx.device.Pattern
+.. autoclass:: atx.drivers.Pattern
     :members:
 
 
 Common methods
 --------------------------
 
-.. autoclass:: atx.device.mixin.DeviceMixin
+.. autoclass:: atx.drivers.mixin.DeviceMixin
     :members:
 
 
 Method only for android
 --------------------------
 
-.. autoclass:: atx.device.android.AndroidDevice
+.. autoclass:: atx.drivers.android.AndroidDevice
     :members:
 
     .. attribute:: serial
@@ -24,5 +24,5 @@ Method only for android
 
 Method only for windows
 -----------------------
-.. autoclass:: atx.device.windows.WindowsDevice
+.. autoclass:: atx.drivers.windows.WindowsDevice
 	:members:

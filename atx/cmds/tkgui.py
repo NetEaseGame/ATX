@@ -50,7 +50,7 @@ def insert_code(filename, code, save=True, marker='# ATX CODE END'):
     return content
 
 class CropIDE(object):
-    def __init__(self, title='AirtestX Basic GUI', device=None):
+    def __init__(self, title='AirtestX Basic GUI', ratio=0.5, device=None):
         self._device = device
         self._root = tk.Tk()
         self._root.title(title)
@@ -80,7 +80,7 @@ class CropIDE(object):
         self._color = 'red' # draw color
         self._tkimage = None # keep reference
         self._image = None
-        self._ratio = 0.5
+        self._ratio = ratio
         self._uinodes = [] # ui dump
         self._selected_node = None
         self._hovered_node = None
@@ -396,16 +396,21 @@ class CropIDE(object):
         self._root.mainloop()
         
 
-def main(serial, host='127.0.0.1', platform='android'):
-    log.debug("gui starting ...")
+def main(serial, host='127.0.0.1', scale=0.5, platform=None):
+    log.debug("gui starting(scale: {}) ...".format(scale))
     if platform == 'android':
-        d = atx.connect(serial, host=host)
+        d = atx.connect(serial, host=host, platform='android')
         serial = d.serial
     elif platform == 'ios':
-        d = ioskit.Device(udid=serial)
+        d = atx.connect(serial, platform='ios')
+        serial = serial
+    else:
+        d = atx.connect(serial)
+        serial = serial
+        # d = ioskit.Device(udid=serial)
         # d = atx.connect(udid=serial, platform='ios')
-        serial = d.udid
-    gui = CropIDE('ATX GUI SN: %s' % serial, device=d)
+        # serial = d.udid
+    gui = CropIDE('ATX GUI SN: %s' % serial, ratio=scale, device=d)
     gui.mainloop()
 
 def test():

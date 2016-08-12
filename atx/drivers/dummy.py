@@ -8,8 +8,8 @@ import os
 
 from PIL import Image
 
-from atx.device.mixin import DeviceMixin, hook_wrap
-from atx.device import Display
+from atx.drivers.mixin import DeviceMixin, hook_wrap
+from atx.drivers import Display
 from atx import consts
 
 

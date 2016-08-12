@@ -19,8 +19,8 @@ from PIL import Image
 from ctypes import wintypes, windll
 from collections import namedtuple
 
-from atx.device import Bounds, Display
-from atx.device.mixin import DeviceMixin
+from atx.drivers import Bounds, Display
+from atx.drivers.mixin import DeviceMixin
 from atx.errors import WindowsAppNotFoundError
 
 # https://msdn.microsoft.com/en-us/library/windows/desktop/dd183376(v=vs.85).aspx

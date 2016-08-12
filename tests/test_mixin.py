@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from atx.device import Pattern
+from atx.drivers import Pattern
 
 
 def test_pattern_offset():

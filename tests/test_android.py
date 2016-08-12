@@ -10,7 +10,7 @@ import scipy.fftpack
 from cv2 import cv
 
 def test_screenshot():
-    from atx.device.android import AndroidDevice
+    from atx.drivers.android import AndroidDevice
     dev = AndroidDevice()
     print 'screen display:', dev.display
     # screen = dev._screenshot_uiauto()
@@ -71,7 +71,7 @@ def test_screenshot():
 #     w.exists('xxx.png')
 
 def test_minicap():
-    from atx.device.android_minicap import AndroidDeviceMinicap
+    from atx.drivers.android_minicap import AndroidDeviceMinicap
 
     cv2.namedWindow("preview")
     d = AndroidDeviceMinicap()
@@ -90,7 +90,7 @@ def test_minicap():
     cv2.destroyWindow('preview')
 
 def test_minitouch():
-    from atx.device.android_minicap import SubAdb
+    from atx.drivers.android_minicap import SubAdb
     
     adb = SubAdb()
     adb.start_minitouch()

@@ -10,7 +10,7 @@ import scipy.fftpack
 from cv2 import cv
 
 from atx.record.monkey import Monkey, StupidMonkey, RandomContourMonkey
-from atx.device.android_minicap import AndroidDeviceMinicap
+from atx.drivers.android_minicap import AndroidDeviceMinicap
 
 def _binary_array_to_hex(arr):
     """
@@ -62,7 +62,7 @@ def dhash(img, size=8):
 ## 识别2D/3D运动
 # Meanshift & Camshift
 def test_features():
-    from atx.device.android_minicap import AndroidDeviceMinicap
+    from atx.drivers.android_minicap import AndroidDeviceMinicap
     cv2.namedWindow("preview")
     d = AndroidDeviceMinicap()
 

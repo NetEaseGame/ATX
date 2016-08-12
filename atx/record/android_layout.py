@@ -13,7 +13,7 @@ import collections
 import xml.dom.minidom
 import numpy as np
 
-from atx.device import Bounds
+from atx.drivers import Bounds
 __UINode = collections.namedtuple('UINode', [
     'xml', 'children', 'depth',
     'index', 'text', 'resourceId',

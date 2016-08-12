@@ -24,7 +24,7 @@ from atx import errors
 from atx import imutils
 from atx import logutils
 from atx.base import nameddict
-from atx.device import Pattern, Bounds, FindPoint
+from atx.drivers import Pattern, Bounds, FindPoint
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
