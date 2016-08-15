@@ -73,7 +73,7 @@ class ImageHandler(tornado.web.RequestHandler):
             name = os.path.basename(name).split('@')[0]
             images.append([name, realpath])
         self.write({
-            'images': images, 
+            'images': images,
             'baseURL': self.request.protocol + '://' + self.request.host+'/static_imgs/'
         })
 
@@ -133,7 +133,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
             self._run = False
             self.write_message({'type': 'run', 'status': 'ready'})
             sys.stdout = __sysout
-        
+
     @run_on_executor
     def background_task(self, code):
         self.write_message({'type': 'run', 'status': 'running'})
@@ -170,7 +170,7 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         log.info("WebSocket closed")
-    
+
     def check_origin(self, origin):
         return True
 
@@ -205,9 +205,11 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         self.finish()
 
     def post(self):
-        raw_image = self.get_argument('raw_image')
         filename = self.get_argument('filename')
-        image = imutils.open(raw_image)
+        bound = self.get_arguments('bound[]')
+        l, t, w, h = map(int, bound)
+        image = imutils.open('_screen.png')
+        image = imutils.crop(image, l, t, l+w, t+h)
         cv2.imwrite(filename, image)
         self.write({'status': 'ok'})
 

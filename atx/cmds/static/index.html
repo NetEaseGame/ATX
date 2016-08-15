@@ -97,12 +97,13 @@
         <div id="right-panel" v-bind:class="landscape ? 'col-md-6' : 'col-md-3'">
           <div>
             <h4>Screen
-              <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存</button>
+              <button type="button" id="btn-save-screen" class="btn btn-default btn-xs">保存选区</button>
               <button type="button" id="btn-refresh-screen" class="btn btn-default btn-xs">刷新</button>
               <button type="button" v-on:click="toggleLandscape" class="btn btn-default btn-xs">宽屏切换</button>
             </h4>
-            <div id="screen-wrapper" style="border: 1px solid red">
+            <div id="screen-wrapper" style="border: 1px solid red; position: relative;">
               <!-- <img src="/static/favicon.ico" class="phone-screen"/> -->
+              <div id="screen-crop" class="image-crop"></div>
               <canvas id="canvas" width="40" height="10">
                 Browser not support canvas
               </canvas>
