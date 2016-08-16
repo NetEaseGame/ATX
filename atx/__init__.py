@@ -18,7 +18,7 @@ except pkg_resources.DistributionNotFound:
 
 from atx.consts import *
 from atx.errors import *
-from atx.drivers import Pattern, Bounds
+from atx.drivers import Pattern, Bounds, ImageCrop
 
 
 def _detect_platform(*args):
