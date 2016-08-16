@@ -23,7 +23,7 @@ log = logutils.getLogger('install')
 DEFAULT_REMOTE_PATH = '/data/local/tmp/_atx_tmp.apk'
 __apks = {
     'utf7ime': 'http://o8oookdsx.qnssl.com/android_unicode_ime-debug.apk',
-    'atx-assistant': 'http://obkzgxotj.bkt.clouddn.com/atx-assistant-v1.0.1.apk',
+    'atx-assistant': 'http://obq2bnw3f.bkt.clouddn.com/atx-assistant-latest.apk',
 }
 
 

@@ -56,10 +56,6 @@ UINode = collections.namedtuple('UINode', [
 log = logutils.getLogger(__name__)
 
 
-# def getenv(name, default_value=None, type=str):
-#     value = os.getenv(name)
-#     return type(value) if value else default_value
-
 def getenvs(*names):
     for name in names:
         if os.getenv(name):
