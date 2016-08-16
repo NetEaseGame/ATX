@@ -353,12 +353,32 @@ class DeviceMixin(object):
             return None
         return self._bounds * self._cal_scale()
     
-    def match(self, pattern, screen=None, threshold=None):
+    def _match_auto(self, screen, search_img, threshold):
+        """Maybe not a good idea
+        """
+        # 1. try template first
+        ret = ac.find_template(screen, search_img)
+        if ret and ret['confidence'] > threshold:
+            return FindPoint(ret['result'], ret['confidence'], consts.IMAGE_MATCH_METHOD_TMPL, matched=True)
+
+        # 2. try sift
+        ret = ac.find_sift(screen, search_img, min_match_count=10)
+        if ret is None:
+            return None
+
+        matches, total = ret['confidence']
+        if 1.0*matches/total > 0.5: # FIXME(ssx): sift just write here
+            return FindPoint(ret['result'], ret['confidence'], consts.IMAGE_MATCH_METHOD_SIFT, matched=True)
+        return None
+
+    def match(self, pattern, screen=None, threshold=None, method=None):
         """Check if image position in screen
 
         Args:
             - pattern: Image file name or opencv image object
-            - screen: opencv image, optional, if not None, screenshot method will be called
+            - screen (PIL.Image): optional, if not None, screenshot method will be called
+            - threshold (float): it depends on the image match method
+            - method (string): choices on <template | sift>
 
         Returns:
             None or FindPoint, For example:
@@ -392,33 +412,47 @@ class DeviceMixin(object):
 
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
-        match_method = self.image_match_method
+        match_method = method or self.image_match_method
+        
         ret = None
+        confidence = None
+        matched = True
+        position = None
         if match_method == consts.IMAGE_MATCH_METHOD_TMPL:
             ret = ac.find_template(screen, search_img)
-        elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
-            ret = ac.find_sift(screen, search_img, min_match_count=10)
-        else:
-            raise TypeError("Invalid image match method: %s" %(match_method,))
-
-        if ret is None:
-            return None
-        (x, y) = ret['result']
-        # fix by offset
-        position = (x+dx, y+dy)
-        if self.bounds:
-            x, y = position
-            position = (x+self.bounds.left, y+self.bounds.top)
-        confidence = ret['confidence']
-
-        matched = True
-        if match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+            if ret is None:
+                return None
+            confidence = ret['confidence']
             if confidence < threshold:
                 matched = False
+            (x, y) = ret['result']
+            position = (x+dx, y+dy) # fix by offset
         elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
+            ret = ac.find_sift(screen, search_img, min_match_count=10)
+            if ret is None:
+                return None
+            confidence = ret['confidence']
             matches, total = confidence
             if 1.0*matches/total > 0.5: # FIXME(ssx): sift just write here
                 matched = True
+            (x, y) = ret['result']
+            position = (x+dx, y+dy) # fix by offset
+        elif match_method == consts.IMAGE_MATCH_METHOD_AUTO:
+            fp = self._match_auto(screen, search_img, threshold)
+            if fp is None:
+                return None
+            (x, y) = fp.pos
+            position = (x+dx, y+dy)
+            return FindPoint(position, fp.confidence, fp.method, fp.matched)
+        else:
+            raise TypeError("Invalid image match method: %s" %(match_method,))
+
+        (x, y) = ret['result']
+        position = (x+dx, y+dy) # fix by offset
+        if self.bounds:
+            x, y = position
+            position = (x+self.bounds.left, y+self.bounds.top)
+
         return FindPoint(position, confidence, match_method, matched=matched)
 
     def region(self, bounds):
@@ -536,7 +570,7 @@ class DeviceMixin(object):
         return point
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None):
+    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, method=None):
         """Simulate click according image position
 
         Args:
@@ -544,6 +578,8 @@ class DeviceMixin(object):
             - timeout (float): if image not found during this time, ImageNotFoundError will raise.
             - action (str): click or long_click
             - safe (bool): if safe is True, Exception will not raise and return None instead.
+            - method (str): image match method, choice of <template|sift>
+
         Returns:
             None
 
@@ -556,7 +592,7 @@ class DeviceMixin(object):
         found = False
         point = None
         while time.time() - start_time < timeout:
-            point = self.match(pattern)
+            point = self.match(pattern, method=method)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
