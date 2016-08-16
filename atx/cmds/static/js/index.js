@@ -27,13 +27,15 @@ $(function(){
   }
 
   // Initial global value for blockly images
-  window.blocklyBaseURL = 'http://127.0.0.1:10010/static_imgs/';
-  window.blocklyImageList = [['haha.png', 'screenshot-0.0.6.png']]
+  window.blocklyBaseURL = 'http://'+ location.host +'/static_imgs/';
+  window.blocklyImageList = null;
+  window.blocklyCropImageList = null;
 
-  $.getJSON('/api/images', function(res){
-    window.blocklyImageList = res.images;
-    window.blocklyBaseURL = res.baseURL;
-  })
+  //  useless
+  // $.getJSON('/api/images', function(res){
+  //   window.blocklyImageList = res.images;
+  //   window.blocklyBaseURL = res.baseURL;
+  // })
 
 
   function changeRunningStatus(status, message){
@@ -63,11 +65,16 @@ $(function(){
         console.log(evt.data);
         switch(data.type){
         case 'image_list':
-          M.images = data.data;
+          M.images = data.images;
           window.blocklyImageList = [];
-          for (var i = 0, info; i < data.data.length; i++) {
-            info = data.data[i];
+          for (var i = 0, info; i < data.images.length; i++) {
+            info = data.images[i];
             window.blocklyImageList.push([info['name'], info['path']]);
+          }
+          window.blocklyCropImageList = [];
+          for (var i = 0, info; i < data.screenshots.length; i++) {
+            info = data.screenshots[i]
+            window.blocklyCropImageList.push([info['name'], info['path']]);
           }
           $('#btn-image-refresh').notify(
             '已刷新',
@@ -233,10 +240,9 @@ $(function(){
 
   $('#btn-save-screen').click(function(){
     if (crop_bounds.bound === null) {
-      console.log('no crop section selected.');
+      $.notify('还没选择截图区域！');
       return;
     }
-    console.log(12, crop_bounds.bound);
     var filename = window.prompt('保存的文件名, 不需要输入.png扩展名');
     if (!filename){
       return;
@@ -254,6 +260,7 @@ $(function(){
         console.log(res)
         $.notify('图片保存成功', 'success')
         sendWebsocket({command: 'refresh'})
+        $('#screen-crop').css({'left':'0px', 'top':'0px','width':'0px', 'height':'0px'});
       },
       error: function(err){
         console.log(err)
@@ -262,8 +269,12 @@ $(function(){
     })
   })
 
+  // global, for track screenshots
+  var screen_idx = 1;
   $('#btn-refresh-screen').click(function(){
-    M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
+    // M.screenURL = '/images/screenshot?v=t' + new Date().getTime();
+    M.screenURL = '/images/screenshot?v=t' + screen_idx;
+    screen_idx += 1;
     var $this = $(this);
     $this.notify('Refreshing', {className: 'info', position: 'top'})
     $this.prop('disabled', true);
@@ -461,7 +472,7 @@ $(function(){
     if  (crop_bounds.end !== null) {
       var start = getMousePos(canvas, crop_bounds.start),
           end = getMousePos(canvas, crop_bounds.end);
-      crop_bounds.bound = [start.x, start.y, end.x-start.x, end.y-start.y];
+      crop_bounds.bound = [start.x, start.y, end.x, end.y];
     }
     crop_bounds.start = null;
   });
@@ -494,102 +505,103 @@ $(function(){
   });
 
   // --------- selected is atx_click_image ------------
-  // var rect_bounds = {start: null, end: null};
-  // canvas.addEventListener('mousedown', function(evt){
-  //   var blk = Blockly.selected;
-  //   if (blk == null || blk.type != 'atx_click_image') {
-  //     return;
-  //   }
-  //   rect_bounds.start = evt;
-  //   rect_bounds.end = null;
-  // });
-  // canvas.addEventListener('mousemove', function(evt){
-  //   // ignore fake move
-  //   if (evt.movementX == 0 && evt.movementY == 0) {
-  //     return;
-  //   }
-  //   var blk = Blockly.selected;
-  //   if (blk == null || blk.type != 'atx_click_image' || rect_bounds.start == null) {
-  //     return;
-  //   }
-  //   rect_bounds.end = evt;
-  //   // update model in blockly
-  //   var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
-  //   if (pat_conn == null) { return;}
-  //   var pat_blk = pat_conn.sourceBlock_;
-  //   if (pat_blk.type != 'atx_image_pattern') {return;}
-  //   var img_conn = pat_blk.getInput('FILENAME').connection.targetConnection;
-  //   if (img_conn == null) { return;}
-  //   var img_blk = img_conn.sourceBlock_;
-  //   if (img_blk.type != 'atx_image_crop_preview') {return; }
-  //   var crop_conn = img_blk.getInput('IMAGE_CROP').connection.targetConnection;
-  //   if (crop_conn == null) { return;}
-  //   var crop_blk = crop_conn.sourceBlock_,
-  //       start_pos = getMousePos(this, rect_bounds.start),
-  //       end_pos = getMousePos(this, rect_bounds.end);
-  //   crop_blk.setFieldValue(start_pos.x, 'LEFT');
-  //   crop_blk.setFieldValue(start_pos.y, 'TOP');
-  //   crop_blk.setFieldValue(end_pos.x - start_pos.x, 'WIDTH');
-  //   crop_blk.setFieldValue(end_pos.y - start_pos.y, 'HEIGHT');
-  //   pat_blk.setFieldValue(0, 'OX');
-  //   pat_blk.setFieldValue(0, 'OY');
-  //
-  //   // update image-rect position
-  //   var $rect = overlays['atx_click_image'].$el,
-  //       left = rect_bounds.start.pageX,
-  //       top = rect_bounds.start.pageY,
-  //       width = Math.max(rect_bounds.end.pageX - left, 10),
-  //       height = Math.max(rect_bounds.end.pageY - top, 10);
-  //   $rect.css('left', left+'px')
-  //        .css('top', top+'px')
-  //        .css('width', width+'px')
-  //        .css('height', height+'px');
-  //   $rect.children().css('left', '50%').css('top', '50%');
-  // });
-  // canvas.addEventListener('mouseup', function(evt){
-  //   var blk = Blockly.selected;
-  //   // mouseup event should only be triggered when there happened mousemove
-  //   if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end == null) {
-  //     return;
-  //   }
-  //   rect_bounds.start = null;
-  // });
-  // canvas.addEventListener('mouseout', function(evt){
-  //   var blk = Blockly.selected;
-  //   // mouseout is same as mouseup
-  //   if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end == null) {
-  //     return;
-  //   }
-  //   rect_bounds.start = null;
-  // });
-  // canvas.addEventListener('click', function(evt){
-  //   var blk = Blockly.selected;
-  //   // click event should only be triggered when there's no mousemove happened.
-  //   if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end != null) {
-  //     return;
-  //   }
-  //   rect_bounds.start = null;
-  //   // update model in blockly
-  //   var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
-  //   if (pat_conn == null) { return;}
-  //   var pat_blk = pat_conn.sourceBlock_;
-  //
-  //   // update image-rect point position
-  //   var $rect = overlays['atx_click_image'].$el,
-  //       pos = $rect.position(),
-  //       x = pos.left,
-  //       y = pos.top,
-  //       w = $rect.width(),
-  //       h = $rect.height(),
-  //       cx = x + w/2,
-  //       cy = y + h/2,
-  //       ox = parseInt((evt.pageX - cx)/w * 100),
-  //       oy = parseInt((evt.pageY - cy)/h * 100),
-  //       $point = $rect.children();
-  //   pat_blk.setFieldValue(ox, 'OX');
-  //   pat_blk.setFieldValue(oy, 'OY');
-  //   $point.css('left', (50+ox)+'%').css('top', (50+oy)+'%');
-  // });
+  var rect_bounds = {start: null, end: null};
+  canvas.addEventListener('mousedown', function(evt){
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_click_image') {
+      return;
+    }
+    rect_bounds.start = evt;
+    rect_bounds.end = null;
+  });
+  canvas.addEventListener('mousemove', function(evt){
+    // ignore fake move
+    if (evt.movementX == 0 && evt.movementY == 0) {
+      return;
+    }
+    var blk = Blockly.selected;
+    if (blk == null || blk.type != 'atx_click_image' || rect_bounds.start == null) {
+      return;
+    }
+    rect_bounds.end = evt;
+    // update model in blockly
+    var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
+    if (pat_conn == null) { return;}
+    var pat_blk = pat_conn.sourceBlock_;
+    if (pat_blk.type != 'atx_image_pattern_offset') {return;}
+    var img_conn = pat_blk.getInput('FILENAME').connection.targetConnection;
+    if (img_conn == null) { return;}
+    var img_blk = img_conn.sourceBlock_;
+    if (img_blk.type != 'atx_image_crop_preview') {return; }
+    var crop_conn = img_blk.getInput('IMAGE_CROP').connection.targetConnection;
+    if (crop_conn == null) { return;}
+    var crop_blk = crop_conn.sourceBlock_,
+        start_pos = getMousePos(this, rect_bounds.start),
+        end_pos = getMousePos(this, rect_bounds.end);
+    crop_blk.setFieldValue(start_pos.x, 'LEFT');
+    crop_blk.setFieldValue(start_pos.y, 'TOP');
+    crop_blk.setFieldValue(end_pos.x - start_pos.x, 'WIDTH');
+    crop_blk.setFieldValue(end_pos.y - start_pos.y, 'HEIGHT');
+    pat_blk.setFieldValue(0, 'OX');
+    pat_blk.setFieldValue(0, 'OY');
+
+    // update image-rect position
+    var $rect = overlays['atx_click_image'].$el,
+        left = rect_bounds.start.pageX,
+        top = rect_bounds.start.pageY,
+        width = Math.max(rect_bounds.end.pageX - left, 10),
+        height = Math.max(rect_bounds.end.pageY - top, 10);
+    $rect.css('left', left+'px')
+         .css('top', top+'px')
+         .css('width', width+'px')
+         .css('height', height+'px');
+    $rect.children().css('left', '50%').css('top', '50%');
+  });
+  canvas.addEventListener('mouseup', function(evt){
+    var blk = Blockly.selected;
+    // mouseup event should only be triggered when there happened mousemove
+    if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end == null) {
+      return;
+    }
+    rect_bounds.start = null;
+  });
+  canvas.addEventListener('mouseout', function(evt){
+    var blk = Blockly.selected;
+    // mouseout is same as mouseup
+    if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end == null) {
+      return;
+    }
+    rect_bounds.start = null;
+  });
+  canvas.addEventListener('click', function(evt){
+    var blk = Blockly.selected;
+    // click event should only be triggered when there's no mousemove happened.
+    if (blk == null || blk.type != 'atx_click_image' || rect_bounds.end != null) {
+      return;
+    }
+    rect_bounds.start = null;
+    // update model in blockly
+    var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
+    if (pat_conn == null) { return;}
+    var pat_blk = pat_conn.sourceBlock_;
+    if (pat_blk.type !== 'atx_image_pattern_offset') {return;}
+
+    // update image-rect point position
+    var $rect = overlays['atx_click_image'].$el,
+        pos = $rect.position(),
+        x = pos.left,
+        y = pos.top,
+        w = $rect.width(),
+        h = $rect.height(),
+        cx = x + w/2,
+        cy = y + h/2,
+        ox = parseInt((evt.pageX - cx)/w * 100),
+        oy = parseInt((evt.pageY - cy)/h * 100),
+        $point = $rect.children();
+    pat_blk.setFieldValue(ox, 'OX');
+    pat_blk.setFieldValue(oy, 'OY');
+    $point.css('left', (50+ox)+'%').css('top', (50+oy)+'%');
+  });
 
   // TODO ------------ selected is atx_click_ui ------------
 
@@ -612,7 +624,7 @@ $(function(){
         var pat_conn = blk.getInput('ATX_PATTERN').connection.targetConnection;
         if (pat_conn == null) { return null;}
         var pat_blk = pat_conn.sourceBlock_;
-        if (pat_blk.type != 'atx_image_pattern') {return null;}
+        if (pat_blk.type != 'atx_image_pattern_offset') {return null;}
         var img_conn = pat_blk.getInput('FILENAME').connection.targetConnection;
         if (img_conn == null) { return null;}
         var img_blk = img_conn.sourceBlock_;
@@ -653,10 +665,8 @@ $(function(){
     }
   }
 
-  function onSelectedChange(evt){
-    if (evt.element != 'selected') {
-      return;
-    }
+  function onUISelectedChange(evt){
+    if (evt.type != 'ui' || evt.element != 'selected') {return;}
     if (evt.oldValue != null) {
       var oldblk = workspace.getBlockById(evt.oldValue);
       if (oldblk === null) { return;}
@@ -675,6 +685,30 @@ $(function(){
       $('#btn-save-screen').removeAttr('disabled');
     }
   }
-  workspace.addChangeListener(onSelectedChange);
+  workspace.addChangeListener(onUISelectedChange);
+
+  // track screenshot related to each block
+  var block_screen = {};
+  function onUIFieldChange(evt) {
+    if (evt.type != 'ui' || evt.element != 'field') {return;}
+    var blk = workspace.getBlockById(evt.blockId);
+    if (blk.type == 'atx_image_crop' && evt.name == 'FILENAME') {
+      block_screen[evt.blockId] = evt.newValue;
+    }
+  }
+  workspace.addChangeListener(onUIFieldChange);
+  function onCreateBlock(evt){
+    if (evt.type != Blockly.Events.CREATE) {return;}
+    var blk = workspace.getBlockById(evt.blockId);
+    if (blk.type == 'atx_image_crop') {
+
+    }
+  }
+  workspace.addChangeListener(onCreateBlock);
+  function onDeleteBlock(evt){
+    if (evt.type != Blockly.Events.DELETE) {return;}
+    delete block_screen[evt.blockId];
+  }
+  workspace.addChangeListener(onDeleteBlock);
 
 })

@@ -8,6 +8,7 @@ import socket
 import time
 import json
 import traceback
+import shutil
 
 import cv2
 import tornado.ioloop
@@ -28,9 +29,9 @@ log.setLevel(logging.DEBUG)
 
 
 IMAGE_PATH = ['.', 'imgs', 'images']
-workdir = '.'
 device = None
 atx_settings = {}
+latest_screen = ''
 
 
 def read_file(filename, default=''):
@@ -68,12 +69,17 @@ class ImageHandler(tornado.web.RequestHandler):
     def get(self):
         imgs = base.list_images(path=IMAGE_PATH)
         images = []
+        screenshots = []
         for name in imgs:
             realpath = name.replace('\\', '/') # fix for windows
             name = os.path.basename(name).split('@')[0]
-            images.append([name, realpath])
+            if realpath.startswith('screenshots/'):
+                screenshots.append([name, realpath])
+            else:
+                images.append([name, realpath])
         self.write({
             'images': images,
+            'screenshots': screenshots,
             'baseURL': self.request.protocol + '://' + self.request.host+'/static_imgs/'
         })
 
@@ -152,9 +158,16 @@ class DebugWebSocket(tornado.websocket.WebSocketHandler):
 
         if command == 'refresh':
             imgs = base.list_images(path=IMAGE_PATH)
-            imgs = [dict(
-                path=name.replace('\\', '/'), name=os.path.basename(name)) for name in imgs]
-            self.write_message({'type': 'image_list', 'data': list(imgs)})
+            images = []
+            screenshots = []
+            for name in imgs:
+                realpath = name.replace('\\', '/') # fix for windows
+                name = os.path.basename(name).split('@')[0]
+                if realpath.startswith('screenshots/'):
+                    screenshots.append({'name':name, 'path':realpath})
+                else:
+                    images.append({'name':name, 'path':realpath})
+            self.write_message({'type': 'image_list', 'images': images, 'screenshots':screenshots, 'latest': latest_screen})
         elif command == 'stop':
             self._run = False
             self.write_message({'type': 'run', 'notify': '停止中'})
@@ -191,12 +204,17 @@ class WorkspaceHandler(tornado.web.RequestHandler):
 
 
 class ScreenshotHandler(tornado.web.RequestHandler):
+
     def get(self):
         d = atx.connect(**atx_settings)
-        d.screenshot('_screen.png')
+        v = self.get_argument('v')
+        global latest_screen
+        latest_screen = 'screen_%s.png' % v
+        latest = 'screenshots/screen_%s.png' % v
+        d.screenshot(latest)
 
         self.set_header('Content-Type', 'image/png')
-        with open('_screen.png', 'rb') as f:
+        with open(latest, 'rb') as f:
             while 1:
                 data = f.read(16000)
                 if not data:
@@ -205,11 +223,12 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         self.finish()
 
     def post(self):
+        screenname = self.get_argument('screenname')
         filename = self.get_argument('filename')
         bound = self.get_arguments('bound[]')
-        l, t, w, h = map(int, bound)
+        l, t, r, b = map(int, bound)
         image = imutils.open('_screen.png')
-        image = imutils.crop(image, l, t, l+w, t+h)
+        image = imutils.crop(image, l, t, r, b)
         cv2.imwrite(filename, image)
         self.write({'status': 'ok'})
 
@@ -234,6 +253,14 @@ def make_app(settings={}):
 
 
 def main(web_port=None, host=None, port=None, open_browser=True, workdir='.'):
+    os.chdir(workdir)
+
+    global IMAGE_PATH
+    if os.path.exists('screenshots'):
+        shutil.rmtree('screenshots')
+    os.makedirs('screenshots')
+    IMAGE_PATH.append('screenshots')
+
     application = make_app({
         'static_path': os.path.join(__dir__, 'static'),
         'template_path': os.path.join(__dir__, 'static'),
@@ -242,14 +269,9 @@ def main(web_port=None, host=None, port=None, open_browser=True, workdir='.'):
     if not web_port:
         web_port = get_valid_port()
 
-    global device
-    # global workdir
+    global atx_settings
     atx_settings['host'] = host
     atx_settings['port'] = port
-    # device = atx.connect(host=kws.get('host'), port=kws.get('port'))
-    # TODO
-    # filename = 'blockly.py'
-    IMAGE_PATH.append('images/blockly')
 
     if open_browser:
         url = 'http://127.0.0.1:{}'.format(web_port)
