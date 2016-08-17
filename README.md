@@ -323,6 +323,17 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	# number为百分比
 	# 所以 R20T50代表，点击为止从图片中心向右偏移20%并且向上偏移50%
 	d.click_image("button.R20T50.png")
+	# same as
+	d.click_image("button.png", offset=(0.2, -0.5))
+
+	# Full example
+	d.click_image("button.png", 
+		offset=(0.2, 0.5), 
+		action="long_click", 
+		safe=True, 
+		desc="I love click", 
+		method='template', 
+		threshold=0.8)
 
 	# if image not show in 10s, ImageNotFoundError will raised
 	try:

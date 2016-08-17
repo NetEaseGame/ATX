@@ -307,25 +307,25 @@ class DeviceMixin(object):
         sys.stdout.write("\n")
         return self
 
-    def exists(self, pattern, screen=None):
+    def exists(self, pattern, **match_kwargs):
         """Check if image exists in screen
 
         Returns:
             If exists, return FindPoint, or
             return None if result.confidence < self.image_match_threshold
         """
-        ret = self.match(pattern, screen)
+        ret = self.match(pattern, **match_kwargs)
         if ret is None:
             return None
         if not ret.matched:
             return None
         return ret
 
-    def wait(self, pattern, timeout=10.0):
+    def wait(self, pattern, timeout=10.0, **match_kwargs):
         """Wait till pattern is found or time is out (default: 10s)."""
         t = time.time() + timeout
         while time.time() < t:
-            ret = self.exists(pattern)
+            ret = self.exists(pattern, **match_kwargs)
             if ret:
                 return ret
             time.sleep(0.2)
@@ -371,7 +371,7 @@ class DeviceMixin(object):
             return FindPoint(ret['result'], ret['confidence'], consts.IMAGE_MATCH_METHOD_SIFT, matched=True)
         return None
 
-    def match(self, pattern, screen=None, threshold=None, method=None):
+    def match(self, pattern, screen=None, offset=None, threshold=None, method=None):
         """Check if image position in screen
 
         Args:
@@ -402,12 +402,12 @@ class DeviceMixin(object):
         screen = screen or self.region_screenshot()
         threshold = threshold or pattern.threshold or self.image_match_threshold
 
-        dx, dy = pattern.offset or (0, 0)
+        dx, dy = offset or pattern.offset or (0, 0)
         # handle offset if percent, ex (0.2, 0.8)
-        if 0 < dx <= 5:
+        if -5 < dx <= 5:
             dx = pattern.image.shape[1] * dx # opencv object width
-        if 0 < dy <= 5:
-            dx = pattern.image.shape[0] * dy # opencv object height
+        if -5 < dy <= 5:
+            dy = pattern.image.shape[0] * dy # opencv object height
         dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
 
         # image match
@@ -416,15 +416,15 @@ class DeviceMixin(object):
         
         ret = None
         confidence = None
-        matched = True
+        matched = False
         position = None
-        if match_method == consts.IMAGE_MATCH_METHOD_TMPL:
+        if match_method == consts.IMAGE_MATCH_METHOD_TMPL: #IMG_METHOD_TMPL
             ret = ac.find_template(screen, search_img)
             if ret is None:
                 return None
             confidence = ret['confidence']
-            if confidence < threshold:
-                matched = False
+            if confidence > threshold:
+                matched = True
             (x, y) = ret['result']
             position = (x+dx, y+dy) # fix by offset
         elif match_method == consts.IMAGE_MATCH_METHOD_SIFT:
@@ -517,7 +517,7 @@ class DeviceMixin(object):
             if flag & event_flag:
                 fn(event)
 
-    def assert_exists(self, pattern, timeout=20.0):
+    def assert_exists(self, pattern, timeout=20.0, **match_kwargs):
         """Assert if image exists
         Args:
             - image: image filename # not support pattern for now
@@ -535,7 +535,7 @@ class DeviceMixin(object):
         log.info('assert exists image: %s', pattern)
         start_time = time.time()
         while time.time() - start_time < timeout:
-            point = self.match(search_img)
+            point = self.match(search_img, **match_kwargs)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
@@ -551,7 +551,7 @@ class DeviceMixin(object):
             raise errors.AssertExistsError('image not found %s' %(pattern,))
             
     # TODO: need to add hook here
-    def click_nowait(self, pattern, action='click'):
+    def click_nowait(self, pattern, action='click', **match_kwargs):
         """ Return immediately if no image found
 
         Args:
@@ -561,7 +561,7 @@ class DeviceMixin(object):
         Returns:
             Click point or None
         """
-        point = self.match(pattern)
+        point = self.match(pattern, **match_kwargs)
         if not point or not point.matched:
             return None
 
@@ -570,7 +570,7 @@ class DeviceMixin(object):
         return point
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, method=None):
+    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, **match_kwargs):
         """Simulate click according image position
 
         Args:
@@ -592,7 +592,7 @@ class DeviceMixin(object):
         found = False
         point = None
         while time.time() - start_time < timeout:
-            point = self.match(pattern, method=method)
+            point = self.match(pattern, **match_kwargs)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
