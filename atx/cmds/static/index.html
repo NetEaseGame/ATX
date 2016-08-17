@@ -8,9 +8,11 @@
     <title>Atx Web IDE</title>
 
     <!-- Bootstrap -->
-    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//gohttp.nie.netease.com/automatorx/jquery.fancybox.min.css">
+    <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css"> -->
     <!-- <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"> -->
+    <!-- <link rel="stylesheet" href="//gohttp.nie.netease.com/automatorx/jquery.fancybox.min.css"> -->
+    <link rel="stylesheet" href="{{static_url('css/bootstrap-3.3.5.min.css')}}">
+    <link rel="stylesheet" href="{{static_url('css/jquery.fancybox.min.css')}}">
     <link rel="stylesheet" href="{{static_url('css/index.css')}}">
   </head>
   <body>
@@ -145,16 +147,16 @@
         </block>
         <block type="atx_image_pattern">
           <value name="FILENAME">
+            <block type="atx_image_file"></block>
+          </value>
+        </block>
+        <block type="atx_image_pattern_offset">
+          <value name="FILENAME">
             <block type="atx_image_crop_preview">
               <value name="IMAGE_CROP">
                 <block type="atx_image_crop"></block>
               </value>
             </block>
-          </value>
-        </block>
-        <block type="atx_image_crop_preview">
-          <value name="IMAGE_CROP">
-            <block type="atx_image_crop"></block>
           </value>
         </block>
         <block type="atx_blank"></block>
@@ -188,19 +190,23 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{{static_url('js/jquery-1.11.3.min.js')}}"></script>
     <!-- <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script> -->
-    <script src="//gohttp.nie.netease.com/automatorx/jquery.mousewheel.min.js"></script>
+    <!-- <script src="//gohttp.nie.netease.com/automatorx/jquery.mousewheel.min.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/jquery.fancybox.pack.js"></script>
-    <script src="//gohttp.nie.netease.com/automatorx/notify.js"></script>
+    <script src="//gohttp.nie.netease.com/automatorx/notify.js"></script> -->
+    <script src="{{static_url('js/jquery.mousewheel.min.js')}}"></script>
+    <script src="{{static_url('js/jquery.fancybox.pack.js')}}"></script>
+    <script src="{{static_url('js/notify.js')}}"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <!-- <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script> -->
+    <script src="{{static_url('js/bootstrap-3.3.5.min.js')}}"></script>
     <!-- <script src="//gohttp.nie.netease.com/automatorx/blockly/blockly_compressed.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/blocks_compressed.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/msg/js/en.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/python_compressed.js"></script> -->
-    <script src="//127.0.0.1:8000/blockly_compressed.js"></script>
-    <script src="//127.0.0.1:8000/blocks_compressed.js"></script>
-    <script src="//127.0.0.1:8000/msg/js/en.js"></script>
-    <script src="//127.0.0.1:8000/python_compressed.js"></script>
+    <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
+    <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
+    <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
+    <script src="{{static_url('blockly/python_compressed.js')}}"></script>
 
     <script src="{{static_url('js/vue.min.js')}}"></script>
     <script src="{{static_url('js/index.js')}}"></script>

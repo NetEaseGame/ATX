@@ -38,6 +38,11 @@ class Bounds(__boundstuple):
     def __mul__(self, mul):
         return Bounds(*(int(v*mul) for v in self))
 
+class ImageCrop(object):
+    def __init__(self, src, bound):
+        self.src = src
+        l, t, w, h = bound
+        self.bound = Bounds(l, t, l+w, t+h)
 
 class Pattern(object):
     def __init__(self, name, image=None, offset=None, anchor=0, rsl=None, resolution=None, th=None, threshold=None):
@@ -52,7 +57,13 @@ class Pattern(object):
             threshold: image match threshold, usally (0, 1]
             th: alias of threshold
         """
-        self._name = name # better to be the image path
+        if isinstance(name, ImageCrop):
+            self._name = name.src
+            self._bound = name.bound
+        else:
+            self._name = name
+            self._bound = None
+
         self._image = image # if image is None, it will delay to pattern_open function
         self._offset = offset
         self._resolution = rsl or resolution
@@ -90,7 +101,10 @@ class Pattern(object):
     
     @property
     def image(self):
-        return self._image
+        if self._bound is None:
+            return self._image
+        else:
+            return imutils.crop(self._image, *self._bound)
 
     @property
     def offset(self):
