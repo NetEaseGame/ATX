@@ -276,6 +276,9 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	print d.forward(10080)
 
 	print d.wlan_ip # 获取手机的Wlan IP
+
+	print d.current_app() # 获取当前运行应用的package name和activity以及运行的pid
+	# Expect: AppInfo(package='com.miui.mihome2', activity='com.android.launcher2.Launcher', pid=634)
 	```
 
 * 图片查找与点击

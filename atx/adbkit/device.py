@@ -290,12 +290,19 @@ class Device(object):
 
     def current_app(self):
         """
-        Return: (package_name, activity)
+        Return: dict(package, activity, pid?)
         Raises:
             RuntimeError
         """
+        # try: adb shell dumpsys activity top
+        _activityRE = re.compile(r'ACTIVITY (?P<package>[^/]+)/(?P<activity>[^/\s]+) \w+ pid=(?P<pid>\d+)')
+        m = _activityRE.search(self.shell('dumpsys', 'activity', 'top'))
+        if m:
+            return dict(package=m.group('package'), activity=m.group('activity'), pid=int(m.group('pid')))
+
+        # try: adb shell dumpsys window windows
         _focusedRE = re.compile('mFocusedApp=.*ActivityRecord{\w+ \w+ (?P<package>.*)/(?P<activity>.*) .*')
         m = _focusedRE.search(self.shell('dumpsys', 'window', 'windows'))
         if m:
-            return m.group('package'), m.group('activity')
+            return dict(package=m.group('package'), activity=m.group('activity'))
         raise RuntimeError("Couldn't get focused app")

@@ -128,6 +128,22 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         port = self._adb_device.forward(device_port, local_port)
         return (self._host, port)
 
+    def current_app(self):
+        """Get current app (package, activity)
+        Returns:
+            namedtuple ['package', 'activity', 'pid']
+            activity, pid maybe None
+
+        Raises:
+            RuntimeError
+        """
+        AppInfo = collections.namedtuple('AppInfo', ['package', 'activity', 'pid'])
+        try:
+            ai = self._adb_device.current_app()
+            return AppInfo(ai['package'], ai['activity'], ai.get('pid'))
+        except RuntimeError:
+            return AppInfo(self.info['currentPackageName'], None, None)
+
     @property
     def current_package_name(self):
         return self.info['currentPackageName']
