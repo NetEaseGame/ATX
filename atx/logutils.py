@@ -48,6 +48,7 @@ class Logger(object):
 
         levelname = logging.getLevelName(level)
         message = str_format % args if args else str_format
+        message = strutils.decode(message)
         frame, filename, line_number, function_name, lines, index = inspect.stack()[2]
         props = dict(
             asctime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],

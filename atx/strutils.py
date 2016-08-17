@@ -15,7 +15,11 @@ def encode(s, encoding=None, errors='ignore'):
 def decode(s, encodings=['utf-8', 'gbk']):
     if isinstance(s, unicode):
         return s
-    for enc in encodings:
+    _encodings = [SYSTEM_ENCODING]
+    for e in encodings:
+        if e != SYSTEM_ENCODING:
+            _encodings.append(e)
+    for enc in _encodings:
         try:
             return unicode(s, enc)
         except:
