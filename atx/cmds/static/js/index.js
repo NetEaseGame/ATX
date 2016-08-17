@@ -1,10 +1,11 @@
 /* Javascript */
 var M = {};
 
-new Vue({
+var vm = new Vue({
   el: '#main-content',
   data: {
     landscape: false,
+    latest_screen: null,
   },
   methods: {
     toggleLandscape: function() {
@@ -67,15 +68,24 @@ $(function(){
         case 'image_list':
           M.images = data.images;
           window.blocklyImageList = [];
+          $('#imagesDiv>ul').empty();
           for (var i = 0, info; i < data.images.length; i++) {
             info = data.images[i];
             window.blocklyImageList.push([info['name'], info['path']]);
+            $('#imagesDiv>ul')
+              .append($('<li>')
+                      .append($('<div>')
+                            .append($('<img>').attr('src', window.blocklyBaseURL + info['path']))
+                            .append($('<p>').text(info['name']))
+                      )
+              );
           }
           window.blocklyCropImageList = [];
           for (var i = 0, info; i < data.screenshots.length; i++) {
             info = data.screenshots[i]
             window.blocklyCropImageList.push([info['name'], info['path']]);
           }
+          vm.latest_screen = data.latest;
           $('#btn-image-refresh').notify(
             '已刷新',
             {className: 'success', position: 'right'}
@@ -253,6 +263,7 @@ $(function(){
       method: 'POST',
       dataType: 'json',
       data: {
+        screenname: vm.latest_screen,
         filename: filename,
         bound: crop_bounds.bound,
       },
@@ -689,26 +700,47 @@ $(function(){
 
   // track screenshot related to each block
   var block_screen = {};
+  M.block_screen = block_screen;
   function onUIFieldChange(evt) {
-    if (evt.type != 'ui' || evt.element != 'field') {return;}
+    if (evt.type != Blockly.Events.UI || evt.element != 'field') {return;}
     var blk = workspace.getBlockById(evt.blockId);
     if (blk.type == 'atx_image_crop' && evt.name == 'FILENAME') {
       block_screen[evt.blockId] = evt.newValue;
     }
   }
-  workspace.addChangeListener(onUIFieldChange);
   function onCreateBlock(evt){
     if (evt.type != Blockly.Events.CREATE) {return;}
-    var blk = workspace.getBlockById(evt.blockId);
-    if (blk.type == 'atx_image_crop') {
+    for (var i = 0, bid; i < evt.ids.length; i++) {
+      bid = evt.ids[i];
+      var blk = workspace.getBlockById(bid);
+      if (blk.type == 'atx_image_crop') {
+        block_screen[bid] = blk.getFieldValue('FILENAME');
+      }
+    }
+  }
+  function onDeleteBlock(evt){
+    if (evt.type != Blockly.Events.DELETE) {return;}
+    for (var i = 0, bid; i < evt.ids.length; i++) {
+      bid = evt.ids[i];
+      delete block_screen[bid];
+    }
+  }
+  function onBlockConnectionChange(evt) {
+    if (evt.type != Blockly.Events.MOVE && !evt.oldParentId && !evt.newParentId) {
+      return;
+    }
+    var oldblk = evt.oldParentId ? workspace.getBlockById(evt.oldParentId) : null,
+        newblk = evt.newParentId ? workspace.getBlockById(evt.newParentId) : null;
+    if (oldblk) {
+
+    }
+    if (newblk) {
 
     }
   }
   workspace.addChangeListener(onCreateBlock);
-  function onDeleteBlock(evt){
-    if (evt.type != Blockly.Events.DELETE) {return;}
-    delete block_screen[evt.blockId];
-  }
   workspace.addChangeListener(onDeleteBlock);
+  workspace.addChangeListener(onUIFieldChange);
+  workspace.addChangeListener(onBlockConnectionChange);
 
 })
