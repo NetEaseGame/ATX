@@ -392,7 +392,6 @@ class DeviceMixin(object):
         """
         pattern = self.pattern_open(pattern)
         search_img = pattern.image
-        print 111, search_img.shape
 
         pattern_scale = self._cal_scale(pattern)
         if pattern_scale != 1.0:

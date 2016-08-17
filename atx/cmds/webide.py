@@ -9,6 +9,7 @@ import time
 import json
 import traceback
 import shutil
+import locale
 
 import cv2
 import tornado.ioloop
@@ -209,12 +210,11 @@ class ScreenshotHandler(tornado.web.RequestHandler):
         d = atx.connect(**atx_settings)
         v = self.get_argument('v')
         global latest_screen
-        latest_screen = 'screen_%s.png' % v
-        latest = 'screenshots/screen_%s.png' % v
-        d.screenshot(latest)
+        latest_screen = 'screenshots/screen_%s.png' % v
+        d.screenshot(latest_screen)
 
         self.set_header('Content-Type', 'image/png')
-        with open(latest, 'rb') as f:
+        with open(latest_screen, 'rb') as f:
             while 1:
                 data = f.read(16000)
                 if not data:
@@ -224,10 +224,10 @@ class ScreenshotHandler(tornado.web.RequestHandler):
 
     def post(self):
         screenname = self.get_argument('screenname')
-        filename = self.get_argument('filename')
+        filename = self.get_argument('filename').encode(locale.getpreferredencoding(), 'ignore')
         bound = self.get_arguments('bound[]')
         l, t, r, b = map(int, bound)
-        image = imutils.open('_screen.png')
+        image = imutils.open(screenname)
         image = imutils.crop(image, l, t, r, b)
         cv2.imwrite(filename, image)
         self.write({'status': 'ok'})
@@ -256,9 +256,8 @@ def main(web_port=None, host=None, port=None, open_browser=True, workdir='.'):
     os.chdir(workdir)
 
     global IMAGE_PATH
-    if os.path.exists('screenshots'):
-        shutil.rmtree('screenshots')
-    os.makedirs('screenshots')
+    if not os.path.exists('screenshots'):
+        os.makedirs('screenshots')
     IMAGE_PATH.append('screenshots')
 
     application = make_app({

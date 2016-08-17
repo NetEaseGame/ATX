@@ -33,3 +33,22 @@ pre.console {
   border: 2px solid red;
   pointer-events: none;
 }
+
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#imagesDiv > ul > li {
+  float: left;
+  padding: 10px;
+  list-style: none;
+  text-align: center;
+  height: 140px;
+}
+
+#imagesDiv img {
+  max-width: 100px;
+  max-height: 100px;
+}

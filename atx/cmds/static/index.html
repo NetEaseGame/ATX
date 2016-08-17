@@ -68,6 +68,9 @@
             <li role="presentation">
               <a href="#pythonDiv" aria-controls="pythonDiv" role="tab" data-toggle="tab">Python</a>
             </li>
+            <li role="presentation">
+              <a href="#imagesDiv" aria-controls="imagesDiv" role="tab" data-toggle="tab">Images</a>
+            </li>
             <li class="pull-right">
               <a href="#play">
                 <span class="glyphicon glyphicon-play"></span>
@@ -87,6 +90,9 @@
             </div>
             <div id="pythonDiv" role="tabpanel" class="tab-pane">
               <pre class='code-python'></pre>
+            </div>
+            <div id="imagesDiv" role="tabpanel" class="tab-pane">
+              <ul class="clearfix"></ul>
             </div>
           </div>
           <div v-show="!landscape">
@@ -203,6 +209,10 @@
     <script src="//gohttp.nie.netease.com/automatorx/blockly/blocks_compressed.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/msg/js/en.js"></script>
     <script src="//gohttp.nie.netease.com/automatorx/blockly/python_compressed.js"></script> -->
+    <!-- <script src="//127.0.0.1:8000/blockly_compressed.js"></script>
+    <script src="//127.0.0.1:8000/blocks_compressed.js"></script>
+    <script src="//127.0.0.1:8000/msg/js/en.js"></script>
+    <script src="//127.0.0.1:8000/python_compressed.js"></script> -->
     <script src="{{static_url('blockly/blockly_compressed.js')}}"></script>
     <script src="{{static_url('blockly/blocks_compressed.js')}}"></script>
     <script src="{{static_url('blockly/msg/js/en.js')}}"></script>
