@@ -159,8 +159,13 @@
               </a>
             </div>
             <div class="col-md-6">
-              <a class="fancybox" title="After" rel="{{step.time}}" v-bind:href="step.screen">
+              <a class="fancybox" title="Before" rel="{{step.time}}" v-bind:href="step.screen">
                 <div class="image-wrapper">
+                  <template v-if="step.position">
+                    <span class="positioner" v-bind:style="step.position | displayPosition">
+                      <span class="finger"></span>
+                    </span>
+                  </template>
                   <img width="100%" v-bind:src="step.screen" />
                 </div>
                 <p class="text-center">Current</p>

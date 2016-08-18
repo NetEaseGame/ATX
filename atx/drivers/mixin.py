@@ -321,7 +321,7 @@ class DeviceMixin(object):
             return None
         return ret
 
-    def wait(self, pattern, timeout=10.0, **match_kwargs):
+    def wait(self, pattern, timeout=10.0, safe=False, **match_kwargs):
         """Wait till pattern is found or time is out (default: 10s)."""
         t = time.time() + timeout
         while time.time() < t:
@@ -329,7 +329,8 @@ class DeviceMixin(object):
             if ret:
                 return ret
             time.sleep(0.2)
-        raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
+        if not safe:
+            raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
     def touch(self, x, y):
         """ Alias for click """
@@ -525,7 +526,7 @@ class DeviceMixin(object):
             - timeout (float): seconds
 
         Returns:
-            self
+            Find point
 
         Raises:
             AssertExistsError
@@ -546,12 +547,11 @@ class DeviceMixin(object):
                 continue
             log.debug('assert pass, confidence: %s', point.confidence)
             sys.stdout.write('\n')
-            break
+            return point
         else:
             sys.stdout.write('\n')
             raise errors.AssertExistsError('image not found %s' %(pattern,))
             
-    # TODO: need to add hook here
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_nowait(self, pattern, action='click', desc=None, **match_kwargs):
         """ Return immediately if no image found

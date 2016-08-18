@@ -241,6 +241,10 @@ class Report(object):
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
                 'success': evt.traceback is None,
             }
+            if evt.traceback is None:
+                kwargs['confidence'] = evt.retval.confidence
+                (x, y) = evt.retval.pos
+                kwargs['position'] = {'x': x, 'y': y}
             self.add_step('assert_exists', **kwargs)
 
 
