@@ -517,7 +517,8 @@ class DeviceMixin(object):
             if flag & event_flag:
                 fn(event)
 
-    def assert_exists(self, pattern, timeout=20.0, **match_kwargs):
+    @hook_wrap(consts.EVENT_ASSERT_EXISTS)
+    def assert_exists(self, pattern, timeout=20.0, desc=None, **match_kwargs):
         """Assert if image exists
         Args:
             - image: image filename # not support pattern for now
@@ -532,7 +533,7 @@ class DeviceMixin(object):
         pattern = self.pattern_open(pattern)
         search_img = pattern.image
         # search_img = imutils.open(image)
-        log.info('assert exists image: %s', pattern)
+        log.info('assert exists image(%s): %s', desc or '', pattern)
         start_time = time.time()
         while time.time() - start_time < timeout:
             point = self.match(search_img, **match_kwargs)
@@ -551,7 +552,8 @@ class DeviceMixin(object):
             raise errors.AssertExistsError('image not found %s' %(pattern,))
             
     # TODO: need to add hook here
-    def click_nowait(self, pattern, action='click', **match_kwargs):
+    @hook_wrap(consts.EVENT_CLICK_IMAGE)
+    def click_nowait(self, pattern, action='click', desc=None, **match_kwargs):
         """ Return immediately if no image found
 
         Args:
