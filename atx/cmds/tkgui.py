@@ -59,6 +59,7 @@ class CropIDE(object):
         self._refresh_text = tk.StringVar()
         self._refresh_text.set("Refresh")
         self._gencode_text = tk.StringVar()
+        self._genfile_name = tk.StringVar()
         self._fileext_text = tk.StringVar()
         self._auto_refresh_var = tk.BooleanVar()
         self._uiauto_detect_var = tk.BooleanVar()
@@ -125,8 +126,10 @@ class CropIDE(object):
         frm_code_editor.grid(column=0, row=0, sticky=(tk.W, tk.E))
         tk.Label(frm_code_editor, text='Generated code').grid(column=0, row=0, sticky=tk.W)
         tk.Entry(frm_code_editor, textvariable=self._gencode_text, width=30).grid(column=0, row=1, sticky=tk.W)
-        tk.Label(frm_code_editor, text='Extention name').grid(column=0, row=2, sticky=tk.W)
-        tk.Entry(frm_code_editor, textvariable=self._fileext_text, width=30).grid(column=0, row=3, sticky=tk.W)
+        tk.Label(frm_code_editor, text='Save file name').grid(column=0, row=2, sticky=tk.W)
+        tk.Entry(frm_code_editor, textvariable=self._genfile_name, width=30).grid(column=0, row=3, sticky=tk.W)
+        tk.Label(frm_code_editor, text='Extention name').grid(column=0, row=4, sticky=tk.W)
+        tk.Entry(frm_code_editor, textvariable=self._fileext_text, width=30).grid(column=0, row=5, sticky=tk.W)
         
         frm_code_btns = tk.Frame(frm_code)
         frm_code_btns.grid(column=0, row=2, sticky=(tk.W, tk.E))
@@ -235,6 +238,7 @@ class CropIDE(object):
 
         log.info('Crop save to: %s', save_to)
         self._image.crop(bounds).save(save_to)
+        self._genfile_name.set(os.path.basename(save_to))
         self._gencode_text.set('d.click_image(r"%s")' % save_to)
 
     def _run_code(self):

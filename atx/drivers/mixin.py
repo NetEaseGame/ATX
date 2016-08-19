@@ -372,7 +372,7 @@ class DeviceMixin(object):
             return FindPoint(ret['result'], ret['confidence'], consts.IMAGE_MATCH_METHOD_SIFT, matched=True)
         return None
 
-    def match(self, pattern, screen=None, offset=None, threshold=None, method=None):
+    def match(self, pattern, screen=None, rect=None, offset=None, threshold=None, method=None):
         """Check if image position in screen
 
         Args:
@@ -413,6 +413,12 @@ class DeviceMixin(object):
 
         # image match
         screen = imutils.from_pillow(screen) # convert to opencv image
+        if rect and isinstance(rect, tuple) and len(rect) == 4:
+            (x0, y0, x1, y1) = [v*pattern_scale for v in rect]
+            (dx, dy) = dx+x0, dy+y0
+            screen = imutils.crop(screen, x0, y0, x1, y1)
+            #cv2.imwrite('cc.png', screen)
+
         match_method = method or self.image_match_method
         
         ret = None
@@ -630,6 +636,7 @@ class DeviceMixin(object):
         Returns:
             watcher object
         """
+        print 'watch is Depreciated from v1.0.13'
         w = Watcher(self, name, timeout, raise_errors)
         w._dev = self
         return w
