@@ -50,9 +50,11 @@ class Report(object):
         self.save_dir = save_dir
         self.steps = []
         self.result = None
+
         self.__uia_last_position = None
         self.__last_screenshot = None
         self.__closed = False
+        
         self.start_record()
 
     @property
@@ -82,13 +84,14 @@ class Report(object):
         kwargs['action'] = action
         self.steps.append(kwargs)
 
-    def _save_screenshot(self, screen=None):
+    def _save_screenshot(self, screen=None, name=None):
         if screen is None:
             screen = self.d.screenshot()
-        abspath = 'images/before_%d.png' % time.time()
-        relpath = os.path.join(self.save_dir, abspath)
+        if name is None:
+            name = 'images/before_%d.png' % time.time()
+        relpath = os.path.join(self.save_dir, name)
         screen.save(relpath)
-        return abspath
+        return name
 
     def patch_uiautomator(self):
         """ record steps of uiautomator """
@@ -128,6 +131,7 @@ class Report(object):
 
         self.d.add_listener(self._listener, consts.EVENT_ALL) # ^ consts.EVENT_SCREENSHOT)
 
+        self.__closed = False
         atexit.register(self.close)
 
     def close(self):
@@ -215,9 +219,8 @@ class Report(object):
                 kwargs['screen_before'] = screen_before
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
                 target = 'images/target_%d.png' % time.time()
-                target_abspath = os.path.join(self.save_dir, target)
                 pattern = d.pattern_open(evt.args[0])
-                pattern.save(target_abspath)
+                self._save_screenshot(pattern, name=target)
                 kwargs['target'] = target
             if evt.traceback is None:
                 screen_after = 'images/after_%d.png' % time.time()
@@ -227,6 +230,22 @@ class Report(object):
                 (x, y) = evt.retval.pos
                 kwargs['position'] = {'x': x, 'y': y}
             self.add_step('click_image', **kwargs)
+        elif evt.flag == consts.EVENT_ASSERT_EXISTS: # this is image, not tested
+            pattern = d.pattern_open(evt.args[0])
+            target = 'images/target_%.2f.png' % time.time()
+            self._save_screenshot(pattern, name=target)
+            kwargs = {
+                'target': target,
+                'description': evt.kwargs.get('desc'),
+                'screen': self._save_screenshot(name='images/screen_%.2f.png' % time.time()),
+                'traceback': None if evt.traceback is None else evt.traceback.stack,
+                'success': evt.traceback is None,
+            }
+            if evt.traceback is None:
+                kwargs['confidence'] = evt.retval.confidence
+                (x, y) = evt.retval.pos
+                kwargs['position'] = {'x': x, 'y': y}
+            self.add_step('assert_exists', **kwargs)
 
 
 def listen(d, save_dir='report'):

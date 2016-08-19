@@ -151,6 +151,32 @@
           <i>{{step.time}}s</i> {{step.action}} {{step.description}}
         </div>
         <div class="panel-body">
+          <template v-if="step.action == 'assert_exists'">
+            <div>
+              验证图片存在
+              <a class="fancybox" v-bind:href="step.target">
+                <img class="halfsize" v-bind:src="step.target" />
+              </a>
+            </div>
+            <div class="col-md-6">
+              <a class="fancybox" title="Before" rel="{{step.time}}" v-bind:href="step.screen">
+                <div class="image-wrapper">
+                  <template v-if="step.position">
+                    <span class="positioner" v-bind:style="step.position | displayPosition">
+                      <span class="finger"></span>
+                    </span>
+                  </template>
+                  <img width="100%" v-bind:src="step.screen" />
+                </div>
+                <p class="text-center">Current</p>
+              </a>
+            </div>
+            <div class="col-md-6">
+              <div v-if="!step.success">
+                <pre>{{step.traceback}}</pre>
+              </div>
+            </div>
+          </template>
           <template v-if="step.action == 'click'">
             <p>
               <code>{{step.action}}({{step.position.x + ", " + step.position.y}})</code>

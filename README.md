@@ -4,7 +4,6 @@
 [![Build Status](https://travis-ci.org/codeskyblue/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
-[![PyPI](https://img.shields.io/pypi/dm/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
 
 ## 简介
@@ -98,7 +97,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	pip install --upgrade atx
 	```
 
-	Sometime <https://pypi.python.org> may not stable, it is also passible to install from source.
+	Sometime <https://pypi.python.org> may not stable, it is also possible to install from source. (need git installed)
 
 	```
 	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
