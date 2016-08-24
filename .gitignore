@@ -47,3 +47,4 @@ __cache__
 AUTHORS
 *.trace/
 *.tiff
+.ipynb_checkpoints

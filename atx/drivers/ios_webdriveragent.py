@@ -108,9 +108,12 @@ class IOSDevice(DeviceMixin):
     
     @property
     def rotation(self):
-        # raise NotImplementedError()
-        # print self._wda.orientation
-        return 0
+        """Rotation of device
+        Returns:
+            int (0-3)
+        """
+        rs = dict(PORTRAIT=0, LANDSCAPE=1, UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT=3)
+        return rs.get(self._session.orientation, 0)
 
     def click(self, x, y):
         """Simulate click operation
@@ -130,6 +133,7 @@ class IOSDevice(DeviceMixin):
         """ Return to homescreen """
         return self._wda.home()
 
+    @hook_wrap(consts.EVENT_SCREENSHOT)
     def screenshot(self, filename=None):
         """Take a screenshot
         Args:

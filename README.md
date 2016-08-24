@@ -23,7 +23,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 PS: 并没有QQ, 因为我们公司上不了QQ
 
-- 网易内部用户目前请直接联系 hzsunshx
+- 网易内部用户目前请直接联系 `hzsunshx` 或加群 `1347390`
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
@@ -137,7 +137,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	```
 
 
-
+### Install FAQ
 Some may still failed the installation. There are some ways which may help you.
 
 1. Uninstall your python, and reinstall from <https://python.org>
