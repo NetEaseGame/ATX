@@ -3,14 +3,22 @@
 
 
 class BaseError(Exception):
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, message, data=None):
+        self.message = message
+        self.data = data
 
     def __str__(self):
-        return repr(self.value)
+        if self.data:
+            return '{}, data: {}'.format(self.message, self.data)
+        return self.message
+
+    def __repr__(self):
+        return repr(self.message)
+
 
 class WindowsAppNotFoundError(BaseError):
     pass
+
 
 class ImageNotFoundError(BaseError):
     pass

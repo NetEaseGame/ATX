@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import traceback
+import warnings
 
 import cv2
 import aircv as ac
@@ -26,6 +27,8 @@ from atx import logutils
 from atx.base import nameddict
 from atx.drivers import Pattern, Bounds, FindPoint
 
+
+warnings.simplefilter('default')
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 log = logutils.getLogger(__name__)
@@ -622,7 +625,7 @@ class DeviceMixin(object):
             if safe:
                 log.info("Image(%s) not found, safe=True, skip", pattern)
                 return None
-            raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
+            raise errors.ImageNotFoundError('Not found image %s' % pattern, point)
 
         # FIXME(ssx): maybe this function is too complex
         return point #collections.namedtuple('X', ['pattern', 'point'])(pattern, point)
@@ -636,7 +639,8 @@ class DeviceMixin(object):
         Returns:
             watcher object
         """
-        print 'watch is Depreciated from v1.0.13'
+        warnings.warn("The 'watch' function was not recommend since v1.0.13.", DeprecationWarning, stacklevel=2)
+
         w = Watcher(self, name, timeout, raise_errors)
         w._dev = self
         return w

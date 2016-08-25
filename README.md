@@ -16,6 +16,8 @@ ATX is short for _AutomatorX_
 
 If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
 
+Read it before you finished reading README, [README for Professional](README_ADVANCED.md)
+
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
