@@ -406,12 +406,10 @@ class DeviceMixin(object):
         screen = screen or self.region_screenshot()
         threshold = threshold or pattern.threshold or self.image_match_threshold
 
-        dx, dy = offset or pattern.offset or (0, 0)
         # handle offset if percent, ex (0.2, 0.8)
-        if -5 < dx <= 5:
-            dx = pattern.image.shape[1] * dx # opencv object width
-        if -5 < dy <= 5:
-            dy = pattern.image.shape[0] * dy # opencv object height
+        dx, dy = offset or pattern.offset or (0, 0)
+        dx = pattern.image.shape[1] * dx # opencv object width
+        dy = pattern.image.shape[0] * dy # opencv object height
         dx, dy = int(dx*pattern_scale), int(dy*pattern_scale)
 
         # image match
@@ -581,7 +579,7 @@ class DeviceMixin(object):
         return point
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
-    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, **match_kwargs):
+    def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, delay=None, **match_kwargs):
         """Simulate click according image position
 
         Args:
@@ -590,6 +588,7 @@ class DeviceMixin(object):
             - action (str): click or long_click
             - safe (bool): if safe is True, Exception will not raise and return None instead.
             - method (str): image match method, choice of <template|sift>
+            - delay (float): wait for a moment then perform click
 
         Returns:
             None
@@ -614,6 +613,10 @@ class DeviceMixin(object):
                 log.info('Ignore confidence: %s', point.confidence)
                 continue
             
+            # wait for program ready
+            if delay and delay > 0:
+                self.delay(delay)
+                
             func = getattr(self, action)
             func(*point.pos)
 

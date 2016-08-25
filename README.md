@@ -331,13 +331,15 @@ ATX毕竟是一个python库，给出代码的例子可能更好理解一些
 	d.click_image("button.png", offset=(0.2, -0.5))
 
 	# Full example
+	# param: delay is when image found wait for a moment then click
 	d.click_image("button.png", 
 		offset=(0.2, 0.5), 
 		action="long_click", 
 		safe=True, 
 		desc="I love click", 
 		method='template', 
-		threshold=0.8)
+		threshold=0.8,
+		delay=2.0)
 
 	# if image not show in 10s, ImageNotFoundError will raised
 	try:
