@@ -616,7 +616,7 @@ class DeviceMixin(object):
             # wait for program ready
             if delay and delay > 0:
                 self.delay(delay)
-                
+
             func = getattr(self, action)
             func(*point.pos)
 

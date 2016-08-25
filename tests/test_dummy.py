@@ -7,6 +7,8 @@ import time
 import pytest
 import atx
 
+from PIL import Image
+
 d = atx.connect(platform='dummy')
 
 def setup_function(f):
@@ -75,5 +77,6 @@ def test_click_image_offset1():
     assert d.last_click == (139, 299)
 
 def test_click_image_offset2():
-    d.click_image(atx.Pattern('media/system-app.png', offset=(10, 10)))
-    assert d.last_click == (149, 309)    
+    d.click_image(atx.Pattern('media/system-app.png', offset=(0.5, 0.5)))
+    w, h = Image.open('media/system-app.png').size
+    assert d.last_click == (139+w/2, 299+h/2)
