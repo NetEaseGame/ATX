@@ -11,11 +11,14 @@ d = atx.connect()
 rp = Report(d, save_dir='report')
 rp.patch_uiautomator() # for android UI test record (optional)
 
-rp.info("Test started")
+rp.info("Test started") # or rp.info("Test started", screenshot=d.screenshot())
 d.click(200, 200)
 
 # keep screenshot when test fails
 rp.error("Oh no.", screenshot=d.screenshot())
+
+# close and generate report
+rp.close()
 ```
 
 After done, HTML report will be saved to report dir. with such directory

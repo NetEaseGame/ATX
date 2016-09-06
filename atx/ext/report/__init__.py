@@ -154,13 +154,19 @@ class Report(object):
             f.write(html_content)
         self.__closed = True
 
-    def info(self, text):
-        self.steps.append({
+    def info(self, text, screenshot=None):
+        step = {
             'time': '%.1f' % (time.time()-self.start_time,),
             'action': 'info',
             'message': text,
             'success': True,
-        })
+        }   
+        screen_path = 'images/info_%d.png' % time.time()
+        if screenshot:
+            screen_abspath = os.path.join(self.save_dir, screen_path)
+            screenshot.save(screen_abspath)
+            step['screenshot'] = screen_path
+        self.steps.append(step)
 
     def error(self, text, screenshot=None):
         step = {
