@@ -92,6 +92,8 @@ class Client(object):
     def devices(self):
         '''get a dict of attached devices. key is the device serial, value is device name.'''
         out = self.run_cmd('devices') #subprocess.check_output([self.adb_path(), 'devices']).decode("utf-8")
+        if 'adb server is out of date' in out:
+            out = self.run_cmd('devices')
         match = "List of devices attached"
         index = out.find(match)
         if index < 0:

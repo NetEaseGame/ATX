@@ -69,7 +69,7 @@ class IOSDevice(DeviceMixin):
         self._session = self._wda.session(bundle_id)
         return self._session
 
-    def stop_app(self):
+    def stop_app(self, *args):
         if self._session is None:
             return
         self._session.close()
