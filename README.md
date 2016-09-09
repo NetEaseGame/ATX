@@ -62,7 +62,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 ## Installation
 1. 安装ATX
 	- [Windows](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
-	- [Mac](whttps://github.com/NetEase/AutomatorX/wiki/Mac-installation)
+	- [Mac](https://github.com/NetEase/AutomatorX/wiki/Mac-installation)
 
 	注: iOS的测试一定需要一个Mac
 
