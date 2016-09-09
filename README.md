@@ -1,7 +1,7 @@
 ![logo](images/logo.png)
 
 # AutomatorX (atx) (中文版)
-[![Build Status](https://travis-ci.org/codeskyblue/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
+[![Build Status](https://travis-ci.org/NetEase/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
@@ -60,57 +60,13 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 3. Android4.1+
 
 ## Installation
-1. 首先安装opencv(`>=2.4 && <3.0`)到你的电脑上
+1. 安装ATX
+	- [Windows](wiki/Win-Installation)
+	- [Mac](wiki/Mac-installation)
 
-	windows推荐直接通过pip安装,
-	
-	```
-	# For Win32
-	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win32.whl
-	# For AMD64
-	pip install http://o8oookdsx.qnssl.com/opencv_python-2.4.12-cp27-none-win_amd64.whl
-	```
+	注: iOS的测试一定需要一个Mac
 
-	如果pip安装遇到问题，也可以把相应的numpy和opencv下载下来。然后在本地安装 [备用下载地址](https://github.com/NetEase/aircv/releases)，安装方法很简单，例如 `pip install opencv??.whl`, pip最好版本高一点(>=8.1.0)，避免出错。
-
-
-	如果是Macbook，安装方法要比想象中的简单，然而耗时也比想象中的要长, 先安装`brew`, 之后
-
-	```
-	brew install python pillow opencv
-	```
-
-	Linux暂时先不写了，折腾过的人可以提个PR补充下。
-
-2. Install atx with `pip`
-
-	为了编码的时候能少敲一点字母, pip中软件包的名字简化成了 atx
-
-	因为目前代码的更新比较快，如果希望使用新功能的话，推荐安装开发版（目前也**强烈推荐**使用开发版）
-	For the develop version, (maybe not stable), Sync with github master code
-
-	```
-	pip install --upgrade --pre atx
-	```
-
-	稳定版的发布频率大约为2周一次. Stable version updated about every two weeks.
-
-	```
-	pip install --upgrade atx
-	```
-
-	Sometime <https://pypi.python.org> may not stable, it is also possible to install from source. (need git installed)
-
-	```
-	pip install -U git+https://github.com/codeskyblue/AutomatorX.git
-	```
-
-3. **Other dependencies** (eg: ADB, Xcode)
-
-	* [Windows](INSTALL_WINDOWS.md)
-	* [Mac](INSTALL_MAC.md)
-
-4. Show atx version
+1. Show atx version
 
 	```
 	python -matx version
@@ -118,7 +74,7 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 	Remember the atx version in case if you want to rollback.
 
-5. Install ATX Assistant into you phone (Only android)
+1. Install ATX Assistant into you phone (Only android)
 
 	To make sure device connected, use command `adb devices`
 
@@ -138,18 +94,6 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
 	```
 
-
-### Install FAQ
-Some may still failed the installation. There are some ways which may help you.
-
-1. Uninstall your python, and reinstall from <https://python.org>
-2. Mac user may found install numpy error
-
-    Reference: <http://blog.csdn.net/hqzxsc2006/article/details/51602654>
-
-3. Windows user may found install pyyaml failed.
-
-    Just download the pyyaml wheel file and install with pip. <http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyyaml>
 
 ## Quick start (Android and iOS)
 1. Connect an device
@@ -191,7 +135,6 @@ Some may still failed the installation. There are some ways which may help you.
 		d = atx.connect('http://localhost:8100', platform='ios') # platform也可以不指定
 		print d.status()
 		```
-
 
 2. Take screenshot
 

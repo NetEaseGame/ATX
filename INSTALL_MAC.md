@@ -31,27 +31,7 @@ $ npm i -g ios-deploy
 $ pip install pyipa
 ```
 
-## WebDriverAgent的安装 (For iOS test)
-Facebook出品的[WebDriverAgent](https://github.com/facebook/WebDriverAgent)为iOS的自动化开辟了一个新的空间
 
-为了方便表达，一般都会用WDA来简称WebDriverAgent，其安装方法请参考 <https://github.com/facebook/WebDriverAgent>
-
-PS：安装最困难的问题，我觉的还是签名的问题，虽然有点麻烦，细心点还是可以搞定的。
-
-Xcode编译没有问题之后，可以尝试命令行看是否正常
-
-```sh
-UDID=$(idevice_id -l)
-xcodebuild -project WebDriverAgent.xcodeproj \
-	-scheme WebDriverAgentRunner \
-	-destination "id=$UDID" test
-```
-
-不过我还是强烈推荐在**Xcode**中运行（因为可以自动修复CodeSign错误的问题）
-
-成功跑起来之后，会发现iOS上多了一个名叫WebDriverAgent的App, App实际上启动了一个服务器，监听的端口是8100
-
-模拟器的ip是127.0.0.1, 所以其`DEVICE_URL`就是`http://127.0.0.1:8100`, 真机的需要查看手机Wifi的IP地址
 
 ## 测试WDA
 现在可以直接上代码了
@@ -93,10 +73,7 @@ d.click(100, 200)
 
 	因为WDA的代码也经常变动，所以atx代码也会跟着变动，有时间运行不了也正常，发现了记得提issue
 
-## 限制的地方
-- 除非使用第三方输入法，否则只能对开发者签名的应用有效，其他的App都会陷入长时间的等待
-- 输入法只能使用系统自带的输入法
-- 点击不受限制，可以将应用转移到后台，然后直接完成点击
+
 
 ## Articles and Projects
 - [2012年的文章关于UIAutomation, 4年的时间也没有让它褪色](http://blog.manbolo.com/2012/04/08/ios-automated-tests-with-uiautomation)
