@@ -18,6 +18,14 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 Read it before you finished reading README, [README for Professional](README_ADVANCED.md)
 
+## Features
+1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
+1. 支持iOS, Android的自动化测试
+1. 对于iOS的真机,安卓模拟器都能很好的支持
+1. 可以用来测试Windows应用
+1. 对于游戏的测试使用了图像识别
+1. 同一个测试脚本可以通过图像的缩放算法，适配到其他分辨率的手机上
+
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
@@ -27,37 +35,11 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 
 - 网易内部用户目前请直接联系 `hzsunshx` 或加群 `1347390`
 
-## Features
-1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
-1. 可以很好的支持安卓手机的测试，包括安卓模拟器
-1. 支持iOS手机的测试
-1. 支持Windows应用的测试
-1. 对于游戏测试，可以使用图像缩放的方法适应不同分辨率的手机
-
-## 历史起源
-该项目重构于过去写过一个项目 <https://github.com/netease/airtest>，
-因原有代码冗余太严重，维护成本太高，于是就用ATX取代之(Develop from 2016-02-25)。
-
-新版有哪些新的功能呢？
-
-### 与原版主要变化
-* 简化安装方式，只需要安装opencv以及通过pip安装atx 无其他依赖
-* 支持原生UI元素的查找和点击
-* 截图方式从原有缓慢的adb截图，改成默认uiautomator截图，可选minicap截图(1080x1920手机截图平均耗时0.2s）
-* 优化图像的自动缩放算法，以便同样的脚本可以适应不同的机器
-* 支持Watch用法，可持续监控界面，当某个元素出现时执行特定操作
-* 截图客户端从网页服务器变成了python-Tkinter写的客户端 使用python -matx gui启动
-* 支持dir(dev) 查看元素已有的方法（-_-! 之前代码写的不好，并不支持）
-* 更稳定的依赖库控制，与travis持续集成，可在代码更新后自动发布到pypi
-* 移除性能监控功能(目前性能测试使用第三方工具 腾讯GT)
-* 图像匹配默认使用模版匹配，将SIFT匹配改为可选
-
-[更多More](CHANGELOG)
-
-## Dependency
-1. python2.7
-2. opencv2.4
-3. Android4.1+
+## 限制
+- 只支持Python2的测试脚本
+- Android 4.1+
+- iOS 9.0+
+- iOS测试必须一个Mac
 
 ## Installation
 1. 安装ATX
@@ -93,7 +75,6 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	```
 	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
 	```
-
 
 ## Quick start (Android and iOS)
 1. Connect an device
