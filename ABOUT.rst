@@ -1,1 +1,1 @@
-Documents in <https://github.com/codeskyblue/AutomatorX>
+Documents in <https://github.com/NetEase/AutomatorX>
