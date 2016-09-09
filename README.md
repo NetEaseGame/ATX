@@ -16,8 +16,6 @@ ATX is short for _AutomatorX_
 
 If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
 
-Read it before you finished reading README, [README for Professional](README_ADVANCED.md)
-
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
 1. 支持iOS, Android的自动化测试
@@ -47,30 +45,14 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 	- [Mac](https://github.com/NetEase/AutomatorX/wiki/Mac-installation)
 
 	注: iOS的测试一定需要一个Mac
+	装完之后测试下安装是否成功, `python -m atx version` 查看atx版本号
 
-1. Show atx version
+1. 安卓的设备上还需要安装一个**ATX手机助手**
 
-	```
-	python -matx version
-	```
+	可以下载[APK](https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
 
-	Remember the atx version in case if you want to rollback.
 
-1. Install ATX Assistant into you phone (Only android)
-
-	To make sure device connected, use command `adb devices`
-
-	Install via command line
-
-	```sh
-	python -m atx install atx-assistant
-	```
-
-	Or download and install <https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk>
-
-	This App provided ATX input method, Keep screen wake and some other good stuff. Recommend all user to install it.
-
-	目前该输入法需要手工启动，该输入法为ATX提供命令行的中文输入方法
+	该App为自动化提供了输入法的功能，输入法的命令行启动方法(目前还需要手工)
 
 	```
 	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
@@ -79,7 +61,9 @@ PS: 并没有QQ, 因为我们公司上不了QQ
 ## Getting Started
 To get started, it is better to look at the [Quick Start](QUICKSTART.md)
 
-More about the ATX API [here](docs/API.md)
+More about the ATX [API here](docs/API.md)
+
+There is also a doc for professional users. [here]((README_ADVANCED.md)
 
 ## Command Line Tools
 There are a lot of command tools along with atx, eg
@@ -162,6 +146,7 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 1. [让adb install显示进度](https://testerhome.com/topics/4772)
 2. [Android 屏幕同步和录制工具](https://testerhome.com/topics/5006)
 3. [安卓手机的快速截图](https://testerhome.com/topics/5004)
+4. 更多的系列文章 <https://testerhome.com/topics/node78>
 
 ## Developer dashboards
 1. Platform Versions, Screen Size, Open GL Version <http://developer.android.com/intl/zh-cn/about/dashboards/index.html>
