@@ -129,6 +129,24 @@ def diff_rect(img1, img2, pos=None):
         if x0 <= x <= x1 and y0 <= y <= y1:
             return (x0, y0, x1, y1)
 
+def mark_point(img, x, y):
+    """
+    Mark a point
+
+    Args:
+        - img(numpy): the source image
+        - x, y(int): position
+    """
+    overlay = img.copy()
+    output = img.copy()
+
+    alpha = 0.5
+    radius = min(img.shape[:2])/10
+    cv2.circle(overlay, (x, y), radius, (0, 0, 255), -1)
+    cv2.addWeighted(overlay, alpha, output, 1-alpha, 0, output)
+    return output
+
+
 if __name__ == '__main__':
     # image = open('https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png')
     image = open('baidu.png')
