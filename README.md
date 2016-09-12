@@ -25,6 +25,8 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 1. 对于游戏的测试使用了图像识别
 1. 同一个测试脚本可以通过图像的缩放算法，适配到其他分辨率的手机上
 
+![demo-gif](images/demo.gif)
+
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
