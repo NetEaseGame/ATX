@@ -7,6 +7,7 @@
 from __future__ import absolute_import
 
 import collections
+import contextlib
 import base64
 import os
 import re
@@ -42,6 +43,8 @@ _PROP_PATTERN = re.compile(
 
 _INPUT_METHOD_RE = re.compile(
     r'mCurMethodId=([-_./\w]+)')
+
+_DEFAULT_IME = 'com.netease.atx.assistant/.ime.Utf7ImeService'
 
 UINode = collections.namedtuple('UINode', [
     'xml',
@@ -489,53 +492,62 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         self.adb_shell(['input', 'keyevent', keycode])
 
-    def _is_utf7ime(self):
-        return self.current_ime() in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService']
+    def enable_ime(self, ime):
+        """
+        Enable input methods
 
-    def _enable_utf7ime(self):
-        self.adb_shell(['ime', 'enable', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
-        self.adb_shell(['ime', 'set', 'com.netease.atx.assistant/.ime.Utf7ImeService'])
+        Args:
+            - ime(string): for example "android.unicode.ime/.Utf7ImeService"
+        """
+        self.adb_shell(['ime', 'enable', ime])
+        self.adb_shell(['ime', 'set', ime])
 
-    def type(self, text, enter=False):
+    def _is_utf7ime(self, ime=None):
+        if ime is None:
+            ime = self.current_ime()
+        return ime in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService']
+
+    def _prepare_ime(self):
+        if self._is_utf7ime():
+            return
+
+        for ime in self.input_methods():
+            if self._is_utf7ime(ime):
+                self.enable_ime(ime)
+                return
+        raise RuntimeError("Input method for programers not detected.\n" +
+            "\tInstall with: python -m atx install atx-assistant")
+
+    def type(self, text, enter=False, next=False):
         """Input some text, this method has been tested not very stable on some device.
         "Hi world" maybe spell into "H iworld"
 
         Args:
             - text: string (text to input), better to be unicode
             - enter(bool): input enter at last
+            - next(bool): perform editor action Next
 
         The android source code show that
         space need to change to %s
         insteresting thing is that if want to input %s, it is really unconvinent.
         android source code can be found here.
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
+        app source see here: https://github.com/openatx/android-unicode
         """
-        if self._is_utf7ime():
-            estext = base64.b64encode(text.encode('utf-7'))
-            self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
-        else:
-            first = True
-            for s in text.split('%s'):
-                if first:
-                    first = False
-                else:
-                    self.adb_shell(['input', 'text', '%'])
-                    s = 's' + s
-                if s == '':
-                    continue
-                estext = self._escape_text(s)
-                self.adb_shell(['input', 'text', estext])
-
+        self._prepare_ime()
+        estext = base64.b64encode(text.encode('utf-7'))
+        self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
         if enter:
             self.keyevent('KEYCODE_ENTER')
+        if next:
+            self.adb_shell(['am', 'broadcast', '-a', 'ADB_EDITOR_CODE', '--ei', 'code', '5'])
 
     def clear_text(self, count=100):
         """Clear text
         Args:
             - count (int): send KEY_DEL count
         """
-        if not self._is_utf7ime():
-            raise RuntimeError("Input method must be 'android.unicode.ime'")
+        self._prepare_ime()
         self.keyevent('KEYCODE_MOVE_END')
         self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
 
