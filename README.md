@@ -29,7 +29,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 - Chat room [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-PS: 并没有QQ, 因为我们公司上不了QQ
+PS: 因为我们公司上不了QQ, 所以不会经常上, 有兴趣的请加群: `497460177`
 
 - 网易内部用户目前请直接联系 `hzsunshx` 或加群 `1347390`
 
