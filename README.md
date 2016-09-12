@@ -19,7 +19,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
-1. 支持iOS, Android的自动化测试
+1. 支持iOS, Android的自动化测试，两个平台都支持测试第三方应用
 1. 对于iOS的真机,安卓模拟器都能很好的支持
 1. 可以用来测试Windows应用
 1. 对于游戏的测试使用了图像识别
@@ -36,7 +36,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 - 只支持Python2的测试脚本
 - Android 4.1+
 - iOS 9.0+
-- iOS测试必须一个Mac
+- iOS测试必须要有一个Mac
 
 ## Installation
 1. 安装ATX
@@ -51,11 +51,8 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 	可以下载[APK](https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
 
 
-	该App为自动化提供了输入法的功能，输入法的命令行启动方法(目前还需要手工)
+	该App为自动化提供了输入法的功能，屏幕常量等功能
 
-	```
-	adb shell ime set com.netease.atx.assistant/.ime.Utf7ImeService
-	```
 
 ## Getting Started
 To get started, it is better to look at the [Quick Start](QUICKSTART.md)
