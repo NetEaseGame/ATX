@@ -61,7 +61,7 @@ To get started, it is better to look at the [Quick Start](QUICKSTART.md)
 
 More about the ATX [API here](docs/API.md)
 
-There is also a doc for professional users. [here]((README_ADVANCED.md)
+There is also a doc for professional users. [here](README_ADVANCED.md)
 
 ## Command Line Tools
 There are a lot of command tools along with atx, eg
@@ -76,7 +76,7 @@ There are a lot of command tools along with atx, eg
 etc... To see the whole list click [here](https://github.com/NetEase/AutomatorX/wiki/Command-Line-Tools)
 
 ## Known Issues
-If you are having some issues please checkout [wiki](https://github.com/NetEase/AutomatorX/wiki/iOS-Common-Issues) first.
+If you are having some issues please checkout [wiki](https://github.com/NetEase/AutomatorX/wiki/Common-Issues) first.
 
 ## ATX Extentions
 该部分属于atx的扩展插件实现的功能
