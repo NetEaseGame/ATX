@@ -57,7 +57,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 
 ## Getting Started
-To get started, it is better to look at the [Quick Start](QUICKSTART.md)
+To get started, it is better to look at the [Quick Start](docs/QUICKSTART.md)
 
 More about the ATX [API here](docs/API.md)
 
