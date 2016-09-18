@@ -1,7 +1,7 @@
 ![logo](images/logo.png)
 
 # AutomatorX (atx) (中文版)
-[![Build Status](https://travis-ci.org/NetEase/AutomatorX.svg?branch=master)](https://travis-ci.org/codeskyblue/AutomatorX)
+[![Build Status](https://travis-ci.org/NetEaseGame/AutomatorX.svg?branch=master)](https://travis-ci.org/NetEaseGame/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
