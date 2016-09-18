@@ -11,7 +11,7 @@
 该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
 
-This project is to make mobile test automated, free people who are boring of repeated job. **AutomatorX** is a python library base on `python-opencv` and a lot of outstanding python libs.
+This project is to make mobile test automated, free people from the boring of repeated job. **AutomatorX** is a python library base on `python-opencv` and a lot of outstanding python libs.
 
 ATX is short for _AutomatorX_
 
