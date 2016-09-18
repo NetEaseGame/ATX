@@ -120,14 +120,19 @@ class IOSDevice(DeviceMixin):
         Args:
             x, y(int): position
         """
-        if self._session is None:
-            raise RuntimeError("Need to call start_app before")
-        if not self.__scale:
-            raw_size = self._session.window_size()
-            self.__scale = min(self.display) / min(raw_size)
-        rx, ry = x/self.__scale, y/self.__scale
+        rx, ry = x/self.scale, y/self.scale
         self._session.tap(rx, ry)
-        return self
+
+    def swipe(self, x1, y1, x2, y2, duration=0.5):
+        """Simulate swipe operation
+        Args:
+            x1, y1(int): from position
+            x2, y2(int): to position
+            duration(float): swipe duration, unit seconds
+        """
+        scale = self.scale
+        x1, y1, x2, y2 = x1/scale, y1/scale, x2/scale, y2/scale
+        self._session.swipe(x1, y1, x2, y2, duration)
 
     def home(self):
         """ Return to homescreen """
