@@ -10,8 +10,11 @@ import time
 import json
 import warnings
 
+import imageio
+
 from atx import consts
 from atx import errors
+from atx import imutils
 from atx.base import nameddict
 from atx.ext.report import patch as pt
 
@@ -51,6 +54,8 @@ class Report(object):
         self.steps = []
         self.result = None
 
+        self.__gif_path = os.path.join(save_dir, 'output.gif')
+        self.__gif = imageio.get_writer(self.__gif_path, fps=2)
         self.__uia_last_position = None
         self.__last_screenshot = None
         self.__closed = False
@@ -69,10 +74,17 @@ class Report(object):
             self.d.screenshot()
             self.__uia_last_position = center(evt.this.bounds)
         else:
-            screen_before = self._save_screenshot(self.last_screenshot)
-            # FIXME: maybe need sleep for a while
-            screen_after = self._save_screenshot()
             (x, y) = self.__uia_last_position
+            # self.last_screenshot
+            cv_last_img = imutils.from_pillow(self.last_screenshot)
+            cv_last_img = imutils.mark_point(cv_last_img, x, y)
+            screen = imutils.to_pillow(cv_last_img)
+            screen_before = self._save_screenshot()
+            self._add_to_gif(screen)
+            # screen_before = self._save_screenshot(self.last_screenshot)
+            # FIXME: maybe need sleep for a while
+            screen_after = self._save_screenshot(append_gif=True)
+
             self.add_step('click',
                 screen_before=screen_before,
                 screen_after=screen_after,
@@ -84,14 +96,23 @@ class Report(object):
         kwargs['action'] = action
         self.steps.append(kwargs)
 
-    def _save_screenshot(self, screen=None, name=None):
+    def _save_screenshot(self, screen=None, name=None, append_gif=False):
         if screen is None:
             screen = self.d.screenshot()
         if name is None:
             name = 'images/before_%d.png' % time.time()
         relpath = os.path.join(self.save_dir, name)
         screen.save(relpath)
+        if append_gif:
+            self._add_to_gif(screen)
         return name
+
+    def _add_to_gif(self, image):
+        half = 0.5
+        out = image.resize([int(half*s) for s in image.size])
+        cvimg = imutils.from_pillow(out)
+        self.__gif.append_data(cvimg[:, :, ::-1])
+
 
     def patch_uiautomator(self):
         """ record steps of uiautomator """
@@ -152,6 +173,8 @@ class Report(object):
 
         with open(save_path, 'wb') as f:
             f.write(html_content)
+
+        self.__gif.close()
         self.__closed = True
 
     def info(self, text, screenshot=None):

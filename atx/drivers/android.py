@@ -17,6 +17,7 @@ import time
 import tempfile
 import warnings
 import logging
+import uuid
 import xml.dom.minidom
 
 from uiautomator import Device as UiaDevice
@@ -219,9 +220,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             y=self.display.height,
             r=rotation*90)
     
+    def _mktemp(self, suffix='.jpg'):
+        prefix= 'atx-tmp-{}-'.format(uuid.uuid1())
+        return tempfile.mktemp(prefix=prefix, suffix='.jpg')
+
     def _screenshot_minicap(self):
         phone_tmp_file = '/data/local/tmp/_atx_screen-{}.jpg'.format(self._randid)
-        local_tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
+        local_tmp_file = self._mktemp()
         command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
             self._minicap_params(), phone_tmp_file)
         try:
@@ -242,7 +247,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             self.adb_shell(['rm', phone_tmp_file])
 
     def _screenshot_uiauto(self):
-        tmp_file = tempfile.mktemp(prefix='atx-tmp-', suffix='.jpg')
+        tmp_file = self._mktemp()
         self._uiauto.screenshot(tmp_file)
         try:
             return imutils.open_as_pillow(tmp_file)
