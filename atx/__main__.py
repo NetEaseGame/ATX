@@ -59,6 +59,9 @@ def _version(args):
     print atx.version
 
 
+def _deprecated(args):
+    print 'Deprecated'
+
 def main():
     ap = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -73,11 +76,14 @@ def main():
         yield subp.add_parser(name, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     with add_parser('tcpproxy') as p:
+        p.description = 'A very simple tcp proxy'
         p.add_argument('-l', '--listen', default=5555, type=int, help='Listen port')
         p.add_argument('-f', '--forward', default=26944, type=int, help='Forwarded port')
+        p.add_argument('--host', default='127.0.0.1', type=str, help='Forwarded host')
         p.set_defaults(func=load_main('tcpproxy'))
 
     with add_parser('gui') as p:
+        p.description = 'GUI tool to help write test script'
         p.add_argument('-p', '--platform', default='auto', choices=('auto', 'android', 'ios'), help='platform')
         p.add_argument('-s', '--serial', default=None, type=str, help='android serial or WDA device url')
         p.add_argument('--scale', default=0.5, type=float, help='scale size')
@@ -91,9 +97,11 @@ def main():
         p.set_defaults(func=load_main('record'))
 
     with add_parser('minicap') as p:
+        p.description = 'install minicap to phone'
         p.set_defaults(func=load_main('minicap'))
 
     with add_parser('apkparse') as p:
+        p.description = 'parse package-name and main-activity from apk'
         p.add_argument('filename', help='Apk filename')
         p.set_defaults(func=_apk_parse)
 
@@ -101,6 +109,7 @@ def main():
         p.set_defaults(func=load_main('monkey'))
 
     with add_parser('install') as p:
+        p.description = 'install apk to phone'
         p.add_argument('path', help='<apk file path | apk url path> (only support android for now)')
         p.add_argument('--start', action='store_true', help='Start app when app success installed')
         p.set_defaults(func=load_main('install'))
@@ -111,12 +120,14 @@ def main():
         p.set_defaults(func=load_main('screen'))
 
     with add_parser('screencap') as p:
+        p.description = 'take screenshot'
         p.add_argument('--scale', required=False, type=float, default=1.0, help='image scale')
         p.add_argument('-o', '--out', required=False, default='screenshot.png', help='output path')
         p.add_argument('-m', '--method', required=False, default='minicap', choices=('minicap', 'screencap'), help='screenshot method')
         p.set_defaults(func=load_main('screencap'))
 
     with add_parser('screenrecord') as p:
+        p.description = 'record video (require minicap)'
         p.add_argument('-o', '--output', default='out.avi', help='video output path')
         p.add_argument('--overwrite', action='store_true', help='overwrite video output file.')
         p.add_argument('--scale', type=float, default=0.5, help='image scale for video')
@@ -125,9 +136,8 @@ def main():
         p.set_defaults(func=load_main('screenrecord'))
 
     with add_parser('web') as p:
-        p.add_argument('-b', '--no-browser', dest='open_browser', action='store_false', help='Not open browser')
-        p.add_argument('--web-port', required=False, type=int, help='web listen port')
-        p.set_defaults(func=load_main('webide'))
+        p.description = 'not maintained this func, try with: pip install atx-webide'
+        p.set_defaults(func=_deprecated)
 
     with add_parser('run') as p:
         p.add_argument('-f', dest='config_file', default='atx.yml', help='config file')

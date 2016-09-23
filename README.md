@@ -15,7 +15,7 @@ This project is to make mobile test automated, free people from the boring of re
 
 ATX is short for _AutomatorX_
 
-If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](http://atx.readthedocs.org/en/latest/?badge=latest)
+If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](docs/API.md)
 
 ## Features
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
@@ -50,7 +50,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 1. 安卓的设备上还需要安装一个**ATX手机助手**
 
-	可以下载[APK](https://o8oookdsx.qnssl.com/atx-assistant-1.0.0.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
+	可以下载[APK](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
 
 
 	该App为自动化提供了输入法的功能，屏幕常量等功能

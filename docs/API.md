@@ -130,6 +130,7 @@ print nd.match('folder.png')
 ```
 
 ## 原生UI操作
+下面给的例子并不完全，更多的接口需要看下面这两个链接
 
 - Android 如何点击UI元素请直接看 <https://github.com/codeskyblue/atx-uiautomator>
 - iOS如何点击UI元素参考 <https://github.com/codeskyblue/python-wda>
@@ -139,7 +140,7 @@ print nd.match('folder.png')
 ```py
 # click by UI component
 d(text='Enter').click()
-d(text='Enter').sibling(className='android.widget.ImageView').click()
+d(text='Enter').sibling(className='android.widget.ImageView').click() # only android
 
 # swipe from (sx, sy) to (ex, ey)
 d.swipe(sx, sy, ex, ey)
@@ -151,6 +152,7 @@ d.swipe(sx, sy, ex, ey, steps=10)
 ```py
 d.type("hello world")
 d.type("atx", enter=True) # perform enter after input
+d.type("atx", next=True) # jump to next after input
 d.clear_text() # clear input
 ```
 
