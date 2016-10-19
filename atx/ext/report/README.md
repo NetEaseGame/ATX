@@ -17,6 +17,9 @@ d.click(200, 200)
 # keep screenshot when test fails
 rp.error("Oh no.", screenshot=d.screenshot())
 
+# assert operations
+rp.assert_equal(1, 2, desc="Hi")  # take screenshot auto if not equal
+
 # close and generate report
 rp.close()
 ```

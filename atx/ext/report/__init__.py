@@ -113,7 +113,6 @@ class Report(object):
         cvimg = imutils.from_pillow(out)
         self.__gif.append_data(cvimg[:, :, ::-1])
 
-
     def patch_uiautomator(self):
         """ record steps of uiautomator """
         import uiautomator
@@ -191,11 +190,12 @@ class Report(object):
             step['screenshot'] = screen_path
         self.steps.append(step)
 
-    def error(self, text, screenshot=None):
+    def error(self, text, screenshot=None, desc=None):
         step = {
             'time': '%.1f' % (time.time()-self.start_time,),
             'action': 'error',
             'message': text,
+            'description': desc,
             'success': False,
         }   
         screen_path = 'images/error_%d.png' % time.time()
@@ -204,6 +204,13 @@ class Report(object):
             screenshot.save(screen_abspath)
             step['screenshot'] = screen_path
         self.steps.append(step)
+
+    def assert_equal(self, v1, v2, desc=None, safe=False):
+        """ Check v1 is equals v2, and take screenshot if not equals """
+        message = '%s not equal %s' % (v1, v2)
+        self.error(message, screenshot=self.d.screenshot(), desc=desc)
+        if not safe:
+            raise AssertionError(message)
 
     def _listener(self, evt):
         d = self.d

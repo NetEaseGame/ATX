@@ -12,7 +12,7 @@ import sys
 # But when buffer get to high or delay go too down, you can broke things
 buffer_size = 4096
 delay = 0.0001
-forward_to = ('127.0.0.1', 5555)
+forward_to = ('127.0.0.1', 5037)
 #forward_to = ('10.249.80.122', 57149)
 
 class Forward:
@@ -71,6 +71,7 @@ class TheServer:
 
     def on_close(self):
         print '[proxy]', self.s.getpeername(), "has disconnected"
+        print '[proxy]', self.channel[self.s].getpeername(), "has disconnected, too"
         #remove objects from input_list
         self.input_list.remove(self.s)
         self.input_list.remove(self.channel[self.s])
@@ -91,7 +92,7 @@ class TheServer:
         self.channel[self.s].send(data)
 
 if __name__ == '__main__':
-        server = TheServer('', 5037)
+        server = TheServer('', 5555)
         try:
             server.main_loop()
         except KeyboardInterrupt:

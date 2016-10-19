@@ -19,7 +19,7 @@ __alias = {
 
 # Can also be found in directory
 IMAGE_BASE_DIR = '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/DeviceSupport/'
-IMAGE_BASE_URL = 'http://gohttp.nie.netease.com/tools-ios/DeveloperImages/'
+IMAGE_BASE_URL = 'http://gohttp.nie.netease.com/tools/tools-ios/DeveloperImages/'
 logger = logging.getLogger('ios')
 
 
