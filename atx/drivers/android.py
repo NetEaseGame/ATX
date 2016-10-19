@@ -269,20 +269,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         return self._uiauto.click(x, y)
 
-    @hook_wrap(consts.EVENT_SCREENSHOT)
-    def screenshot(self, filename=None):
-        """
-        Take screen snapshot
-
-        Args:
-            filename: filename where save to, optional
-
-        Returns:
-            PIL.Image object
-
-        Raises:
-            TypeError, IOError
-        """
+    def _take_screenshot(self):
         screen = None
         if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
             screen = self._screenshot_uiauto()
@@ -297,6 +284,27 @@ class AndroidDevice(DeviceMixin, UiaDevice):
                 self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
         else:
             raise TypeError('Invalid screenshot_method')
+        return screen
+
+    @hook_wrap(consts.EVENT_SCREENSHOT)
+    def screenshot(self, filename=None):
+        """
+        Take screen snapshot
+
+        Args:
+            filename: filename where save to, optional
+
+        Returns:
+            PIL.Image object
+
+        Raises:
+            TypeError, IOError
+        """
+        try:
+            screen = self._take_screenshot()
+        except TypeError:
+            # try taks screenshot again
+            screen = self._take_screenshot()
 
         if filename:
             save_dir = os.path.dirname(filename) or '.'
