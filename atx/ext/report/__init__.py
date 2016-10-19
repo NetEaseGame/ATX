@@ -96,11 +96,11 @@ class Report(object):
         kwargs['action'] = action
         self.steps.append(kwargs)
 
-    def _save_screenshot(self, screen=None, name=None, append_gif=False):
+    def _save_screenshot(self, screen=None, name=None, name_prefix='screen', append_gif=False):
         if screen is None:
             screen = self.d.screenshot()
         if name is None:
-            name = 'images/before_%d.png' % time.time()
+            name = 'images/%s_%d.png' % (name_prefix, time.time())
         relpath = os.path.join(self.save_dir, name)
         screen.save(relpath)
         if append_gif:
@@ -205,12 +205,26 @@ class Report(object):
             step['screenshot'] = screen_path
         self.steps.append(step)
 
+    def _record_assert(self, is_success, text, desc=None):
+        step = {
+            'time': '%.1f' % (time.time()-self.start_time,),
+            'action': 'assert',
+            'message': text,
+            'description': desc,
+            'success': is_success,
+            'screenshot': self._save_screenshot(name_prefix='assert', append_gif=True),
+        }
+        self.steps.append(step)
+
     def assert_equal(self, v1, v2, desc=None, safe=False):
         """ Check v1 is equals v2, and take screenshot if not equals """
-        message = '%s not equal %s' % (v1, v2)
-        self.error(message, screenshot=self.d.screenshot(), desc=desc)
-        if not safe:
-            raise AssertionError(message)
+        if v1 == v2:
+            self._record_assert(True, "assert equal success, %s == %s" %(v1, v2), desc=desc)
+        else:
+            text = '%s not equal %s' % (v1, v2)
+            self._record_assert(False, text, desc=desc)
+            if not safe:
+                raise AssertionError(text)
 
     def _listener(self, evt):
         d = self.d
