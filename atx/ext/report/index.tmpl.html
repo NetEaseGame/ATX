@@ -237,19 +237,19 @@
           <template v-if="step.action == 'info'">
             <p>{{step.message}}</p>
             <div class="image-wrapper" v-if="step.screenshot">
-              <img width="100%" v-bind:src="step.screenshot" />
+              <img width="50%" v-bind:src="step.screenshot" />
             </div>
           </template>
           <template v-if="step.action == 'assert'">
             <p>{{step.message}}</p>
             <div class="image-wrapper" v-if="step.screenshot">
-              <img width="100%" v-bind:src="step.screenshot" />
+              <img width="50%" v-bind:src="step.screenshot" />
             </div>
           </template>
           <template v-if="step.action == 'error'">
             <p>{{step.message}}</p>
             <div class="image-wrapper" v-if="step.screenshot">
-              <img width="100%" v-bind:src="step.screenshot" />
+              <img width="50%" v-bind:src="step.screenshot" />
             </div>
           </template>
           <template v-if="step.action == 'traceback'">
