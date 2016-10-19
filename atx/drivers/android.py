@@ -302,7 +302,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         """
         try:
             screen = self._take_screenshot()
-        except TypeError:
+        except IOError:
             # try taks screenshot again
             screen = self._take_screenshot()
 
