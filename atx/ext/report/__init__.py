@@ -9,6 +9,7 @@ import os
 import time
 import json
 import warnings
+import inspect
 
 import imageio
 
@@ -17,6 +18,7 @@ from atx import errors
 from atx import imutils
 from atx.base import nameddict
 from atx.ext.report import patch as pt
+from PIL import Image
 
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
@@ -92,26 +94,10 @@ class Report(object):
 
     def add_step(self, action, **kwargs):
         kwargs['success'] = kwargs.pop('success', True)
+        kwargs['description'] = kwargs.get('description') or kwargs.get('desc')
         kwargs['time'] = round(kwargs.pop('time', time.time()-self.start_time), 1)
         kwargs['action'] = action
         self.steps.append(kwargs)
-
-    def _save_screenshot(self, screen=None, name=None, name_prefix='screen', append_gif=False):
-        if screen is None:
-            screen = self.d.screenshot()
-        if name is None:
-            name = 'images/%s_%d.png' % (name_prefix, time.time())
-        relpath = os.path.join(self.save_dir, name)
-        screen.save(relpath)
-        if append_gif:
-            self._add_to_gif(screen)
-        return name
-
-    def _add_to_gif(self, image):
-        half = 0.5
-        out = image.resize([int(half*s) for s in image.size])
-        cvimg = imutils.from_pillow(out)
-        self.__gif.append_data(cvimg[:, :, ::-1])
 
     def patch_uiautomator(self):
         """ record steps of uiautomator """
@@ -205,6 +191,40 @@ class Report(object):
             step['screenshot'] = screen_path
         self.steps.append(step)
 
+    def _save_screenshot(self, screen=None, name=None, name_prefix='screen', append_gif=False):
+        if screen is None:
+            screen = self.d.screenshot()
+        if name is None:
+            name = 'images/%s_%d.png' % (name_prefix, time.time())
+        relpath = os.path.join(self.save_dir, name)
+        screen.save(relpath)
+        if append_gif:
+            self._add_to_gif(screen)
+        return name
+
+    def _add_to_gif(self, image):
+        half = 0.5
+        out = image.resize([int(half*s) for s in image.size])
+        cvimg = imutils.from_pillow(out)
+        self.__gif.append_data(cvimg[:, :, ::-1])
+
+    def _take_screenshot(self, screenshot=False, name_prefix='unknown'):
+        """
+        This is different from _save_screenshot.
+        The return value maybe None or the screenshot path
+
+        Args:
+            screenshot: bool or PIL image
+        """
+        if isinstance(screenshot, bool):
+            if not screenshot:
+                return
+            return self._save_screenshot(name_prefix=name_prefix)
+        if isinstance(screenshot, Image.Image):
+            return self._save_screenshot(screen=screenshot, name_prefix=name_prefix)
+
+        raise TypeError("invalid type for func _take_screenshot: "+ type(screenshot))
+
     def _record_assert(self, is_success, text, screenshot=False, desc=None):
         step = {
             'time': '%.1f' % (time.time()-self.start_time,),
@@ -212,21 +232,70 @@ class Report(object):
             'message': text,
             'description': desc,
             'success': is_success,
+            'screenshot': self._take_screenshot(screenshot, name_prefix='assert'),
         }
-        if screenshot:
-            step['screenshot'] = self._save_screenshot(name_prefix='assert', append_gif=True)
         self.steps.append(step)
 
-    def assert_equal(self, v1, v2, desc=None, screenshot=False, safe=False):
-        """ Check v1 is equals v2, and take screenshot if not equals """
-        if v1 == v2:
-            text = "assert equal success, %s == %s" %(v1, v2)
-            self._record_assert(True, text, screenshot=screenshot, desc=desc)
+    def _add_assert(self, **kwargs):
+        """
+        if screenshot is None, only failed case will take screenshot
+        """
+        # convert screenshot to relative path from <None|True|False|PIL.Image>
+        screenshot = kwargs.get('screenshot')
+        is_success = kwargs.get('success')
+        screenshot = (not is_success) if screenshot is None else screenshot
+        kwargs['screenshot'] = self._take_screenshot(screenshot=screenshot, name_prefix='assert')
+        self.add_step('assert', **kwargs)
+        if not is_success:
+            message = kwargs.get('message')
+            frame, filename, line_number, function_name, lines, index = inspect.stack()[2]
+            print 'Assert [%s: %d] WARN: %s' % (filename, line_number, message)
+            if not kwargs.get('safe', False):
+                raise AssertionError(message)
+
+    def assert_equal(self, v1, v2, **kwargs):#, desc=None, screenshot=False, safe=False):
+        """ Check v1 is equals v2, and take screenshot if not equals
+        Args:
+            - desc (str): some description
+            - safe (bool): will omit AssertionError if set to True
+            - screenshot: can be type <None|True|False|PIL.Image>
+        """
+        is_success = v1 == v2
+        if is_success:
+            message = "assert equal success, %s == %s" %(v1, v2)
         else:
-            text = '%s not equal %s' % (v1, v2)
-            self._record_assert(False, text, screenshot=screenshot, desc=desc)
-            if not safe:
-                raise AssertionError(text)
+            message = '%s not equal %s' % (v1, v2)
+        kwargs.update({
+            'message': message,
+            'success': is_success,
+        })
+        self._add_assert(**kwargs)
+
+    def assert_ui_exists(self, ui, **kwargs):
+        """ For Android Only
+        Args:
+            - ui: need have property "exists"
+            - desc (str): description
+            - safe (bool): will omit AssertionError if set to True
+            - screenshot: can be type <None|True|False|PIL.Image>
+        """
+        is_success = ui.exists
+        if is_success:
+            if kwargs.get('screenshot') is not None:
+                bounds = ui.info['bounds'] # iOS may not have this.
+                print bounds
+                kwargs['position'] = {
+                    'x': (bounds['left']+bounds['right'])/2,
+                    'y': (bounds['top']+bounds['bottom'])/2,
+                }
+            message = 'UI exists'
+        else:
+            message = 'UI not exists'
+        kwargs.update({
+            'message': message,
+            'success': is_success,
+        })
+        self._add_assert(**kwargs)
 
     def _listener(self, evt):
         d = self.d

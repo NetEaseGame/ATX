@@ -18,7 +18,13 @@ d.click(200, 200)
 rp.error("Oh no.", screenshot=d.screenshot())
 
 # assert operations
-rp.assert_equal(1, 2, desc="Hi")  # take screenshot auto if not equal
+# param screenshot can be type <None|True|False|PIL.Image>
+# 	set to None means only take screenshot when assert fails.
+#	this is also same to other assert functions
+rp.assert_equal(1, 2, desc="Hi", screenshot=True, safe=True)
+
+# assert android ui exists
+rp.assert_ui_exists(d(text='Hello'), desc='Hello UI')
 
 # close and generate report
 rp.close()
