@@ -10,5 +10,5 @@ Pillow>=2.7.0
 requests>=2.9.1
 facebook-wda==0.0.3.dev4
 atx-androguard==3.0
-atx-uiautomator==0.2.11.dev2
+atx-uiautomator==0.2.11.dev3
 imageio==1.5
