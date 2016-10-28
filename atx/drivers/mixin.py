@@ -538,13 +538,10 @@ class DeviceMixin(object):
         Raises:
             AssertExistsError
         """
-        pattern = self.pattern_open(pattern)
-        search_img = pattern.image
-        # search_img = imutils.open(image)
         log.info('assert exists image(%s): %s', desc or '', pattern)
         start_time = time.time()
         while time.time() - start_time < timeout:
-            point = self.match(search_img, **match_kwargs)
+            point = self.match(pattern, **match_kwargs)
             if point is None:
                 sys.stdout.write('.')
                 sys.stdout.flush()
@@ -552,7 +549,7 @@ class DeviceMixin(object):
             if not point.matched:
                 log.debug('Ignore confidence: %s', point.confidence)
                 continue
-            log.debug('assert pass, confidence: %s', point.confidence)
+            log.info('assert pass, confidence: %s', point.confidence)
             sys.stdout.write('\n')
             return point
         else:
