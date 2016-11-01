@@ -32,6 +32,7 @@ For Android and iOS
 * iOS
 
 	WDA运行完之后，准备好`DEVICE_URL`, 如 `http://localhost:8100`
+如果是真机，需要将localhost改成手机的IP地址
 
 	python代码可以这样写
 
@@ -46,7 +47,9 @@ For Android and iOS
 ## Take screenshot
 
 - Android: `python -m atx gui`
-- iOS: `python -m atx gui --serial http://localhost:8100`
+- iOS: `python -m atx gui --serial $DEVICE_URL`
+
+`DEVICE_URL` 通常是 `http://localhost:8100`
 
 更多命令可以通过`python -m atx gui --help` 查看。如果屏幕超过了整个屏幕可以通过调小 `--scale` 来调整
 
