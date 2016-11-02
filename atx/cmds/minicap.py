@@ -65,15 +65,16 @@ def main(serialno=None, host=None, port=None):
         abi = adb('shell', 'getprop', 'ro.product.cpu.abi').strip()
         sdk = adb('shell', 'getprop', 'ro.build.version.sdk').strip()
 
+        minicap_base_url = "https://github.com/codeskyblue/stf-binaries/raw/master/node_modules/minicap-prebuilt/prebuilt/"
         logger.info("Downloading minicap.so ....")
-        url = "https://github.com/openstf/stf/raw/master/vendor/minicap/shared/android-"+sdk+"/"+abi+"/minicap.so"
+        url = minicap_base_url+abi+"/lib/android-"+sdk+"/minicap.so"
         target_path = os.path.join(tmpdir, 'minicap.so')
         http_download(url, target_path)
         logger.info("Push data to device ....")
         adb('push', target_path, '/data/local/tmp')
         
         logger.info("Downloading minicap ....")
-        url = "https://github.com/openstf/stf/raw/master/vendor/minicap/bin/"+abi+"/minicap"
+        url = minicap_base_url+abi+"/bin/minicap"
         target_path = os.path.join(tmpdir, 'minicap')
         http_download(url, target_path)
         logger.info("Push data to device ....")
@@ -97,7 +98,7 @@ def main(serialno=None, host=None, port=None):
         logger.info("Minitouch install finished !")
 
     except Exception, e:
-        logger.error(e)
+        logger.error('error: %s', e)
     finally:
         if tmpdir:
             logger.info("Cleaning temp dir")
