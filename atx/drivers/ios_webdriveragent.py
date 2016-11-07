@@ -27,7 +27,7 @@ class IOSDevice(DeviceMixin):
         self.__scale = None
         
         self._wda = wda.Client(device_url)
-        self._session = None
+        self._session = self._wda.session()
         self._bundle_id = None
 
         if bundle_id:
@@ -115,6 +115,13 @@ class IOSDevice(DeviceMixin):
         rs = dict(PORTRAIT=0, LANDSCAPE=1, UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT=3)
         return rs.get(self._session.orientation, 0)
 
+    def type(self, text):
+        """Type text
+        Args:
+            text(string): input text
+        """
+        self._session.send_keys(text)
+        
     def click(self, x, y):
         """Simulate click operation
         Args:
