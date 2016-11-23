@@ -27,11 +27,12 @@ class IOSDevice(DeviceMixin):
         self.__scale = None
         
         self._wda = wda.Client(device_url)
-        self._session = self._wda.session()
+        self._session = None
         self._bundle_id = None
 
         if bundle_id:
             self.start_app(bundle_id)
+            
         # ioskit.Device.__init__(self, udid)
 
         # # xcodebuild -project  -scheme WebDriverAgentRunner -destination "id=1002c0174e481a651d71e3d9a89bd6f90d253446" test
@@ -78,7 +79,8 @@ class IOSDevice(DeviceMixin):
 
     def __call__(self, *args, **kwargs):
         if self._session is None:
-            raise RuntimeError("Need to call start_app before")
+            self._session = self._wda.session()
+            # raise RuntimeError("Need to call start_app before")
         return self._session(*args, **kwargs)
 
     def status(self):
