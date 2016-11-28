@@ -70,6 +70,12 @@ class IOSDevice(DeviceMixin):
         self._session = self._wda.session(bundle_id)
         return self._session
 
+    @property
+    def session(self):
+        if self._session is None:
+            self._session = self._wda.session()
+        return self._session
+
     def stop_app(self, *args):
         if self._session is None:
             return
@@ -78,10 +84,7 @@ class IOSDevice(DeviceMixin):
         self._bundle_id = None
 
     def __call__(self, *args, **kwargs):
-        if self._session is None:
-            self._session = self._wda.session()
-            # raise RuntimeError("Need to call start_app before")
-        return self._session(*args, **kwargs)
+        return self.session(*args, **kwargs)
 
     def status(self):
         """ Check if connection is ok """
@@ -102,9 +105,7 @@ class IOSDevice(DeviceMixin):
     def scale(self):
         if self.__scale:
             return self.__scale
-        if self._session is None:
-            raise RuntimeError("Need to call start_app before")
-        wsize = self._session.window_size()
+        wsize = self.session.window_size()
         self.__scale = min(self.display) / min(wsize)
         return self.__scale
     
@@ -115,14 +116,14 @@ class IOSDevice(DeviceMixin):
             int (0-3)
         """
         rs = dict(PORTRAIT=0, LANDSCAPE=1, UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT=3)
-        return rs.get(self._session.orientation, 0)
+        return rs.get(self.session.orientation, 0)
 
     def type(self, text):
         """Type text
         Args:
             text(string): input text
         """
-        self._session.send_keys(text)
+        self.session.send_keys(text)
         
     def click(self, x, y):
         """Simulate click operation
@@ -130,7 +131,7 @@ class IOSDevice(DeviceMixin):
             x, y(int): position
         """
         rx, ry = x/self.scale, y/self.scale
-        self._session.tap(rx, ry)
+        self.session.tap(rx, ry)
 
     def swipe(self, x1, y1, x2, y2, duration=0.5):
         """Simulate swipe operation
@@ -141,7 +142,7 @@ class IOSDevice(DeviceMixin):
         """
         scale = self.scale
         x1, y1, x2, y2 = x1/scale, y1/scale, x2/scale, y2/scale
-        self._session.swipe(x1, y1, x2, y2, duration)
+        self.session.swipe(x1, y1, x2, y2, duration)
 
     def home(self):
         """ Return to homescreen """
