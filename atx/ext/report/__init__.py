@@ -272,22 +272,38 @@ class Report(object):
         self._add_assert(**kwargs)
 
     def assert_ui_exists(self, ui, **kwargs):
-        """ For Android Only
+        """ For Android & IOS
         Args:
             - ui: need have property "exists"
             - desc (str): description
             - safe (bool): will omit AssertionError if set to True
             - screenshot: can be type <None|True|False|PIL.Image>
+            - platform (str, default:android): android | ios
         """
         is_success = ui.exists
         if is_success:
             if kwargs.get('screenshot') is not None:
-                bounds = ui.info['bounds'] # iOS may not have this.
-                print bounds
-                kwargs['position'] = {
-                    'x': (bounds['left']+bounds['right'])/2,
-                    'y': (bounds['top']+bounds['bottom'])/2,
-                }
+                if kwargs.get('platform') is None:
+                    bounds = ui.info['bounds'] # For android only.
+                    #print bounds
+                    kwargs['position'] = {
+                        'x': (bounds['left']+bounds['right'])/2,
+                        'y': (bounds['top']+bounds['bottom'])/2,
+                    }
+                elif kwargs.get('platform') == 'android':
+                    bounds = ui.info['bounds'] # For android only.
+                    #print bounds
+                    kwargs['position'] = {
+                        'x': (bounds['left']+bounds['right'])/2,
+                        'y': (bounds['top']+bounds['bottom'])/2,
+                    }
+                elif kwargs.get('platform') == 'ios':
+                    bounds = ui.bounds # For IOS only.
+                    #print bounds
+                    kwargs['position'] = {
+                        'x': self.d.scale*(bounds.x+bounds.width/2),
+                        'y': self.d.scale*(bounds.y+bounds.height/2),
+                    }
             message = 'UI exists'
         else:
             message = 'UI not exists'
