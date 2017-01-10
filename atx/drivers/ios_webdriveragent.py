@@ -23,7 +23,7 @@ class IOSDevice(DeviceMixin):
     def __init__(self, device_url, bundle_id=None):
         DeviceMixin.__init__(self)
         self.__device_url = device_url
-        self.__display = None
+        self.__screensize = None
         self.__scale = None
         
         self._wda = wda.Client(device_url)
@@ -93,9 +93,8 @@ class IOSDevice(DeviceMixin):
     @property
     def display(self):
         """ Get screen width and height """
-        if not self.__display:
-            self.screenshot()
-        return self.__display
+        w, h = self.session.window_size()
+        return Display(w*self.scale, h*self.scale)
 
     @property
     def bundle_id(self):
@@ -106,7 +105,9 @@ class IOSDevice(DeviceMixin):
         if self.__scale:
             return self.__scale
         wsize = self.session.window_size()
-        self.__scale = min(self.display) / min(wsize)
+        # duplicate operation here. But do not want fix it now.
+        self.__scale = min(self.screenshot().size)/min(wsize)
+        # self.__scale = min(self.__screensize) / min(wsize)
         return self.__scale
     
     @property
@@ -161,6 +162,6 @@ class IOSDevice(DeviceMixin):
         img = Image.open(StringIO(raw_png))
         if filename:
             img.save(filename)
-        if not self.__display:
-            self.__display = Display(*sorted(img.size))
+        if not self.__screensize:
+            self.__screensize = Display(*sorted(img.size))
         return img

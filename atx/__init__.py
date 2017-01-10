@@ -70,6 +70,7 @@ def connect(*args, **kwargs):
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
     c = cls(*args, **kwargs)
+    c.platform = platform
     return c
 
 

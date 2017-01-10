@@ -375,6 +375,17 @@ class DeviceMixin(object):
             return FindPoint(ret['result'], ret['confidence'], consts.IMAGE_MATCH_METHOD_SIFT, matched=True)
         return None
 
+    def match_all(self, pattern):
+        """
+        Test method, not suggested to use
+        """
+        pattern = self.pattern_open(pattern)
+        search_img = pattern.image
+        screen = self.region_screenshot()
+        screen = imutils.from_pillow(screen)
+        points = ac.find_all_template(screen, search_img, maxcnt=10)
+        return points
+
     def match(self, pattern, screen=None, rect=None, offset=None, threshold=None, method=None):
         """Check if image position in screen
 

@@ -283,23 +283,14 @@ class Report(object):
         is_success = ui.exists
         if is_success:
             if kwargs.get('screenshot') is not None:
-                if kwargs.get('platform') is None:
+                if self.d.platform == 'android':
                     bounds = ui.info['bounds'] # For android only.
-                    #print bounds
                     kwargs['position'] = {
                         'x': (bounds['left']+bounds['right'])/2,
                         'y': (bounds['top']+bounds['bottom'])/2,
                     }
-                elif kwargs.get('platform') == 'android':
-                    bounds = ui.info['bounds'] # For android only.
-                    #print bounds
-                    kwargs['position'] = {
-                        'x': (bounds['left']+bounds['right'])/2,
-                        'y': (bounds['top']+bounds['bottom'])/2,
-                    }
-                elif kwargs.get('platform') == 'ios':
-                    bounds = ui.bounds # For IOS only.
-                    #print bounds
+                elif self.d.platform == 'ios':
+                    bounds = ui.bounds # For iOS only.
                     kwargs['position'] = {
                         'x': self.d.scale*(bounds.x+bounds.width/2),
                         'y': self.d.scale*(bounds.y+bounds.height/2),

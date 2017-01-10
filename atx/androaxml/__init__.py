@@ -10,4 +10,5 @@ def parse_apk(filename):
         (package, activity)
     '''
     a = apk.APK(filename)
+    
     return (a.get_package(), a.get_main_activity())
