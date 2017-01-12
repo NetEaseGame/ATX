@@ -96,8 +96,17 @@ d.click_nowait('button.png')
 
 # 文件名添加截图手机的分辨率, 脚本运行在其他分辨率的手机上时可以自动适应
 d.click_image("button.1920x1080.png")
-# 等价于
-d.click_image(atx.Pattern('button.png', rsl=(1080, 1920)))
+
+# 更高级一点(强烈推荐)
+# 下面这种方法会自动根据当前测试手机的分辨率选择合适的文件
+# 比如手机分辨率1920x1080,代码会自动寻找文件4中文件之一，找到就返回
+# - button@1920x1080.png
+# - button@1080x1920.png
+# - button.1920x1080.png
+# - button.1080x1920.png
+d.click_image("button@auto.png")
+
+# 至于为什么同时出现用`@`和`.`分隔，一开始用的是pytk写的编辑器，那个tkFileDialog对`@`支持的不好，所以只能用`.`
 
 # 文件名中添加偏移量, 格式为 <L|R><number><T|B><number>.png
 # 其中 L: Left, R: Right, T: Top, B: Bottom

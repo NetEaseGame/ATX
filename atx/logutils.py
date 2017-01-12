@@ -59,7 +59,7 @@ class Logger(object):
         )
         props['levelname'] = Logger.__alias.get(levelname, levelname)
         output = u'{asctime} {levelname:<5s} [{name}:{lineno:>4}] {message}'.format(**props)
-        self._write(strutils.encode(output, 'utf-8'))
+        self._write(strutils.encode(output))
 
     def debug(self, *args, **kwargs):
         self._level_write(logging.DEBUG, *args, **kwargs)

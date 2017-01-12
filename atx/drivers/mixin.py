@@ -257,6 +257,7 @@ class DeviceMixin(object):
         self.image_path = ['.']
         self.__last_screen = None
         self.__keep_screen = False
+        self.__screensize = None
 
     @property
     def resolution(self):
@@ -278,20 +279,25 @@ class DeviceMixin(object):
         return image_path
 
     def pattern_open(self, image):
+        if self.__screensize is None:
+            self.__screensize = self.display
+
         if isinstance(image, Pattern):
             if image._image is None:
                 image_path = self._search_image(image._name)
                 image._image = imutils.open(image_path)
             return image
-        elif isinstance(image, basestring):
-            image_path = base.search_image(image, self.image_path)
+        
+        if isinstance(image, basestring):
+            image_path = base.lookup_image(image, self.__screensize[0], self.__screensize[1])
             if image_path is None:
-                raise IOError('image file not found: {}'.format(image))
+                raise IOError('file not found: {}'.format(image))
             return Pattern(image_path, image=imutils.open(image_path))
-        elif 'numpy' in str(type(image)):
+        
+        if 'numpy' in str(type(image)):
             return Pattern('unknown', image=image)
-        else:
-            raise TypeError("Not supported image type: {}".format(type(image)))
+        
+        raise TypeError("Not supported image type: {}".format(type(image)))
 
     def delay(self, secs):
         """Delay some seconds

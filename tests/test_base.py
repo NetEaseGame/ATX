@@ -35,3 +35,28 @@ def test_search_image():
     assert imgpath is not None
     assert 'haima.png' in imgpath
     assert 'media' in imgpath
+
+
+def test_filename_match():
+    # @auto is supported
+    assert base.filename_match('fight@auto.png', 'fight@4x3.png', 4, 3) == True
+    assert base.filename_match('fight@auto.png', 'fight@4x3.png', 3, 4) == True
+    assert base.filename_match('fight@auto.png', 'fight.4x3.png', 3, 4) == True
+    assert base.filename_match('fight@auto.png', 'fight.3x4.png', 3, 4) == True
+
+    assert base.filename_match('fight@auto.png', 'fight.16x9.png', 3, 4) == False
+    assert base.filename_match('fight@auto.png', 'fight@16x9.png', 0, 0) == False
+
+    # not support @wxh now
+    assert base.filename_match('fight@3x4.png', 'fight@3x4.png', 3, 4) == True
+
+    # normal
+    assert base.filename_match('fight.png', 'fight.png', 3, 4) == True
+    assert base.filename_match('fight.png', 'fight.png', 0, 0) == True
+    assert base.filename_match('fight.png', 'fight.jpg', 0, 0) == False
+    # assert base.filename_match('fight.3x4.png', 'fight.3x4.png', 3, 4) == True
+    # assert base.filename_match('fight@auto.png', 'fight@4x3.png', 15, 20) == False
+
+
+if __name__ == '__main__':
+    test_filename_match()
