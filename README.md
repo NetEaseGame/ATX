@@ -78,6 +78,25 @@ etc... To see the whole list click [here](https://github.com/NetEase/AutomatorX/
 ## Known Issues
 If you are having some issues please checkout [wiki](https://github.com/NetEase/AutomatorX/wiki/Common-Issues) first.
 
+为了避免潜在的Python编码问题，代码文件都应该用UTF-8编码格式保存。
+
+- 对于python2.7 字符串前应该加上u开头，例如`u'你好'`
+
+	文件的开头可以加上下面这段代码，强制使用python3的编码体系(默认全部都是unicode)
+
+	```python
+	from __future__ import unicode_literals
+	```
+
+- 对于python3的非windows系统
+	
+	检查一下`sys.stdout.encoding`的编码是否是UTF-8，不然中文字符的输出通常会有问题
+	解决办法通常就是在bashrc文件中加入一行
+
+	```shell
+	export PYTHONIOENCODING=UTF-8
+	```
+
 ## ATX Extentions
 该部分属于atx的扩展插件实现的功能
 

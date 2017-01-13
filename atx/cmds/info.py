@@ -19,4 +19,4 @@ def main(serial, host, port):
         'version.release': props.get('ro.build.version.release'),
         'product.cpu.abi': props.get('ro.product.cpu.abi'),
     }
-    print json.dumps(info, indent=4)
+    print(json.dumps(info, indent=4))

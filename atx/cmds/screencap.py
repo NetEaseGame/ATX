@@ -18,15 +18,15 @@ def main(host=None, port=None, serial=None, scale=1.0, out='screenshot.png', met
     Disable scale for now.
     Because -s scale is conflict of -s serial
     """
-    print 'Started screencap'
+    print('Started screencap')
     start = time.time()
 
     client = adbkit.Client(host=host, port=port)
     device = client.device(serial)
     im = device.screenshot(scale=scale)
     im.save(out)
-    print 'Time spend: %.2fs' % (time.time() - start)
-    print 'File saved to "%s"' % out
+    print('Time spend: %.2fs' % (time.time() - start))
+    print('File saved to "%s"' % out)
 
     try:
         import win32clipboard
@@ -40,7 +40,7 @@ def main(host=None, port=None, serial=None, scale=1.0, out='screenshot.png', met
         win32clipboard.EmptyClipboard()
         win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
         win32clipboard.CloseClipboard()
-        print 'Copied to clipboard'
+        print('Copied to clipboard')
     except:
         pass # ignore
 
