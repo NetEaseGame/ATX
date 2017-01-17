@@ -522,14 +522,28 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
     def _prepare_ime(self):
         if self._is_utf7ime():
-            return
+            return True
 
         for ime in self.input_methods():
             if self._is_utf7ime(ime):
                 self.enable_ime(ime)
-                return
-        raise RuntimeError("Input method for programers not detected.\n" +
-            "\tInstall with: python -m atx install atx-assistant")
+                return True
+        return False
+        # raise RuntimeError("Input method for programers not detected.\n" +
+        #     "\tInstall with: python -m atx install atx-assistant")
+
+    def _shell_type(self, text):
+        first = True
+        for s in text.split('%s'):
+            if first:
+                first = False
+            else:
+                self.adb_shell(['input', 'text', '%'])
+                s = 's' + s
+            if s == '':
+                continue
+            estext = self._escape_text(s)
+            self.adb_shell(['input', 'text', estext])
 
     def type(self, text, enter=False, next=False):
         """Input some text, this method has been tested not very stable on some device.
@@ -547,12 +561,16 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         app source see here: https://github.com/openatx/android-unicode
         """
-        self._prepare_ime()
-        estext = base64.b64encode(text.encode('utf-7'))
-        self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
+        if self._prepare_ime():
+            estext = base64.b64encode(text.encode('utf-7'))
+            self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
+        else:
+            self._shell_type(text)
+
         if enter:
             self.keyevent('KEYCODE_ENTER')
         if next:
+            # FIXME(ssx): maybe KEYCODE_NAVIGATE_NEXT
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_EDITOR_CODE', '--ei', 'code', '5'])
 
     def clear_text(self, count=100):
