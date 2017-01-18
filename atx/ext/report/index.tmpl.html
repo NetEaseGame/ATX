@@ -190,7 +190,7 @@
               <a class="fancybox" title="Before" rel="{{step.time}}" v-bind:href="step.screen_before">
                 <div class="image-wrapper">
                   <span class="positioner" v-bind:style="step.position | displayPosition">
-                    <span class="finger"></span>
+                    <!-- <span class="finger"></span> -->
                   </span>
                   <img width="100%" v-bind:src="step.screen_before" />
                 </div>
@@ -218,7 +218,7 @@
                 <div class="image-wrapper">
                   <template v-if="step.position">
                     <span class="positioner" v-bind:style="step.position | displayPosition">
-                      <span class="finger"></span>
+                      <!-- <span class="finger"></span> -->
                     </span>
                   </template>
                   <img width="100%" v-bind:src="step.screen_before" />

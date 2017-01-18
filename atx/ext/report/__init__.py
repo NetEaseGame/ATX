@@ -81,9 +81,7 @@ class Report(object):
             cv_last_img = imutils.from_pillow(self.last_screenshot)
             cv_last_img = imutils.mark_point(cv_last_img, x, y)
             screen = imutils.to_pillow(cv_last_img)
-            screen_before = self._save_screenshot()
-            self._add_to_gif(screen)
-            # screen_before = self._save_screenshot(self.last_screenshot)
+            screen_before = self._save_screenshot(screen=screen, append_gif=True)
             # FIXME: maybe need sleep for a while
             screen_after = self._save_screenshot(append_gif=True)
 
@@ -319,6 +317,11 @@ class Report(object):
         if evt.is_before: # call before function
             if evt.flag == consts.EVENT_CLICK:
                 self.__last_screenshot = d.screenshot() # Maybe no need to set value here.
+                (x, y) = evt.args
+                cv_img = imutils.from_pillow(self.last_screenshot)
+                cv_img = imutils.mark_point(cv_img, x, y)
+                self.__last_screenshot = imutils.to_pillow(cv_img)
+                self._add_to_gif(self.last_screenshot)
             return
 
         if evt.flag == consts.EVENT_CLICK:
@@ -351,11 +354,17 @@ class Report(object):
                 self._save_screenshot(pattern, name=target)
                 kwargs['target'] = target
             if evt.traceback is None:
+                (x, y) = evt.retval.pos
+                # FIXME(ssx): quick hot fix
+                cv_img = imutils.from_pillow(self.last_screenshot)
+                cv_img = imutils.mark_point(cv_img, x, y)
+                self.__last_screenshot = imutils.to_pillow(cv_img)
+                self.last_screenshot.save(screen_before_abspath)
+                
                 screen_after = 'images/after_%d.png' % time.time()
                 d.screenshot(os.path.join(self.save_dir, screen_after))
                 kwargs['screen_after'] = screen_after
                 kwargs['confidence'] = evt.retval.confidence
-                (x, y) = evt.retval.pos
                 kwargs['position'] = {'x': x, 'y': y}
             self.add_step('click_image', **kwargs)
         elif evt.flag == consts.EVENT_ASSERT_EXISTS: # this is image, not tested

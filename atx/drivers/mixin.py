@@ -164,6 +164,16 @@ class DeviceMixin(object):
         if not safe:
             raise errors.ImageNotFoundError('Not found image %s' %(pattern,))
 
+    def wait_gone(self, pattern, timeout=10.0, safe=False, **match_kwargs):
+        t = time.time() + timeout
+        while time.time() < t:
+            ret = self.exists(pattern, **match_kwargs)
+            if not ret:
+                return True
+            time.sleep(0.2)
+        if not safe:
+            raise errors.ImageNotFoundError('Image not gone %s' %(pattern,))
+
     def touch(self, x, y):
         """ Alias for click """
         self.click(x, y)

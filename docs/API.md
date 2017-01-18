@@ -154,6 +154,12 @@ with d.keep_screen():
 	d.click_nowait("button2.png")
 ```
 
+## 图片等待操作
+```
+d.wait("button.png") # 等待一个按钮出现
+d.wait_gone("button.png") # 等待一个按钮消失
+```
+
 ## 原生UI操作
 下面给的例子并不完全，更多的接口需要看下面这两个链接
 
