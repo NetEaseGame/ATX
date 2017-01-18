@@ -138,6 +138,22 @@ nd = d.region(atx.Bounds(50, 50, 180, 300))
 print nd.match('folder.png')
 ```
 
+## 锁定当前屏幕（主要用于提高查询效率）
+```
+d.keep_screen()
+d.click_nowait("button1.png")
+d.click_nowait("button2.png")
+d.free_screen()
+```
+
+这种操作，执行第二次`click_nowait`时，就不会再次截图。另外上面的代码也可以这样写
+
+```
+with d.keep_screen():
+	d.click_nowait("button1.png")
+	d.click_nowait("button2.png")
+```
+
 ## 原生UI操作
 下面给的例子并不完全，更多的接口需要看下面这两个链接
 
@@ -207,7 +223,7 @@ d.click_image('photo2.png')
 ```
 
 
-## 监控事件 (即将废弃，不建议使用)
+## 监控事件 (已经废弃，不建议使用)
 
 watch是一个内部循环，对于on函数中的所有出现的图片进行监控，如果发现吻合的，就执行后续的操作，直到timeout时间到。
 
