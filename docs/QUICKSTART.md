@@ -71,7 +71,7 @@ _PS: 这里其实有个好的IDE截图的最好了，现在是用Tkinter做的�
 安装方法
 
 ```
-python install -U --pre atx-webide
+pip install -U --pre atx-webide
 ```
 
 在命令行下使用命令 `python -m atxweb` 启动编辑器
