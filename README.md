@@ -140,7 +140,30 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 		```
 
 	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
-	
+
+* WebView
+
+	这部分稳定性很不确定（仅限安卓），使用该功能需要很大的耐心
+
+	从该地址<https://sites.google.com/a/chromium.org/chromedriver/downloads> 下载chromedriver到PC上，并添加到PATH中。（不用启动）
+
+	手动安装额外的依赖库 `pip install selenium`
+
+	例子代码
+
+	```python
+	# coding: utf-8
+	import atx
+	from atx.ext.chromedriver import ChromeDriver
+
+    d = atx.connect()
+    driver = ChromeDriver(d).driver() # return selenium.driver instance
+    elem = driver.find_element_by_link_text(u"登录")
+    elem.click()
+    driver.quit()
+    ```
+
+    更多的selenium文档需要参考 <http://selenium-python.readthedocs.io/getting-started.html>
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
