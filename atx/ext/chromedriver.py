@@ -27,19 +27,27 @@ class ChromeDriver(object):
         except subprocess.TimeoutExpired:
             return True
 
-    def driver(self):
+    def driver(self, attach=True, activity=None):
         """
-        Returns selenium driver
+        Args:
+            - attach(bool): Attach to an already-running app instead of launching the app with a clear data directory
+            - activity(string): Name of the Activity hosting the WebView.
+
+        Returns:
+            selenium driver
         """
         app = self._d.current_app()
-        print app
         capabilities = {
             'chromeOptions': {
-                'androidPackage': app.package,
-                'androidActivity': app.activity,
                 'androidDeviceSerial': self._d.serial,
+                'androidPackage': app.package,
             }
         }
+        if attach:
+            capabilities['chromeOptions']['androidUseRunningApp'] = True
+        if activity:
+            capabilities['chromeOptions']['androidActivity'] = activity
+
         try:
             return webdriver.Remote('http://localhost:%d' % self._port, capabilities)
         except URLError:
