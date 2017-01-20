@@ -8,9 +8,16 @@
 from __future__ import absolute_import
 
 
+import atexit
+import six
 from selenium import webdriver
-from urllib2 import URLError
-import subprocess32 as subprocess
+
+if six.PY3:
+    import subprocess
+    from urllib.error import URLError
+else:
+    from urllib2 import URLError
+    import subprocess32 as subprocess
 
 
 class ChromeDriver(object):
@@ -27,11 +34,14 @@ class ChromeDriver(object):
         except subprocess.TimeoutExpired:
             return True
 
-    def driver(self, attach=True, activity=None):
+    def driver(self, package=None, attach=True, activity=None, process=None):
         """
         Args:
-            - attach(bool): Attach to an already-running app instead of launching the app with a clear data directory
+            - package(string): default current running app
+            - attach(bool): default true, Attach to an already-running app instead of launching the app with a clear data directory
             - activity(string): Name of the Activity hosting the WebView.
+            - process(string): Process name of the Activity hosting the WebView (as given by ps). 
+                If not given, the process name is assumed to be the same as androidPackage.
 
         Returns:
             selenium driver
@@ -40,19 +50,22 @@ class ChromeDriver(object):
         capabilities = {
             'chromeOptions': {
                 'androidDeviceSerial': self._d.serial,
-                'androidPackage': app.package,
+                'androidPackage': package or app.package,
+                'androidUseRunningApp': attach,
+                'androidProcess': process or app.package,
+                'androidActivity': activity or app.activity,
             }
         }
-        if attach:
-            capabilities['chromeOptions']['androidUseRunningApp'] = True
-        if activity:
-            capabilities['chromeOptions']['androidActivity'] = activity
 
         try:
-            return webdriver.Remote('http://localhost:%d' % self._port, capabilities)
+            dr = webdriver.Remote('http://localhost:%d' % self._port, capabilities)
         except URLError:
             self._launch_webdriver()
-            return webdriver.Remote('http://localhost:%d' % self._port, capabilities)
+            dr = webdriver.Remote('http://localhost:%d' % self._port, capabilities)
+        
+        # always quit driver when done
+        atexit.register(dr.quit)
+        return dr
 
     def windows_kill(self):
         subprocess.call(['taskkill', '/F', '/IM', 'chromedriver.exe', '/T'])
