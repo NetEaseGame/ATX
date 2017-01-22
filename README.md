@@ -71,9 +71,9 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 
 ## Getting Started
-To get started, it is better to look at the [QUICK START](docs/QUICKSTART.md)
-
-More about the ATX [API HERE](docs/API.md)
+* To get started, it is better to look at the [QUICK START](docs/QUICKSTART.md)
+* More about the ATX [API HERE](docs/API.md)
+* iOS的接口文档被放到了testerhome上 <https://testerhome.com/topics/7204>
 
 There is also a doc for professional users. [API ADVANCED](README_ADVANCED.md)
 
@@ -157,9 +157,9 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 
 * WebView
 
-	这部分稳定性很不确定（仅限安卓），使用该功能需要很大的耐心
+	目前仅限安卓
 
-	从该地址<https://sites.google.com/a/chromium.org/chromedriver/downloads> 下载chromedriver到PC上，并添加到PATH中。（不用启动）
+	从该地址<https://sites.google.com/a/chromium.org/chromedriver/downloads> 下载chromedriver到PC上，并添加到PATH中。（启动不启动都可以）
 
 	手动安装额外的依赖库 `pip install selenium`
 
@@ -178,6 +178,8 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
     ```
 
     更多的selenium文档需要参考 <http://selenium-python.readthedocs.io/getting-started.html>
+
+    目前已知的问题: Chrome开inspect的时候不能和python代码同时运行。
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
