@@ -1,8 +1,8 @@
-aircv==1.4.4
+aircv==1.4.5
 futures==3.0.5
 tornado==4.3
 maproxy==0.0.12
-subprocess32==3.2.7
+subprocess32==3.2.7 ; python_version <= '2.7'
 tqdm==4.5.0
 PyYAML==3.11
 numpy>=1.11.0

@@ -9,10 +9,14 @@ import re
 import json
 import collections
 import tempfile
-from StringIO import StringIO
 
 from PIL import Image
 from atx import logutils
+
+try:
+    from StringIO import StringIO
+except:
+    from io import StringIO
 
 
 logger = logutils.getLogger(__name__)

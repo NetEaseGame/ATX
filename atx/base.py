@@ -37,7 +37,7 @@ def exec_cmd(*cmds, **kwargs):
         try:
             envcopy[key] = str(env[key]).encode('utf-8') # fix encoding
         except:
-            print 'IGNORE BAD ENV KEY:', repr(key)
+            print('IGNORE BAD ENV KEY: ' + repr(key))
     env = envcopy
 
     timeout = kwargs.get('timeout', 120)
@@ -254,4 +254,4 @@ if __name__ == '__main__':
     # print search_image()
 
     Point = nameddict('Point', ['x', 'y'])
-    print Point(2, 3, 4)
+    print(Point(2, 3, 4))

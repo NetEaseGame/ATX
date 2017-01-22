@@ -51,15 +51,15 @@ from atx.adbkit.client import Client
 
 if __name__ == '__main__':
     adb = Client()
-    print adb.devices()
-    print adb.version()
+    print(adb.devices())
+    print(adb.version())
     dev = adb.device() #'10.250.210.165:57089')
     # print dev.keyevent('HOME')
-    print dev.display
+    print(dev.display)
     # for pkg in dev.packages():
     #     print pkg
     # dev.screenshot('s.png', scale=1.0)
-    print dev.is_locked()
-    print dev.wake()
+    print(dev.is_locked())
+    print(dev.wake())
     dev.click(568, 1488)
-    print dev.current_app()
+    print(dev.current_app())

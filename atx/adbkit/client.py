@@ -6,7 +6,10 @@ from __future__ import absolute_import
 import os
 import re
 import socket
-import subprocess32 as subprocess
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
 
 from atx.adbkit.device import Device
 
@@ -169,12 +172,12 @@ class Client(object):
                     return int(lp[4:])
             return self.forward(serial, next_local_port(self.server_host), remote_port)
         else:
-            print serial, remote_port, local_port
+            print(serial, remote_port, local_port)
             self.raw_cmd("-s", serial, "forward", "tcp:%d" % local_port, "tcp:%d" % remote_port).wait()
             return local_port
 
 
 if __name__ == '__main__':
     adb = Client()
-    print adb.devices()
-    print adb.version()
+    print(adb.devices())
+    print(adb.version())

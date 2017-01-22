@@ -13,15 +13,18 @@ import base64
 
 import numpy as np
 from PIL import Image
-from StringIO import StringIO
 
-# import any special Python 2.7 packages
-if sys.version_info.major == 2:
+try:
     from urllib import urlopen
+    from StringIO import StringIO
+except:
+    from urllib.request import urlopen
+    from io import StringIO
+# import any special Python 2.7 packages
+#if sys.version_info.major == 2:
 
 # import any special Python 3 packages
-elif sys.version_info.major == 3:
-    from urllib.request import urlopen
+#elif sys.version_info.major == 3:
 
 
 __sys_open = open
@@ -151,8 +154,8 @@ if __name__ == '__main__':
     image = open('baidu.png')
     image = open(image)
     # cv2.imwrite('baidu.png', image)
-    print image.shape
+    print(image.shape)
     image = crop(image, bottom=200, top=100, left=50, right=200)
-    print image.shape
+    print(image.shape)
     cv2.imwrite('tmp.png', image)
     # to_pillow(image).save('b2.png')

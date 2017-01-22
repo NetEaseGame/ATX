@@ -492,5 +492,5 @@ class DeviceMixin(object):
 
 if __name__ == '__main__':
     b = Bounds(1, 2, 3, 4)
-    print b
-    print b * 1.0
+    print(b)
+    print(b * 1.0)

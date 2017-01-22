@@ -247,7 +247,7 @@ class Report(object):
         if not is_success:
             message = kwargs.get('message')
             frame, filename, line_number, function_name, lines, index = inspect.stack()[2]
-            print 'Assert [%s: %d] WARN: %s' % (filename, line_number, message)
+            print('Assert [%s: %d] WARN: %s' % (filename, line_number, message))
             if not kwargs.get('safe', False):
                 raise AssertionError(message)
 
