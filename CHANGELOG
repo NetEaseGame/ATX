@@ -1,6 +1,172 @@
 CHANGES
 =======
 
+* fix all the python3 needed
+* make it support python3
+* add attach and activity params to chromedriver
+* fix command line pipe error
+* add chromedriver extension
+* fix install command bad name
+* update api doc
+* fix report
+
+1.1.0
+-----
+
+* remove watcher, add keep_screen to doc
+* update facebook wda deps
+* add adb shell input method back to atx
+* update requirements
+* update wiki with encoding, prepare for python3
+* support auto find files with pattern: fight@auto.png
+* update assert_ui_exists code, fix ios display()
+* add ios support for assert_ui_exists
+* fix session error
+* do not add session when start
+* add type for iOS support
+* fix python -matx minicap install failed, because of minicap binary link gone
+* update readme, close #82
+* remove duplicate code
+* add webdriver screenshot support
+* quick horiable fix for android UIAutomator json rpc error
+* sync wda code, close #79
+* add assert_ui_exists api
+* comment record(cmd) because of unstable
+* change type error
+* try to take screenshot again, when the first screenshot failed
+* add screenshot flag
+* finish assert support
+* add assert_equal into report
+* update atx-assistant url
+
+1.0.14
+------
+
+* test push
+* remove useless file
+* fix quick start link
+* also add imageio
+* try to fix multi test file name conflict, ref #69
+* add swipe to ios, close #68
+* fix doc link
+* add demo.gif
+* update doc, .
+* Update discuss group
+* add qq group
+* add mark_point method
+* force use atx-assistant input method for function type
+* remove useless files
+* update doc again
+* move some stuff to wiki
+* remove history doc
+* fix link again
+* fix wiki link
+* update readme, create the wiki
+* change back of android uiautomator apk file
+* fix Client.devices error when adb server restarts
+* info添加截图功能
+* update offset tests
+* add delay param to click_image
+* add profession doc about how to catch click_image error, close #60
+* fix ios report
+* match add rect
+* add get top layer name for surfaceflinger-fps program
+* add confidence and position for assert_exists, wait add safe=False
+* report support asset_exists and click_nowait now
+* add bootstrap fonts resouce
+* add current_app for android
+* add images tab & fix encoding
+* fix decode error for log used in click_image
+* fix offset bug, add match kwargs to add image operation method
+* add atx.ImageCrop
+* translate atx_click_image to python
+* use local resources
+* add match method for click_image
+* update atx-assistant version to 1.0.2
+* move click_image to save screen crop
+* fix install twice android test apk, close #59
+* add run/run_step for debug
+* update requirements
+* rename device folder to drivers, fix ios click image
+* handle exception to avoid subprocess in android_hook cannot be killed
+* use different scale for different screen size
+* fix rotation for swipe
+* fix rotation in webpage
+* fix rotation (uiautomator use top-left as origin even when screen is rotated)
+* fix screen2touch for rotated screen
+* fix connect(None) raise error problem, update atx-assistant version to 1.0.1
+* add edit-mode in record command
+* add save in draft_editor
+* create workdir if not exists
+* update record command. record for android only
+* make atx support facebook-wda report, close #36
+* fix exception when passing port=None
+* offset use percentage in atx_click_image
+* add missing file
+* add click/click_image interaction
+* fix md type
+* add desc args for click_image
+* set adb_shell timeout default to 30s
+* screencap add support to copy to clipboard, close #56
+* add debug script
+* fix clear_text error
+
+1.0.13
+------
+
+* little update desc
+* add atx assistant
+* remove androguard from atx, and put androguard into pypi
+* remove port restrict about atx gui
+* fix when adb port default not 5037 error
+* update drafte editor
+* trace uinodes to change it according to it's order
+* find ui by node index after modified case.json
+* add process_case for modified case.json
+* separate draft generate and code generate
+* change find_selector priority
+* add report test, part
+* fix issue #48 screenrecord failure
+* update windows install
+* update wda deps
+* remove useless doc
+* little fix
+* update documentation for ios
+* use webdriveragent to support ios
+* use timeout instead of while loop
+* using while loop to check for index-uiobject
+* analyze uixml to get ui selector
+* fix Division Zero bug
+* offset use percent and put it into filename like T30L20.png, close #39, close #46
+* Update README.md
+* update deps
+* make uilayout attributes compatible with py-uiautomator
+* add swipe & toolbar
+* analyze guestures using regexp
+* atx report support uiautomator
+* short report code, capture screen before run click
+* add named dict, update report ext structure
+* fix #44
+* add issue template
+* add tornado web server draft_editor
+* add missing images
+* add adb 1.0.36 address, close #41
+* add input_methods method, close #42
+* add keep_screen and free_screen, close #43
+* update again
+* add design, which are not started
+* add toolbar
+* add wda doc
+* codesign error, ..-_-!!
+* -_-! webdriveragent why not stable
+* update draft editor web
+* add editor first edition
+* clear_text add move_end
+* format doc
+* update readme doc
+* update
+* add input method detect
+* fix report bug
 * make ios test more stable
 * fix utf7ime install
 * add click_image( safe = True), also update report

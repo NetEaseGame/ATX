@@ -35,33 +35,47 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 - 网易内部用户目前请直接联系 `hzsunshx` 或加群 `1347390`
 
 ## 限制
-- 只支持Python2的测试脚本
+- 支持Python2的测试脚本(实验性的支持python3)
 - Android 4.1+
 - iOS 9.0+
 - iOS测试必须要有一个Mac
 
 ## Installation
 1. 安装ATX
-	- [Windows](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
-	- [Mac](https://github.com/NetEase/AutomatorX/wiki/Mac-installation)
 
-	注: iOS的测试一定需要一个Mac
+	```
+	pip install --upgrade --pre atx
+	pip install opencv_python
+	```
+
+	为了加快下载速度，国内用户可以使用额外的pip参数`-i https://pypi.doubanio.com/simple/`
+
 	装完之后测试下安装是否成功, `python -m atx version` 查看atx版本号
 
-1. 安卓的设备上还需要安装一个**ATX手机助手**
+1. Android测试依赖
 
-	可以下载[APK](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
-
+	安装[ATX手机助手.apk](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
 
 	该App为自动化提供了输入法的功能，屏幕常量等功能
 
+1. iOS测试依赖
+
+	你的iPhone手机需要连接到Mac上，然后Mac安装[WebDriverAgent](https://github.com/facebook/WebDriverAgent)
+
+	WDA成功启动后，会生成一个用于ATX连接的http地址，比如`http://localhost:8100`
+	
+1. 额外补充的信息
+
+	- [Win安装](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
+	- [Mac安装](https://github.com/NetEase/AutomatorX/wiki/Mac-installation)
+
 
 ## Getting Started
-To get started, it is better to look at the [Quick Start](docs/QUICKSTART.md)
+To get started, it is better to look at the [QUICK START](docs/QUICKSTART.md)
 
-More about the ATX [API here](docs/API.md)
+More about the ATX [API HERE](docs/API.md)
 
-There is also a doc for professional users. [here](README_ADVANCED.md)
+There is also a doc for professional users. [API ADVANCED](README_ADVANCED.md)
 
 ## Command Line Tools
 There are a lot of command tools along with atx, eg
