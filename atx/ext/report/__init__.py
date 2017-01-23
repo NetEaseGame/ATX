@@ -98,12 +98,16 @@ class Report(object):
         self.steps.append(kwargs)
 
     def patch_uiautomator(self):
-        """ record steps of uiautomator """
+        """
+        Record steps of uiautomator
+        """
         import uiautomator
         uiautomator.add_listener('atx-report', self._uia_listener)
 
     def patch_wda(self):
-        """ record steps of webdriveragent """
+        """
+        Record steps of WebDriverAgent
+        """
         import wda
 
         def _click(that):
@@ -161,32 +165,35 @@ class Report(object):
         self.__closed = True
 
     def info(self, text, screenshot=None):
+        """
+        Args:
+            - text(str): description
+            - screenshot: Bool or PIL.Image object
+        """
         step = {
             'time': '%.1f' % (time.time()-self.start_time,),
             'action': 'info',
-            'message': text,
+            'description': text,
             'success': True,
         }   
-        screen_path = 'images/info_%d.png' % time.time()
         if screenshot:
-            screen_abspath = os.path.join(self.save_dir, screen_path)
-            screenshot.save(screen_abspath)
-            step['screenshot'] = screen_path
+            step['screenshot'] = self._take_screenshot(screenshot, name_prefix='info')
         self.steps.append(step)
 
-    def error(self, text, screenshot=None, desc=None):
+    def error(self, text, screenshot=None):
+        """
+        Args:
+            - text(str): description
+            - screenshot: Bool or PIL.Image object
+        """
         step = {
             'time': '%.1f' % (time.time()-self.start_time,),
             'action': 'error',
-            'message': text,
-            'description': desc,
+            'description': text,
             'success': False,
         }   
-        screen_path = 'images/error_%d.png' % time.time()
         if screenshot:
-            screen_abspath = os.path.join(self.save_dir, screen_path)
-            screenshot.save(screen_abspath)
-            step['screenshot'] = screen_path
+            step['screenshot'] = self._take_screenshot(screenshot, name_prefix='error')
         self.steps.append(step)
 
     def _save_screenshot(self, screen=None, name=None, name_prefix='screen', append_gif=False):
