@@ -77,7 +77,6 @@ class DeviceMixin(object):
         self._bounds = None
         self._listeners = []
         self._depth = 0 # used for hook_wrap
-        self.image_path = ['.']
         self.__last_screen = None
         self.__keep_screen = False
         self.__screensize = None
@@ -94,12 +93,12 @@ class DeviceMixin(object):
             if not isinstance(value, tuple) or len(value) != 2:
                 raise TypeError("Value should be tuple, contains two values")
             self._resolution = tuple(sorted(value))
-    
-    def _search_image(self, name, raise_error=True):
-        image_path = base.search_image(name, self.image_path)
-        if raise_error and image_path is None:
-            raise IOError('image file not found: {}'.format(name))
-        return image_path
+
+    def _open_image_file(self, path):
+        realpath = base.lookup_image(path, self.__screensize[0], self.__screensize[1])
+        if realpath is None:
+            raise IOError('file not found: {}'.format(path))
+        return imutils.open(realpath)
 
     def pattern_open(self, image):
         if self.__screensize is None:
@@ -107,15 +106,12 @@ class DeviceMixin(object):
 
         if isinstance(image, Pattern):
             if image._image is None:
-                image_path = self._search_image(image._name)
-                image._image = imutils.open(image_path)
+                image._image = self._open_image_file(image._name)
             return image
         
         if isinstance(image, basestring):
-            image_path = base.lookup_image(image, self.__screensize[0], self.__screensize[1])
-            if image_path is None:
-                raise IOError('file not found: {}'.format(image))
-            return Pattern(image_path, image=imutils.open(image_path))
+            path = image
+            return Pattern(path, image=self._open_image_file(path))
         
         if 'numpy' in str(type(image)):
             return Pattern('unknown', image=image)

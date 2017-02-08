@@ -221,22 +221,6 @@ d.rotation = None # default auto detect, 这个配置一下比较好，自动识
 # 1: home key right
 # 2: home key top
 # 3: home key left
-
-# 图片路径查找(实验性功能)
-d.image_path = ['.'] # 默认
-
-# 主要用在希望代码和图片放在不同目录的情况, 如代码结构
-# /--
-#   |-- test.py
-#   |-- images/
-#          |- photo1.png
-#          `- photo2.png
-#
-
-# test.py 中的关键性代码
-d.image_path = ['.', 'images']
-d.click_image('photo1.png')
-d.click_image('photo2.png')
 ```
 
 
