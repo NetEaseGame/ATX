@@ -46,7 +46,7 @@ def run_adb(*args, **kwargs):
     cmds = map(str, cmds)
     cmdline = subprocess.list2cmdline(cmds)
     try:
-        return check_output(cmdline, shell=False)
+        return check_output(cmdline, shell=True)
     except Exception, e:
         raise EnvironmentError('run cmd: {} failed. {}'.format(cmdline, e))
 
