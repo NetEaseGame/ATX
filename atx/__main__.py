@@ -4,13 +4,16 @@
 # USAGE
 # python -matx -s ESLKJXX gui
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from __future__ import print_function
+
 import argparse
 import functools
 import json
 import sys
 import inspect
 from contextlib import contextmanager
-import atx.androaxml as apkparse
 
 from atx.cmds import run
 from atx.cmds import iosdeveloper
@@ -47,20 +50,21 @@ def load_main(module_name):
 
 
 def _apk_parse(args):
+    import atx.androaxml as apkparse
     (pkg_name, activity) = apkparse.parse_apk(args.filename)
-    print json.dumps({
+    print(json.dumps({
         'package_name': pkg_name,
         'main_activity': activity,
-    }, indent=4)
+    }, indent=4))
 
 
 def _version(args):
     import atx
-    print atx.version
+    print(atx.version)
 
 
 def _deprecated(args):
-    print 'Deprecated'
+    print('Deprecated')
 
 def main():
     ap = argparse.ArgumentParser(
@@ -151,6 +155,9 @@ def main():
         p.set_defaults(func=load_main('info'))
 
     args = ap.parse_args()
+    if not hasattr(args, 'func'):
+        print(' '.join(sys.argv) + ' -h for more help')
+        return
     args.func(args)
 
 if __name__ == '__main__':

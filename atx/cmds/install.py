@@ -4,19 +4,21 @@
 import atexit
 import os
 import re
-import subprocess32 as subprocess
 import shutil
 import sys
 import time
 import tempfile
-import urllib2
 
 import tqdm
-import atx.androaxml as apkparse
 
 from atx import logutils
 from atx import adbkit
 from atx.cmds import utils
+
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
 
 
 log = logutils.getLogger('install')
@@ -112,6 +114,7 @@ def main(path, serial=None, host=None, port=None, start=False):
         log.info("Download from: %s", urlpath)
         utils.http_download(urlpath, target)
 
+    import atx.androaxml as apkparse
     package_name, main_activity = apkparse.parse_apk(path)
     log.info("APK package name: %s", package_name)
     log.info("APK main activity: %s", main_activity)

@@ -21,7 +21,10 @@ import json
 from argparse import Namespace
 
 import yaml
-import subprocess32 as subprocess
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
 
 
 def json2obj(data):
@@ -29,7 +32,7 @@ def json2obj(data):
 
 
 def prompt(message):
-    print '>>>', message
+    print('>>> ' + message)
 
 
 def must_exec(*cmds, **kwargs):
@@ -54,7 +57,7 @@ def runtest(scripts):
 
 def notify_popo(users, message):
     prompt("Notify popo users")
-    print 'Skip, todo'
+    print('Skip, todo')
     for user in users:
         pass
     # maybe should not put code here

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import os
 import sys
 import signal
+import six
 
 import pkg_resources
 try:
@@ -27,7 +28,7 @@ def _detect_platform(*args):
 
     if len(args) == 0:
         return 'android'
-    elif not isinstance(args[0], basestring):
+    elif not isinstance(args[0], six.string_types):
         return 'android'
     elif args[0].startswith('http://'): # WDA use http url as connect str
         return 'ios'

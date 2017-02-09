@@ -159,7 +159,7 @@ class CropIDE(object):
             try:
                 func(*args, **kwargs)
             except Exception as e:
-                print e
+                print(e)
             finally:
                 que.task_done()
     
@@ -261,7 +261,7 @@ class CropIDE(object):
         self._attachfile_text.set(filename)
         if filename:
             self._btn_runedit.config(state=tk.NORMAL)
-        print filename
+        print(filename)
 
     def _refresh_screen(self):
         def foo():

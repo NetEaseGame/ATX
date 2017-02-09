@@ -1,12 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import urllib2
-import shutil
-import os
-import subprocess
-import commands
-import sys
+import requests
 
 
 def http_download(url, target_path):
@@ -14,20 +9,11 @@ def http_download(url, target_path):
     Args:
         - url(string): url request path
         - target_path(string): download destination
-
-    Raises:
-        IOError
-        urllib2.URLError
     """
-    try:
-        resp = urllib2.urlopen(url)
-    except urllib2.URLError, e:
-        if not hasattr(e, 'code'):
-            raise
-        resp = e
-    if resp.code != 200:
-        raise IOError("Request url(%s) expect 200 but got %d" %(url, resp.code))
-
+    r = requests.get(url, stream=True)
     with open(target_path, 'wb') as f:
-        shutil.copyfileobj(resp, f)
+        # shutil.copyfileobj(resp, f)
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
     return target_path
