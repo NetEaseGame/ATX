@@ -154,6 +154,9 @@ def main():
     with add_parser('info') as p:
         p.set_defaults(func=load_main('info'))
 
+    with add_parser('doctor') as p:
+        p.set_defaults(func=load_main('doctor'))
+
     args = ap.parse_args()
     if not hasattr(args, 'func'):
         print(' '.join(sys.argv) + ' -h for more help')

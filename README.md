@@ -50,7 +50,10 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 	为了加快下载速度，国内用户可以使用额外的pip参数`-i https://pypi.doubanio.com/simple/`
 
-	装完之后测试下安装是否成功, `python -m atx version` 查看atx版本号
+	装完之后用命令行简单测试下安装是否成功
+
+	- `python -m atx version` 查看atx版本号
+	- `python -m atx doctor` 检查环境配置是否正常
 
 1. Android测试依赖
 
@@ -60,7 +63,7 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 1. iOS测试依赖
 
-	你的iPhone手机需要连接到Mac上，然后Mac安装[WebDriverAgent](https://github.com/facebook/WebDriverAgent)
+	你的iPhone手机需要连接到Mac上，然后Mac安装[WebDriverAgent](https://github.com/facebook/WebDriverAgent)，通常对Xcode部署的人搭WDA的人会遇到不少问题，搞不定继续参考这里 <https://testerhome.com/topics/7220>
 
 	WDA成功启动后，会生成一个用于ATX连接的http地址，比如`http://localhost:8100`
 	
@@ -157,11 +160,7 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 
 * WebView
 
-	目前仅限安卓
-
-	从该地址<https://sites.google.com/a/chromium.org/chromedriver/downloads> 下载chromedriver到PC上，并添加到PATH中。（启动不启动都可以）
-
-	手动安装额外的依赖库 `pip install selenium`
+	目前仅限安卓, 具体参考 <https://testerhome.com/topics/7232>
 
 	例子代码
 
@@ -177,9 +176,7 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
     driver.quit()
     ```
 
-    更多的selenium文档需要参考 <http://selenium-python.readthedocs.io/getting-started.html>
-
-    目前已知的问题: Chrome开inspect的时候不能和python代码同时运行。
+    PS: 实现这个扩展并不复杂，简单的封装了一下selenium就搞定了
 
 ## 代码导读
 `connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)

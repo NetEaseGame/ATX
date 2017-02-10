@@ -12,3 +12,4 @@ facebook-wda==0.0.4.dev4
 atx-androguard==3.0
 atx-uiautomator==0.2.11.dev3
 imageio==1.5
+colorama==0.3.7
