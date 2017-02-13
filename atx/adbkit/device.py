@@ -54,7 +54,7 @@ class Device(object):
         """
         timeout = kwargs.pop('timeout', None)
         p = self.raw_cmd(*args, **kwargs)
-        return p.communicate(timeout=timeout)[0].replace('\r\n', '\n')
+        return p.communicate(timeout=timeout)[0].decode('utf-8').replace('\r\n', '\n')
 
     def shell(self, *args, **kwargs):
         """

@@ -16,10 +16,8 @@ from PIL import Image
 
 try:
     from urllib import urlopen
-    from StringIO import StringIO
 except:
     from urllib.request import urlopen
-    from io import StringIO
 # import any special Python 2.7 packages
 #if sys.version_info.major == 2:
 
@@ -68,9 +66,9 @@ def open(image):
 
 def open_as_pillow(filename):
     """ This way can delete file immediately """
-    with __sys_open(filename, 'rb') as f:
-        data = StringIO(f.read())
-        return Image.open(data)
+    im = Image.open(filename)
+    im.load()
+    return im
 
 
 def from_pillow(pil_image):
@@ -85,10 +83,9 @@ def from_pillow(pil_image):
 
 def to_pillow(image):
     return Image.fromarray(image[:, :, ::-1].copy())
-
     # There is another way
     # img_bytes = cv2.imencode('.png', image)[1].tostring()
-    # return Image.open(StringIO(img_bytes))
+    # return Image.open(BytesIO(img_bytes))
 
 def url_to_image(url, flag=cv2.IMREAD_COLOR):
     """ download the image, convert it to a NumPy array, and then read
