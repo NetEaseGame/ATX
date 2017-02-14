@@ -34,7 +34,7 @@ class RotationWatcherMixin(object):
         if package_name not in out:
             apkpath = os.path.join(__dir__, '..', 'vendor', 'RotationWatcher.apk')
             print 'install rotationwatcher...', apkpath
-            if 0 != self.raw_cmd('install', '-rt', apkpath).wait():
+            if 0 != self.raw_cmd('install', '-r', '-t', apkpath).wait():
                 print 'install rotationwatcher failed.'
                 return
 
