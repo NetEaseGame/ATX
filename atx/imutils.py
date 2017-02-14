@@ -10,6 +10,7 @@ import os
 import sys
 import cv2
 import base64
+from io import BytesIO
 
 import numpy as np
 from PIL import Image
@@ -66,9 +67,12 @@ def open(image):
 
 def open_as_pillow(filename):
     """ This way can delete file immediately """
-    im = Image.open(filename)
-    im.load()
-    return im
+    with __sys_open(filename, 'rb') as f:
+        data = BytesIO(f.read())
+        return Image.open(data)
+    # im = Image.open(filename)
+    # im.load()
+    # return im
 
 
 def from_pillow(pil_image):

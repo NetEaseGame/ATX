@@ -65,6 +65,7 @@ def getenvs(*names):
         if os.getenv(name):
             return os.getenv(name)
 
+
 class AndroidDevice(DeviceMixin, UiaDevice):
     def __init__(self, serialno=None, **kwargs):
         """Initial AndroidDevice
@@ -233,7 +234,6 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             self.adb_shell(command)
             self.adb_cmd(['pull', phone_tmp_file, local_tmp_file])
             image = imutils.open_as_pillow(local_tmp_file)
-
             # Fix rotation not rotate right.
             (width, height) = image.size
             if self.screen_rotation in [1, 3] and width < height:
@@ -518,7 +518,10 @@ class AndroidDevice(DeviceMixin, UiaDevice):
     def _is_utf7ime(self, ime=None):
         if ime is None:
             ime = self.current_ime()
-        return ime in ['android.unicode.ime/.Utf7ImeService', 'com.netease.atx.assistant/.ime.Utf7ImeService']
+        return ime in [
+            'android.unicode.ime/.Utf7ImeService',
+            'com.netease.atx.assistant/.ime.Utf7ImeService',
+            'com.netease.nie.yosemite/.ime.ImeService']
 
     def _prepare_ime(self):
         if self._is_utf7ime():
