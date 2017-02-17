@@ -165,3 +165,7 @@ class IOSDevice(DeviceMixin):
         if not self.__screensize:
             self.__screensize = Display(*sorted(img.size))
         return img
+
+    def dump_view(self):
+        """Dump page XML, Note, this is a test method"""
+        return self._wda.source()

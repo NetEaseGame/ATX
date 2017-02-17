@@ -488,6 +488,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             ui_nodes.append(self._parse_xml_node(node))
         return ui_nodes
 
+    def dump_view(self):
+        """Current Page XML
+        """
+        return self._uiauto.dump()
+
     def _escape_text(self, s, utf7=False):
         s = s.replace(' ', '%s')
         if utf7:
