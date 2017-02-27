@@ -8,7 +8,7 @@ PyYAML==3.11
 numpy>=1.11.0
 Pillow>=2.7.0
 requests>=2.9.1
-facebook-wda==0.0.4.dev4
+facebook-wda==0.0.4.dev7
 atx-androguard==3.0
 atx-uiautomator==0.2.11.dev3
 imageio==1.5
