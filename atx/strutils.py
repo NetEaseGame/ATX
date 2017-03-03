@@ -13,11 +13,11 @@ import platform
 
 SYSTEM_ENCODING = 'gbk' if os.name == 'nt' else 'utf-8'
 
-if platform.system() in ('Linux', 'Darwin') and \
-        sys.stdout.encoding and sys.stdout.encoding.upper() != 'UTF-8':
-    print("""\033[93mWarning: System "{}" python's encoding is "{}".
-Chinese may not print normally, fix with the following command
-    export PYTHONIOENCODING=UTF-8\033[0m""".format(platform.system(), sys.stdout.encoding))
+# if platform.system() in ('Linux', 'Darwin') and \
+#         sys.stdout.encoding and sys.stdout.encoding.upper() != 'UTF-8':
+#     print("""\033[93mWarning: System "{}" python's encoding is "{}".
+# Chinese may not print normally, fix with the following command
+#     export PYTHONIOENCODING=UTF-8\033[0m""".format(platform.system(), sys.stdout.encoding))
 
 
 def encode(s, encoding=None, errors='ignore'):
