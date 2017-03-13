@@ -73,8 +73,12 @@ def random_name(name):
 
 
 def remove_force(name):
-    if os.path.isfile(name):
-        os.remove(name)
+    if not os.path.isfile(name):
+        return
+    try:
+        os.unlink(name)
+    except Exception as e:
+        print("Warning: tempfile {} not deleted, Error {}".format(name, e))
 
 
 SYSTEM_ENCODING = 'gbk' if os.name == 'nt' else 'utf-8'

@@ -242,9 +242,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         except IOError:
             raise IOError("Screenshot use minicap failed.")
         finally:
-            if os.path.exists(local_tmp_file):
-                os.unlink(local_tmp_file)
             self.adb_shell(['rm', phone_tmp_file])
+            base.remove_force(local_tmp_file)
 
     def _screenshot_uiauto(self):
         tmp_file = self._mktemp()
