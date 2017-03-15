@@ -569,10 +569,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         app source see here: https://github.com/openatx/android-unicode
         """
         if self._prepare_ime():
-            estext = base64.b64encode(text.encode('utf-7'))
+            utext = strutils.decode(text)
+            estext = base64.b64encode(utext.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
         else:
-            self._shell_type(text)
+            self._shell_type(utext)
 
         if enter:
             self.keyevent('KEYCODE_ENTER')
