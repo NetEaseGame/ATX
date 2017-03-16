@@ -568,8 +568,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         app source see here: https://github.com/openatx/android-unicode
         """
+        utext = strutils.decode(text)
         if self._prepare_ime():
-            utext = strutils.decode(text)
             estext = base64.b64encode(utext.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
         else:
