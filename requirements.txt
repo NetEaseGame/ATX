@@ -1,6 +1,6 @@
 aircv==1.4.5
 futures==3.0.5
-tornado==4.3
+tornado>=4.4
 maproxy==0.0.12
 subprocess32==3.2.7 ; python_version <= '2.7'
 tqdm==4.5.0
