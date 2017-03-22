@@ -21,9 +21,9 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
 1. 支持iOS, Android的自动化测试，两个平台都支持测试第三方应用
 1. 对于iOS的真机,安卓模拟器都能很好的支持
-1. 可以用来测试Windows应用
 1. 对于游戏的测试使用了图像识别
 1. 同一个测试脚本可以通过图像的缩放算法，适配到其他分辨率的手机上
+1. 可以用来测试Windows应用 (暂不维护)
 
 ![demo-gif](images/demo.gif)
 
