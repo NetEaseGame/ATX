@@ -3,7 +3,7 @@ python:
 - "2.7"
 - "3.5"
 install:
-- pip install --user --upgrade pip
+- pip install --upgrade pip wheel
 - pip install -r requirements.txt
 - pip install -r tests/requirements.txt
 - pip install opencv_python
