@@ -5,6 +5,7 @@
 #test -n "${TRAVIS}" && exit 0
 
 
+export PYTHONPATH=$PWD:$PYTHONPATH
 cd $(dirname $0)
 
 python -mpytest -v \
