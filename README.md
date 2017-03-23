@@ -43,6 +43,8 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 ## Installation
 1. 安装ATX
 
+	最好在virtualenv的环境下安装, 不懂这是啥的可以学习下Andrew_liu写的文章[Python--Virtualenv简明教程](http://www.jianshu.com/p/08c657bd34f1)
+
 	```
 	pip install --upgrade --pre atx
 	pip install opencv_python
