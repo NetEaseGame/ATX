@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 import os
 import time
+import warnings
 
 import wda
 import subprocess32 as subprocess
@@ -23,7 +24,6 @@ class IOSDevice(DeviceMixin):
     def __init__(self, device_url, bundle_id=None):
         DeviceMixin.__init__(self)
         self.__device_url = device_url
-        self.__screensize = None
         self.__scale = None
         
         self._wda = wda.Client(device_url)
@@ -149,9 +149,8 @@ class IOSDevice(DeviceMixin):
         """ Return to homescreen """
         return self._wda.home()
 
-    @hook_wrap(consts.EVENT_SCREENSHOT)
-    def screenshot(self, filename=None):
-        """Take a screenshot
+    def _take_screenshot(self):
+        """Take a screenshot, also called by Mixin
         Args:
             - filename(string): file name to save
 
@@ -160,12 +159,15 @@ class IOSDevice(DeviceMixin):
         """
         raw_png = self._wda.screenshot()
         img = Image.open(StringIO(raw_png))
-        if filename:
-            img.save(filename)
-        if not self.__screensize:
-            self.__screensize = Display(*sorted(img.size))
         return img
 
     def dump_view(self):
         """Dump page XML, Note, this is a test method"""
+        warnings.warn("deprecated, use source() instead", DeprecationWarning)
+        return self._wda.source()
+
+    def source(self):
+        """
+        Dump page XML
+        """
         return self._wda.source()

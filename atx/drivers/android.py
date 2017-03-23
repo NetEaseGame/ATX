@@ -93,11 +93,10 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         DeviceMixin.__init__(self)
 
         self._randid = base.id_generator(5)
-        self._uiauto = super(AndroidDevice, self)
+        self._uiauto = super(AndroidDevice, self) # also will call DeviceMixin method, not very good
 
         self.screen_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
-        self.last_screenshot = None
 
     @property
     def serial(self):
@@ -247,7 +246,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
     def _screenshot_uiauto(self):
         tmp_file = self._mktemp()
-        self._uiauto.screenshot(tmp_file)
+        UiaDevice.screenshot(self, tmp_file)
+        # self._uiauto.screenshot(tmp_file) # this will call Mixin.screenshot first, which may get too many loop
         try:
             return imutils.open_as_pillow(tmp_file)
         except IOError:
@@ -283,35 +283,6 @@ class AndroidDevice(DeviceMixin, UiaDevice):
                 self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
         else:
             raise TypeError('Invalid screenshot_method')
-        return screen
-
-    @hook_wrap(consts.EVENT_SCREENSHOT)
-    def screenshot(self, filename=None):
-        """
-        Take screen snapshot
-
-        Args:
-            filename: filename where save to, optional
-
-        Returns:
-            PIL.Image object
-
-        Raises:
-            TypeError, IOError
-        """
-        try:
-            screen = self._take_screenshot()
-        except IOError:
-            # try taks screenshot again
-            screen = self._take_screenshot()
-
-        if filename:
-            save_dir = os.path.dirname(filename) or '.'
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            screen.save(filename)
-
-        self.last_screenshot = screen
         return screen
 
     def raw_cmd(self, *args, **kwargs):
@@ -489,6 +460,13 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
     def dump_view(self):
         """Current Page XML
+        """
+        warnings.warn("deprecated, source() instead", DeprecationWarning)
+        return self._uiauto.dump()
+
+    def source(self):
+        """
+        Dump page xml
         """
         return self._uiauto.dump()
 

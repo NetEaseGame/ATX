@@ -94,6 +94,10 @@ class DeviceMixin(object):
                 raise TypeError("Value should be tuple, contains two values")
             self._resolution = tuple(sorted(value))
 
+    @property
+    def last_screenshot(self):
+        return self.__last_screen if self.__last_screen else self.screenshot()
+
     def _open_image_file(self, path):
         realpath = base.lookup_image(path, self.__screensize[0], self.__screensize[1])
         if realpath is None:
@@ -351,11 +355,45 @@ class DeviceMixin(object):
         return self
 
     def region_screenshot(self, filename=None):
-        """ take part of the screenshot """
+        """Deprecated
+        Take part of the screenshot
+        """
+        warnings.warn("deprecated, use screenshot().crop(bounds) instead", DeprecationWarning)
         screen = self.__last_screen if self.__keep_screen else self.screenshot()
         if self.bounds:
             screen = screen.crop(self.bounds)
         if filename:
+            screen.save(filename)
+        return screen
+
+    @hook_wrap(consts.EVENT_SCREENSHOT)
+    def screenshot(self, filename=None):
+        """
+        Take screen snapshot
+
+        Args:
+            - filename: filename where save to, optional
+
+        Returns:
+            PIL.Image object
+
+        Raises:
+            TypeError, IOError
+        """
+        if self.__keep_screen:
+            return self.__last_screen
+        screen = self.__last_screen = self._take_screenshot()
+        # FIXME(ssx): just not take screenshot again
+        # try:
+        #     screen = self._take_screenshot()
+        # except IOError:
+        #     # try taks screenshot again
+        #     screen = self._take_screenshot()
+        self.__last_screen = screen
+        if filename:
+            save_dir = os.path.dirname(filename) or '.'
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
             screen.save(filename)
         return screen
 
