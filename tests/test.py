@@ -9,6 +9,7 @@ print 'Version:', atx.version
 
 d = atx.connect(None)
 
+# 你好
 
 def screenshot():
     start = time.time()

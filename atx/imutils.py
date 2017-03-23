@@ -12,6 +12,7 @@ import cv2
 import base64
 from io import BytesIO
 
+import six
 import numpy as np
 from PIL import Image
 
@@ -50,7 +51,7 @@ def open(image):
     Raises
         IOError
     '''
-    if isinstance(image, basestring):
+    if isinstance(image, six.string_types):
         name = image
         if name.startswith('data:image/'):
             return _open_data_url(name)

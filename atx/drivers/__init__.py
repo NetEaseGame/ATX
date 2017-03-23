@@ -5,6 +5,7 @@ from __future__ import absolute_import
 import re
 import collections
 
+import six
 from atx import imutils
 from atx import strutils
 
@@ -16,7 +17,6 @@ Display = collections.namedtuple('Display', ['width', 'height'])
 __boundstuple = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
 class Bounds(__boundstuple):
     def __init__(self, *args, **kwargs):
-        super(Bounds, self).__init__(*args, **kwargs)
         self._area = None
 
     def is_inside(self, x, y):
@@ -68,7 +68,7 @@ class Pattern(object):
         self._offset = offset
         self._resolution = rsl or resolution
         self._threshold = th or threshold
-        if isinstance(image, basestring):
+        if isinstance(image, six.string_types):
             self._name = image
 
         # search format name.1080x1920.png

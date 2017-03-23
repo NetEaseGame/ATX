@@ -28,7 +28,7 @@ from atx.drivers.windows import Window, FrozenWindow, WindowsDevice
 #     pass
 
 
-def test():
+def _test():
     try:
         name = u"Windows 任务管理器"
         win = FrozenWindow(name.encode("gbk"), exclude_border=True)

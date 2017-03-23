@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from atx import base
+from atx import strutils
 
 
 def test_list_all_image():
@@ -33,8 +34,8 @@ def test_image_name_match():
 def test_search_image():
     imgpath = base.search_image('haima', path=['media'])
     assert imgpath is not None
-    assert 'haima.png' in imgpath
-    assert 'media' in imgpath
+    assert strutils.encode('haima.png') in imgpath
+    assert strutils.encode('media') in imgpath
 
 
 def test_filename_match():

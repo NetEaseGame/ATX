@@ -10,6 +10,7 @@ import time
 import json
 import warnings
 import inspect
+import codecs
 
 import imageio
 
@@ -152,14 +153,14 @@ class Report(object):
         save_path = os.path.join(save_dir, 'index.html')
         json_path = os.path.join(save_dir, 'result.json')
 
-        with open(tmpl_path) as f:
+        with codecs.open(tmpl_path, 'rb', 'utf-8') as f:
             html_content = f.read().replace('$$data$$', data)
 
         with open(json_path, 'wb') as f:
-            f.write(json.dumps(self.result, indent=4))
+            f.write(json.dumps(self.result, indent=4).encode('utf-8'))
 
         with open(save_path, 'wb') as f:
-            f.write(html_content)
+            f.write(html_content.encode('utf-8'))
 
         self.__gif.close()
         self.__closed = True

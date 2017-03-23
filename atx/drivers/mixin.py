@@ -15,6 +15,7 @@ import time
 import traceback
 import warnings
 
+import six
 import cv2
 import aircv as ac
 from uiautomator import AutomatorDeviceObject
@@ -113,7 +114,7 @@ class DeviceMixin(object):
                 image._image = self._open_image_file(image._name)
             return image
         
-        if isinstance(image, basestring):
+        if isinstance(image, six.string_types):
             path = image
             return Pattern(path, image=self._open_image_file(path))
         

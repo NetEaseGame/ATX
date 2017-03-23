@@ -30,7 +30,7 @@ def test_setget_resolution():
     assert d.resolution == (200, 400)
     
 def teardown_function(f):
-    print 'teardown'
+    print('teardown')
     
 def test_screenshot():
     screen = d.screenshot()
@@ -40,7 +40,7 @@ def test_hook_screenshot():
     called = [False]
 
     def hook(event):
-        print 'event', event
+        print('event', event)
         called[0] = True
 
     d.add_listener(hook, atx.EVENT_SCREENSHOT)
