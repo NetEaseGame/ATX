@@ -2,10 +2,7 @@
 #
 
 # Skip all tests in travis
-#if test -n "${TRAVIS}"
-#then
-#	exit 0
-#fi
+test -n "${TRAVIS}" && exit 0
 
 
 cd $(dirname $0)
