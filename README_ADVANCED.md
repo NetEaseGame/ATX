@@ -9,7 +9,7 @@ import atx
 d = atx.connect()
 try:
     d.click_image('button.png', timeout=1)
-except Exception as e:
+except atx.Error as e:
     print e.data
 ```
 

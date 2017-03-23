@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-class BaseError(Exception):
+class Error(Exception):
     def __init__(self, message, data=None):
         self.message = message
         self.data = data
@@ -16,17 +16,17 @@ class BaseError(Exception):
         return repr(self.message)
 
 
-class WindowsAppNotFoundError(BaseError):
+class WindowsAppNotFoundError(Error):
     pass
 
 
-class ImageNotFoundError(BaseError):
+class ImageNotFoundError(Error):
     pass
 
-class WatchTimeoutError(BaseError):
+class WatchTimeoutError(Error):
     pass
 
-class AssertError(BaseError):
+class AssertError(Error):
     pass
 
 class AssertExistsError(AssertError):
