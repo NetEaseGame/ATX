@@ -432,6 +432,7 @@ class DeviceMixin(object):
         Raises:
             AssertExistsError
         """
+        warnings.warn("deprecated, use rp.assert_exists instead", DeprecationWarning)
         log.info('assert exists image(%s): %s', desc or '', pattern)
         start_time = time.time()
         while time.time() - start_time < timeout:

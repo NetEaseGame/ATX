@@ -277,6 +277,29 @@ class Report(object):
         })
         self._add_assert(**kwargs)
 
+    def assert_image_exists(self, pattern, timeout=20.0, **kwargs):
+        """TODO: not finished yet.
+        Assert if image exists
+        Args:
+            - pattern: image filename # not support pattern for now
+            - timeout (float): seconds
+        """
+        start_time = time.time()
+        is_success = False
+        while time.time() - start_time < timeout:
+            point = self.match(pattern, **match_kwargs)
+            if point is None:
+                continue
+            if not point.matched:
+                # log.debug('Ignore confidence: %s', point.confidence)
+                continue
+            is_success = True
+        kwargs.update({
+            'message': 'image exists,
+            'success': is_success,
+        })
+        self._add_assert(**kwargs)
+
     def assert_ui_exists(self, ui, **kwargs):
         """ For Android & IOS
         Args:
