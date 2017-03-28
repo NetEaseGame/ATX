@@ -295,7 +295,7 @@ class Report(object):
                 continue
             is_success = True
         kwargs.update({
-            'message': 'image exists,
+            'message': 'image exists',
             'success': is_success,
         })
         self._add_assert(**kwargs)
