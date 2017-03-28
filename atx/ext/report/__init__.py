@@ -201,7 +201,7 @@ class Report(object):
         if screen is None:
             screen = self.d.screenshot()
         if name is None:
-            name = 'images/%s_%d.png' % (name_prefix, time.time())
+            name = 'images/%s_%d.jpg' % (name_prefix, time.time())
         relpath = os.path.join(self.save_dir, name)
         screen.save(relpath)
         if append_gif:
@@ -335,7 +335,7 @@ class Report(object):
 
     def _listener(self, evt):
         d = self.d
-        screen_before = 'images/before_%d.png' % time.time()
+        screen_before = 'images/before_%d.jpg' % time.time()
         screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
         # keep screenshot for every call
@@ -358,7 +358,7 @@ class Report(object):
         if evt.flag == consts.EVENT_CLICK:
             if self.last_screenshot: # just in case
                 self.last_screenshot.save(screen_before_abspath)
-            screen_after = 'images/after_%d.png' % time.time()
+            screen_after = 'images/after_%d.jpg' % time.time()
             d.screenshot(os.path.join(self.save_dir, screen_after))
 
             (x, y) = evt.args
@@ -380,7 +380,7 @@ class Report(object):
                 self.last_screenshot.save(screen_before_abspath)
                 kwargs['screen_before'] = screen_before
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
-                target = 'images/target_%d.png' % time.time()
+                target = 'images/target_%d.jpg' % time.time()
                 pattern = d.pattern_open(evt.args[0])
                 self._save_screenshot(pattern, name=target)
                 kwargs['target'] = target
@@ -392,7 +392,7 @@ class Report(object):
                 self.__last_screenshot = imutils.to_pillow(cv_img)
                 self.last_screenshot.save(screen_before_abspath)
                 
-                screen_after = 'images/after_%d.png' % time.time()
+                screen_after = 'images/after_%d.jpg' % time.time()
                 d.screenshot(os.path.join(self.save_dir, screen_after))
                 kwargs['screen_after'] = screen_after
                 kwargs['confidence'] = evt.retval.confidence
@@ -400,12 +400,12 @@ class Report(object):
             self.add_step('click_image', **kwargs)
         elif evt.flag == consts.EVENT_ASSERT_EXISTS: # this is image, not tested
             pattern = d.pattern_open(evt.args[0])
-            target = 'images/target_%.2f.png' % time.time()
+            target = 'images/target_%.2f.jpg' % time.time()
             self._save_screenshot(pattern, name=target)
             kwargs = {
                 'target': target,
                 'description': evt.kwargs.get('desc'),
-                'screen': self._save_screenshot(name='images/screen_%.2f.png' % time.time()),
+                'screen': self._save_screenshot(name='images/screen_%.2f.jpg' % time.time()),
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
                 'success': evt.traceback is None,
             }
