@@ -21,18 +21,21 @@ from atx.errors import *
 from atx.drivers import Pattern, Bounds, ImageCrop
 
 
-def _detect_platform(*args):
+def _connect_url(*args):
+    if len(args) == 0:
+        return os.getenv('ATX_CONNECT_URL')
+    return args[0]
+
+
+def _detect_platform(connect_url):
     if os.getenv('ATX_PLATFORM'):
         return os.getenv('ATX_PLATFORM')
 
-    if len(args) == 0:
+    if not connect_url: # None or ""
         return 'android'
-    elif not isinstance(args[0], six.string_types):
-        return 'android'
-    elif args[0].startswith('http://'): # WDA use http url as connect str
+    elif connect_url.startswith('http://'): # WDA use http url as connect str
         return 'ios'
     else:
-        # default android
         return 'android'
 
 
@@ -47,7 +50,8 @@ def connect(*args, **kwargs):
     Raises:
         SyntaxError, EnvironmentError
     """
-    platform = kwargs.pop('platform', _detect_platform(*args))
+    connect_url = _connect_url(*args)
+    platform = kwargs.pop('platform', _detect_platform(connect_url))
 
     cls = None
     if platform == 'android':
@@ -70,10 +74,7 @@ def connect(*args, **kwargs):
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
 
-    if len(args) == 0 and len(kwargs) == 0 and os.getenv('ATX_DEVICE_URL'):
-        c = cls(os.getenv('ATX_DEVICE_URL'))
-    else:
-        c = cls(*args, **kwargs)
+    c = cls(connect_url, **kwargs)
     c.platform = platform
     return c
 

@@ -17,10 +17,10 @@ d = atx.connect()
 
 ```sh
 ATX_PLATFORM  # 默认是 android
-ATX_DEVICE_URL # 设备连接地址，可以是serialno或者wdaUrl
+ATX_CONNECT_URL # 设备连接地址，可以是serialno或者wdaUrl
 ATX_ADB_HOST
 ATX_ADB_PORT
-ATX_ADB_SERIALNO # 建议使用 ATX_DEVICE_URL代替
+ATX_ADB_SERIALNO # 建议使用 ATX_CONNECT_URL 代替
 ```
 
 ```sh
