@@ -16,10 +16,11 @@ d = atx.connect()
 目前支持4个环境变量
 
 ```sh
-ATX_ADB_SERIALNO
+ATX_PLATFORM  # 默认是 android
+ATX_DEVICE_URL # 设备连接地址，可以是serialno或者wdaUrl
 ATX_ADB_HOST
 ATX_ADB_PORT
-ATX_PLATFORM  默认是 android
+ATX_ADB_SERIALNO # 建议使用 ATX_DEVICE_URL代替
 ```
 
 ```sh

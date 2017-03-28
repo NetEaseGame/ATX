@@ -69,7 +69,11 @@ def connect(*args, **kwargs):
     
     if cls is None:
         raise SyntaxError('Platform: %s not exists' % platform)
-    c = cls(*args, **kwargs)
+
+    if len(args) == 0 and len(kwargs) == 0 and os.getenv('ATX_DEVICE_URL'):
+        c = cls(os.getenv('ATX_DEVICE_URL'))
+    else:
+        c = cls(*args, **kwargs)
     c.platform = platform
     return c
 
