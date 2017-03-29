@@ -3,16 +3,17 @@
 
 import os
 import time
+import mock
 
 import pytest
 import atx
-
 from PIL import Image
 
 d = atx.connect(platform='dummy')
 
 def setup_function(f):
     d.resolution = (1280, 720)
+
 
 def test_setget_resolution():
     assert d.resolution == (720, 1280)
@@ -28,13 +29,34 @@ def test_setget_resolution():
     with pytest.raises(TypeError):
         d.resolution = 720
     assert d.resolution == (200, 400)
-    
+
+
 def teardown_function(f):
     print('teardown')
-    
-def test_screenshot():
+
+
+def test_screenshot_normal():
     screen = d.screenshot()
     assert screen is not None
+
+
+def test_screenshot_first_fail():
+    d._fail_first_screenshot = True
+    screen = d.screenshot()
+    assert screen is not None
+
+
+def test_screenshot_always_fail():
+    import types
+    d = atx.connect(platform='dummy')
+
+    def raise_ioerror(self):
+        raise IOError('error of io')
+
+    d._take_screenshot = types.MethodType(raise_ioerror, d)
+    with pytest.raises(IOError):
+        d.screenshot()
+
 
 def test_hook_screenshot():
     called = [False]

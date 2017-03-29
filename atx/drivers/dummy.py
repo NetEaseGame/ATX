@@ -22,15 +22,16 @@ class DummyDevice(DeviceMixin):
         self._rotation = 1
         self.last_click = None
         self.serial = '1234'
+        self._fail_first_screenshot = False
 
-    @hook_wrap(consts.EVENT_SCREENSHOT)
-    def screenshot(self, filename=None):
+    def _take_screenshot(self):
         """ Take a screenshot """
         # screen size: 1280x720
+        if self._fail_first_screenshot:
+            self._fail_first_screenshot = False
+            raise IOError("dummy fail screenshot")
         screen_path = os.path.join(__dir__, '../../tests/media/dummy_screen.png')
         screen = Image.open(screen_path)
-        if filename:
-            screen.save(filename)
         return screen
 
     @property

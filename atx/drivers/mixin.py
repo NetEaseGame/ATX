@@ -359,7 +359,7 @@ class DeviceMixin(object):
         """Deprecated
         Take part of the screenshot
         """
-        warnings.warn("deprecated, use screenshot().crop(bounds) instead", DeprecationWarning)
+        # warnings.warn("deprecated, use screenshot().crop(bounds) instead", DeprecationWarning)
         screen = self.__last_screen if self.__keep_screen else self.screenshot()
         if self.bounds:
             screen = screen.crop(self.bounds)
@@ -383,13 +383,12 @@ class DeviceMixin(object):
         """
         if self.__keep_screen:
             return self.__last_screen
-        screen = self.__last_screen = self._take_screenshot()
-        # FIXME(ssx): just not take screenshot again
-        # try:
-        #     screen = self._take_screenshot()
-        # except IOError:
-        #     # try taks screenshot again
-        #     screen = self._take_screenshot()
+        try:
+            screen = self._take_screenshot()
+        except IOError:
+            # try taks screenshot again
+            log.warn("warning, screenshot failed [2/1], retry again")
+            screen = self._take_screenshot()
         self.__last_screen = screen
         if filename:
             save_dir = os.path.dirname(filename) or '.'
