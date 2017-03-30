@@ -27,7 +27,7 @@ ATX_ADB_SERIALNO # 建议使用 ATX_CONNECT_URL 代替
 $ python -c 'import atx; atx.connect("EFF153")'
 
 # 等价写法
-$ export ATX_ADB_SERIALNO="EFF153"
+$ export ATX_CONNECT_URL="EFF153"
 $ python -c 'import atx; atx.connect()'
 ```
 
@@ -223,33 +223,6 @@ d.rotation = None # default auto detect, 这个配置一下比较好，自动识
 # 2: home key top
 # 3: home key left
 ```
-
-
-## 监控事件 (已经废弃，不建议使用)
-
-watch是一个内部循环，对于on函数中的所有出现的图片进行监控，如果发现吻合的，就执行后续的操作，直到timeout时间到。
-
-下面的这个例子，效果为 当出现`notification.png`就点击`confirm.png`图片，只有检查的顺序，并没有执行的顺序。需要注意的是需要在timeout超时之前，执行`quit`函数
-
-```py
-# watcher, trigger when screenshot is called
-def foo(event):
-	print 'It happens', event
-	d.click(*event.pos)
-
-timeout = 50.0 # 50s
-with d.watch(timeout=timeout) as w:
-	w.on('enter-game.png').click()
-	w.on('notification.png').on('npc.png').click('confirm.png')
-	w.on('inside.png').quit().quit()
-	w.on_ui(text='Login').quit() # UI Component
-	w.on('outside.png').do(foo)
-
-# will not raise errors(TODO: not working in latest version)
-# 'enter game' is just a name which will seen in debug log
-with d.watch('enter game', timeout, raise_errors=False) as w:
-	w.on('output.png').click()
-```	
 
 ## events函数调用事件
 
