@@ -8,14 +8,18 @@ import time
 import warnings
 
 import wda
-import subprocess32 as subprocess
 from PIL import Image
-from StringIO import StringIO
+from io import BytesIO
 
 from atx.drivers.mixin import DeviceMixin, hook_wrap
 from atx.drivers import Display
 from atx import consts
 from atx import ioskit
+
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
@@ -158,7 +162,7 @@ class IOSDevice(DeviceMixin):
             PIL Image object
         """
         raw_png = self._wda.screenshot()
-        img = Image.open(StringIO(raw_png))
+        img = Image.open(BytesIO(raw_png))
         return img
 
     def dump_view(self):
