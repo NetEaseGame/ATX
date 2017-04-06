@@ -146,8 +146,10 @@ def mark_point(img, x, y):
     output = img.copy()
 
     alpha = 0.5
-    radius = max(5, min(img.shape[:2])/15)
-    cv2.circle(overlay, (x, y), radius, (0, 0, 255), -1)
+    radius = int(max(5, min(img.shape[:2])/15))
+    center, color = (x, y), (0, 0, 255)
+
+    cv2.circle(overlay, center, radius, color, -1)
     cv2.addWeighted(overlay, alpha, output, 1-alpha, 0, output)
     return output
 
