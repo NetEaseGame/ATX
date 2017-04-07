@@ -5,20 +5,22 @@
 # https://github.com/jrosebr1/imutils
 #
 
+from __future__ import division
+from __future__ import print_function
+
 import re
 import os
-import sys
-import cv2
 import base64
 from io import BytesIO
 
+import cv2
 import six
 import numpy as np
 from PIL import Image
 
 try:
     from urllib import urlopen
-except:
+except ImportError:
     from urllib.request import urlopen
 # import any special Python 2.7 packages
 #if sys.version_info.major == 2:
@@ -146,7 +148,7 @@ def mark_point(img, x, y):
     output = img.copy()
 
     alpha = 0.5
-    radius = int(max(5, min(img.shape[:2])/15))
+    radius = max(5, min(img.shape[:2])//15)
     center, color = (x, y), (0, 0, 255)
 
     cv2.circle(overlay, center, radius, color, -1)
