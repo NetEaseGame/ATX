@@ -46,9 +46,10 @@ If you are new to atx, it better to start from _Quick start tutorial_ or just vi
 
 	最好在virtualenv的环境下安装, 不懂这是啥的可以学习下Andrew_liu写的文章[Python--Virtualenv简明教程](http://www.jianshu.com/p/08c657bd34f1)
 
-	```
+	```bash
+	# virtualenv venv && . venv/bin/activate
 	pip install --upgrade --pre atx
-	pip install opencv_python
+	pip install opencv_contrib_python
 	```
 
 	为了加快下载速度，国内用户可以使用额外的pip参数`-i https://pypi.doubanio.com/simple/`
