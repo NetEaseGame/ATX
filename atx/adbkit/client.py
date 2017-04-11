@@ -11,6 +11,7 @@ try:
 except:
     import subprocess
 
+from atx import strutils
 from atx.adbkit.device import Device
 
 
@@ -86,6 +87,7 @@ class Client(object):
         kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
         # if os.name != "nt":
         #     cmd_line = [" ".join(cmd_line)]
+        cmds = [strutils.decode(v) for v in cmds]
         return subprocess.Popen(cmds, **kwargs)
 
     def run_cmd(self, *args, **kwargs):
