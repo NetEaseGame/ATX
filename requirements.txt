@@ -10,6 +10,6 @@ Pillow>=2.7.0
 requests>=2.9.1
 facebook-wda==0.1.1.dev1
 atx-androguard==3.0
-atx-uiautomator==0.2.12.dev3
+atx-uiautomator==0.2.12.dev4
 imageio==1.5
 colorama==0.3.7

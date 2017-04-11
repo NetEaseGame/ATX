@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import division
 
 import atexit
 import argparse
@@ -35,8 +36,8 @@ def json2obj(data):
     return nameddict('X', data.keys())(**data)
 
 def center(bounds):
-    x = (bounds['left'] + bounds['right'])/2
-    y = (bounds['top'] + bounds['bottom'])/2
+    x = (bounds['left'] + bounds['right'])//2
+    y = (bounds['top'] + bounds['bottom'])//2
     return (x, y)
 
 
@@ -287,7 +288,7 @@ class Report(object):
         start_time = time.time()
         is_success = False
         while time.time() - start_time < timeout:
-            point = self.match(pattern, **match_kwargs)
+            point = self.d.match(pattern, **match_kwargs)
             if point is None:
                 continue
             if not point.matched:
@@ -315,14 +316,14 @@ class Report(object):
                 if self.d.platform == 'android':
                     bounds = ui.info['bounds'] # For android only.
                     kwargs['position'] = {
-                        'x': (bounds['left']+bounds['right'])/2,
-                        'y': (bounds['top']+bounds['bottom'])/2,
+                        'x': (bounds['left']+bounds['right'])//2,
+                        'y': (bounds['top']+bounds['bottom'])//2,
                     }
                 elif self.d.platform == 'ios':
                     bounds = ui.bounds # For iOS only.
                     kwargs['position'] = {
-                        'x': self.d.scale*(bounds.x+bounds.width/2),
-                        'y': self.d.scale*(bounds.y+bounds.height/2),
+                        'x': self.d.scale*(bounds.x+bounds.width//2),
+                        'y': self.d.scale*(bounds.y+bounds.height//2),
                     }
             message = 'UI exists'
         else:
