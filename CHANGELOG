@@ -1,6 +1,63 @@
 CHANGES
 =======
 
+* fix run in multi devices, close #117
+* use // to divide, close #114
+* fix bug of dead loop
+* fix d.type for py3
+* update install doc with new opencv
+* update doc
+* fix hot fix
+* hot fix
+* update atx-uiautomator version which fix resourcewarning in py3
+* fix report click on py3
+* add python3.4 auto test
+* fix python3 not supported bug of ios
+* re-instated copyright following BSD license (#113)
+* update uiautomator requirements
+
+1.1.1
+-----
+
+* take screenshot again when first failed
+* remove useless blockly
+* use ATX_CONNECT_URL env to pass connect_url
+* add ATX_DEVICE_URL environment
+* fix test of report
+* change report save image from png to jpg to small report size
+* add todo assert image exists
+* fix travis
+* fix travis
+* run test on travis
+* change upgrade pip
+* test again
+* update doc to help with virtualenv
+* update error class name
+* skip test because of missing opencv
+* force test in every push
+* move screenshot method into mixin
+* comment windows support
+* update requirements
+* fix last fix
+* update facebook wda deps
+* ignore remove tmp file error, instead give a warn, close #69
+* fix last update, some xiaomi machine fail to run uiautomator
+* update atx uiautomator
+* disable system encoding check
+* update wda version
+* update wda requirements
+* add dump_view api
+* use BytesIO instead of Image.load to make sure delete image file works
+* adb install doesn’t accept parameters like ‘adb install -rt some.apk’, but ‘adb install -r -t some.apk’ just works fine. fix NetEaseGame/AutomatorX#100 (#101)
+* fix screenshot error in py3, fix #98
+* add python -matx doctor
+* fix issue according to https://docs.python.org/2/library/subprocess.html#frequently-used-arguments
+* make cli support py3, close #95
+* remove all image_path relative code
+* update facebook-wda requirements
+* update report.info close #93
+* add testerhome ios api link
+* update doc
 * fix all the python3 needed
 * make it support python3
 * add attach and activity params to chromedriver
