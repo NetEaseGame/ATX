@@ -51,10 +51,14 @@ def load_main(module_name):
 
 def _apk_parse(args):
     import atx.androaxml as apkparse
-    (pkg_name, activity) = apkparse.parse_apk(args.filename)
+    manifest = apkparse.parse_apk(args.filename)
     print(json.dumps({
-        'package_name': pkg_name,
-        'main_activity': activity,
+        'package_name': manifest.package_name,
+        'main_activity': manifest.main_activity,
+        'version': {
+            'code': manifest.version_code,
+            'name': manifest.version_name,
+        }
     }, indent=4))
 
 
