@@ -37,6 +37,21 @@ def decode(s, encodings=['utf-8', 'gbk', 'cp936']):
     raise UnicodeDecodeError(','.join(encodings), "", 0, len(s or ''), "string: '%s'" % repr(s))
 
 
+def to_string(s, encoding='utf-8'):
+    """
+    Accept unicode(py2) or bytes(py3)
+
+    Returns:
+        py2 type: str
+        py3 type: str
+    """
+    if six.PY2:
+        return s.encode(encoding)
+    if isinstance(s, bytes):
+        return s.decode(encoding)
+    return s
+
+
 if __name__ == '__main__':
     print('Hello 世界!')
     print(encode('Hello 世界!'))

@@ -11,4 +11,5 @@ cd $(dirname $0)
 python -mpytest -v \
 	test_ext_report.py \
 	test_dummy.py \
+	test_strutils.py \
 	test_base.py "$@"
