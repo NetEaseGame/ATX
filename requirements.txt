@@ -1,4 +1,4 @@
-aircv==1.4.5
+aircv==1.4.6
 futures==3.0.5
 tornado>=4.4
 maproxy==0.0.12
