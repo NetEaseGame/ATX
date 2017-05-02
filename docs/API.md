@@ -37,8 +37,15 @@ $ python -c 'import atx; atx.connect()'
 package_name = 'com.example.game'
 
 d.stop_app(package_name)
-
 # d.stop_app(package_name, clear=True) # stop and remove app data (only Android)
+
+# recommend way
+d.start_app(package_name, main_activity)
+
+# force stop the target app before starting the activity
+d.start_app(package_name, main_activity, stop=True)
+
+# use adb shell monkey to start app (not recommend)
 d.start_app(package_name)
 ```
 

@@ -26,6 +26,9 @@ rp.assert_equal(1, 2, desc="Hi", screenshot=True, safe=True)
 # assert android ui exists
 rp.assert_ui_exists(d(text='Hello'), desc='Hello UI')
 
+# assert image exists
+rp.assert_image_exists('button.png', timeout=10.0, safe=True)
+
 # close and generate report
 rp.close()
 ```

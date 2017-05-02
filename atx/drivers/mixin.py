@@ -418,37 +418,37 @@ class DeviceMixin(object):
             if flag & event_flag:
                 fn(event)
 
-    @hook_wrap(consts.EVENT_ASSERT_EXISTS)
-    def assert_exists(self, pattern, timeout=20.0, desc=None, **match_kwargs):
-        """Assert if image exists
-        Args:
-            - image: image filename # not support pattern for now
-            - timeout (float): seconds
+    # @hook_wrap(consts.EVENT_ASSERT_EXISTS)
+    # def assert_exists(self, pattern, timeout=20.0, desc=None, **match_kwargs):
+    #     """Assert if image exists
+    #     Args:
+    #         - image: image filename # not support pattern for now
+    #         - timeout (float): seconds
 
-        Returns:
-            Find point
+    #     Returns:
+    #         Find point
 
-        Raises:
-            AssertExistsError
-        """
-        warnings.warn("deprecated, use rp.assert_exists instead", DeprecationWarning)
-        log.info('assert exists image(%s): %s', desc or '', pattern)
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            point = self.match(pattern, **match_kwargs)
-            if point is None:
-                sys.stdout.write('.')
-                sys.stdout.flush()
-                continue
-            if not point.matched:
-                log.debug('Ignore confidence: %s', point.confidence)
-                continue
-            log.info('assert pass, confidence: %s', point.confidence)
-            sys.stdout.write('\n')
-            return point
-        else:
-            sys.stdout.write('\n')
-            raise errors.AssertExistsError('image not found %s' %(pattern,))
+    #     Raises:
+    #         AssertExistsError
+    #     """
+    #     warnings.warn("deprecated, use rp.assert_exists instead", DeprecationWarning)
+    #     log.info('assert exists image(%s): %s', desc or '', pattern)
+    #     start_time = time.time()
+    #     while time.time() - start_time < timeout:
+    #         point = self.match(pattern, **match_kwargs)
+    #         if point is None:
+    #             sys.stdout.write('.')
+    #             sys.stdout.flush()
+    #             continue
+    #         if not point.matched:
+    #             log.debug('Ignore confidence: %s', point.confidence)
+    #             continue
+    #         log.info('assert pass, confidence: %s', point.confidence)
+    #         sys.stdout.write('\n')
+    #         return point
+    #     else:
+    #         sys.stdout.write('\n')
+    #         raise errors.AssertExistsError('image not found %s' %(pattern,))
             
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_nowait(self, pattern, action='click', desc=None, **match_kwargs):
@@ -468,6 +468,10 @@ class DeviceMixin(object):
         func = getattr(self, action)
         func(*point.pos)
         return point
+
+    def click_exists(self, *args, **kwargs):
+        """ Alias of click_nowait """
+        self.click_nowait(*args, **kwargs)
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, delay=None, **match_kwargs):

@@ -40,6 +40,11 @@
     position: relative;
     overflow: hidden;
     max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .image-wrapper > img {
+    border: 1px solid black;
   }
   
   span.positioner {
@@ -131,8 +136,6 @@
             <li>
               <span class="info-name">SerialNo</span>{{device.serial}}</li>
             <li>
-              <span class="info-name">Brand</span>{{device.product_brand}}</li>
-            <li>
               <span class="info-name">StepCount</span>{{step_count}}</li>
           </ul>
         </div>
@@ -153,33 +156,31 @@
       <div v-for="step in steps" class="panel" v-bind:class="step.success ? 'panel-success': 'panel-danger'">
         <div class="panel-heading">
           <a class="anchor" href="#{{step.time}}" name="{{step.time}}">$</a>
-          <i>{{step.time}}s</i> {{step.action}} {{step.description}}
+          <i>{{step.time}}s</i> {{step.action | translate }} {{step.description}}
         </div>
         <div class="panel-body">
-          <template v-if="step.action == 'assert_exists'">
-            <div>
-              验证图片存在
-              <a class="fancybox" v-bind:href="step.target">
-                <img class="halfsize" v-bind:src="step.target" />
-              </a>
+          <template v-if="step.action == 'assert_image_exists'">
+            <div class="col-md-6">
+              <div>
+                验证图片存在
+                <a class="fancybox" v-bind:href="step.target">
+                  <img class="halfsize" v-bind:src="step.target" />
+                </a>
+              </div>
+              {{step.message}}
             </div>
             <div class="col-md-6">
-              <a class="fancybox" title="Before" rel="{{step.time}}" v-bind:href="step.screen">
+              <a class="fancybox" title="Before" rel="{{step.time}}" v-bind:href="step.screenshot">
                 <div class="image-wrapper">
                   <template v-if="step.position">
                     <span class="positioner" v-bind:style="step.position | displayPosition">
                       <span class="finger"></span>
                     </span>
                   </template>
-                  <img width="100%" v-bind:src="step.screen" />
+                  <img width="100%" v-bind:src="step.screenshot" />
                 </div>
                 <p class="text-center">Current</p>
               </a>
-            </div>
-            <div class="col-md-6">
-              <div v-if="!step.success">
-                <pre>{{step.traceback}}</pre>
-              </div>
             </div>
           </template>
           <template v-if="step.action == 'click'">
@@ -194,7 +195,7 @@
                   </span>
                   <img width="100%" v-bind:src="step.screen_before" />
                 </div>
-                <p class="text-center">Before</p>
+                <p class="text-center"><strong>Before</strong></p>
               </a>
             </div>
             <div class="col-md-6">
@@ -202,7 +203,7 @@
                 <div class="image-wrapper">
                   <img width="100%" v-bind:src="step.screen_after" />
                 </div>
-                <p class="text-center">After</p>
+                <p class="text-center"><strong>After</strong></p>
               </a>
             </div>
           </template>
@@ -223,7 +224,7 @@
                   </template>
                   <img width="100%" v-bind:src="step.screen_before" />
                 </div>
-                <p class="text-center">Before</p>
+                <p class="text-center"><strong>Before</strong></p>
               </a>
             </div>
             <div class="col-md-6">
@@ -231,7 +232,7 @@
                 <div class="image-wrapper">
                   <img width="100%" v-bind:src="step.screen_after" />
                 </div>
-                <p class="text-center">After</p>
+                <p class="text-center"><strong>After</strong></p>
               </a>
             </div>
           </template>
@@ -241,14 +242,20 @@
             </div>
           </template>
           <template v-if="step.action == 'assert'">
-            <p>{{step.message}}</p>
-            <div class="image-wrapper" v-if="step.screenshot">
-              <template v-if="step.position">
-                <span class="positioner" v-bind:style="step.position | displayPosition">
-                  <span class="finger"></span>
-                </span>
-              </template>
-              <img width="100%" v-bind:src="step.screenshot" />
+            <div class="col-md-6">
+              <p>{{step.message}}</p>
+            </div>
+            <div class="col-md-6">
+              <a class="fancybox" title="assert" rel="{{step.time}}" v-bind:href="step.screenshot">
+                <div class="image-wrapper" v-if="step.screenshot">
+                  <template v-if="step.position">
+                    <span class="positioner" v-bind:style="step.position | displayPosition">
+                      <span class="finger"></span>
+                    </span>
+                  </template>
+                  <img width="100%" v-bind:src="step.screenshot" />
+                </div>
+              </a>
             </div>
           </template>
           <template v-if="step.action == 'error'">
@@ -299,6 +306,15 @@ $(function() {
     var x = (pos.x * 100 / this.device.display.width).toFixed(2) + '%';
     var y = (pos.y * 100 / this.device.display.height).toFixed(2) + '%';
     return "left: " + x + "; top: " + y + ";"
+  })
+
+  Vue.filter('translate', function(text) {
+    return {
+      assert_image_exists: '验证图片存在',
+      click_image: '点击图片',
+      assert: '验证',
+      info: '>>'
+    }[text] || text;
   })
 
   Vue.nextTick(function() {

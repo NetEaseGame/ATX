@@ -252,7 +252,8 @@ class Report(object):
         is_success = kwargs.get('success')
         screenshot = (not is_success) if screenshot is None else screenshot
         kwargs['screenshot'] = self._take_screenshot(screenshot=screenshot, name_prefix='assert')
-        self.add_step('assert', **kwargs)
+        action = kwargs.pop('action', 'assert')
+        self.add_step(action, **kwargs)
         if not is_success:
             message = kwargs.get('message')
             frame, filename, line_number, function_name, lines, index = inspect.stack()[2]
@@ -279,24 +280,41 @@ class Report(object):
         self._add_assert(**kwargs)
 
     def assert_image_exists(self, pattern, timeout=20.0, **kwargs):
-        """TODO: not finished yet.
+        """
         Assert if image exists
         Args:
             - pattern: image filename # not support pattern for now
             - timeout (float): seconds
+            - safe (bool): not raise assert error even throung failed.
         """
-        start_time = time.time()
-        is_success = False
-        while time.time() - start_time < timeout:
-            point = self.d.match(pattern, **match_kwargs)
-            if point is None:
-                continue
-            if not point.matched:
-                # log.debug('Ignore confidence: %s', point.confidence)
-                continue
-            is_success = True
+        pattern = self.d.pattern_open(pattern)
+        match_kwargs = kwargs.copy()
+        match_kwargs.pop('safe', None)
+        match_kwargs.update({
+            'timeout': timeout,
+            'safe': True,
+        })
+        res = self.d.wait(pattern, **match_kwargs)
+        is_success = res is not None
+        message = 'assert image exists'
+        if res:
+            x, y = res.pos
+            kwargs['position'] = {'x': x, 'y': y}
+            message = 'image exists\npos %s\nconfidence=%.2f\nmethod=%s' % (res.pos, res.confidence, res.method)
+        else:
+            res = self.d.match(pattern)
+            if res is None:
+                message = 'Image not found'
+            else:
+                th = kwargs.get('threshold') or pattern.threshold or self.image_match_threshold
+                message = 'Matched: %s\nPosition: %s\nConfidence: %.2f\nThreshold: %.2f' % (
+                    res.matched, res.pos, res.confidence, th)
+
+        kwargs['target'] = self._save_screenshot(pattern, name_prefix='target')
+        kwargs['screenshot'] = self.last_screenshot
         kwargs.update({
-            'message': 'image exists',
+            'action': 'assert_image_exists',
+            'message': message,
             'success': is_success,
         })
         self._add_assert(**kwargs)
@@ -336,8 +354,6 @@ class Report(object):
 
     def _listener(self, evt):
         d = self.d
-        screen_before = 'images/before_%d.jpg' % time.time()
-        screen_before_abspath = os.path.join(self.save_dir, screen_before)
 
         # keep screenshot for every call
         if not evt.is_before and evt.flag == consts.EVENT_SCREENSHOT:
@@ -357,10 +373,8 @@ class Report(object):
             return
 
         if evt.flag == consts.EVENT_CLICK:
-            if self.last_screenshot: # just in case
-                self.last_screenshot.save(screen_before_abspath)
-            screen_after = 'images/after_%d.jpg' % time.time()
-            d.screenshot(os.path.join(self.save_dir, screen_after))
+            screen_before = self._save_screenshot(self.last_screenshot, name_prefix='before')
+            screen_after = self._save_screenshot(name_prefix='after')
 
             (x, y) = evt.args
             self.add_step('click',
@@ -373,48 +387,45 @@ class Report(object):
                 'traceback': None if evt.traceback is None else evt.traceback.stack,
                 'description': evt.kwargs.get('desc'),
             }
-            # not record if image not found
+            # do not record if image not found and no trackback
             if evt.retval is None and evt.traceback is None:
                 return
             
-            if self.last_screenshot:
-                self.last_screenshot.save(screen_before_abspath)
-                kwargs['screen_before'] = screen_before
+            # save before click image
+            kwargs['screen_before'] = self._save_screenshot(self.last_screenshot, name_prefix='before')
+
             if evt.traceback is None or not isinstance(evt.traceback.exception, IOError):
-                target = 'images/target_%d.jpg' % time.time()
                 pattern = d.pattern_open(evt.args[0])
-                self._save_screenshot(pattern, name=target)
-                kwargs['target'] = target
+                kwargs['target'] = self._save_screenshot(pattern, name_prefix='target')
             if evt.traceback is None:
+                # update image to add a click mark
                 (x, y) = evt.retval.pos
-                # FIXME(ssx): quick hot fix
                 cv_img = imutils.from_pillow(self.last_screenshot)
                 cv_img = imutils.mark_point(cv_img, x, y)
                 self.__last_screenshot = imutils.to_pillow(cv_img)
-                self.last_screenshot.save(screen_before_abspath)
+                kwargs['screen_before'] = self._save_screenshot(self.last_screenshot, name=kwargs['screen_before'])
+
+                kwargs['screen_after'] = self._save_screenshot(name_prefix='after')
+                kwargs['confidence'] = evt.retval.confidence
+                kwargs['position'] = {'x': x, 'y': y}
                 
-                screen_after = 'images/after_%d.jpg' % time.time()
-                d.screenshot(os.path.join(self.save_dir, screen_after))
-                kwargs['screen_after'] = screen_after
-                kwargs['confidence'] = evt.retval.confidence
-                kwargs['position'] = {'x': x, 'y': y}
             self.add_step('click_image', **kwargs)
-        elif evt.flag == consts.EVENT_ASSERT_EXISTS: # this is image, not tested
-            pattern = d.pattern_open(evt.args[0])
-            target = 'images/target_%.2f.jpg' % time.time()
-            self._save_screenshot(pattern, name=target)
-            kwargs = {
-                'target': target,
-                'description': evt.kwargs.get('desc'),
-                'screen': self._save_screenshot(name='images/screen_%.2f.jpg' % time.time()),
-                'traceback': None if evt.traceback is None else evt.traceback.stack,
-                'success': evt.traceback is None,
-            }
-            if evt.traceback is None:
-                kwargs['confidence'] = evt.retval.confidence
-                (x, y) = evt.retval.pos
-                kwargs['position'] = {'x': x, 'y': y}
-            self.add_step('assert_exists', **kwargs)
+        # elif evt.flag == consts.EVENT_ASSERT_EXISTS: # this is image, not tested
+        #     pattern = d.pattern_open(evt.args[0])
+        #     target = 'images/target_%.2f.jpg' % time.time()
+        #     self._save_screenshot(pattern, name=target)
+        #     kwargs = {
+        #         'target': target,
+        #         'description': evt.kwargs.get('desc'),
+        #         'screen': self._save_screenshot(name='images/screen_%.2f.jpg' % time.time()),
+        #         'traceback': None if evt.traceback is None else evt.traceback.stack,
+        #         'success': evt.traceback is None,
+        #     }
+        #     if evt.traceback is None:
+        #         kwargs['confidence'] = evt.retval.confidence
+        #         (x, y) = evt.retval.pos
+        #         kwargs['position'] = {'x': x, 'y': y}
+        #     self.add_step('assert_exists', **kwargs)
 
 
 def listen(d, save_dir='report'):

@@ -339,7 +339,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
                 props[m.group('key')] = m.group('value')
         return props
 
-    def start_app(self, package_name, activity=None):
+    def start_app(self, package_name, activity=None, stop=False):
         '''
         Start application
 
@@ -348,12 +348,29 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             - activity (string): optional, activity name
 
         Returns time used (unit second), if activity is not None
+
+        Document: usage: adb shell am start
+            -D: enable debugging
+            -W: wait for launch to complete
+            --start-profiler <FILE>: start profiler and send results to <FILE>
+            --sampling INTERVAL: use sample profiling with INTERVAL microseconds
+                between samples (use with --start-profiler)
+            -P <FILE>: like above, but profiling stops when app goes idle
+            -R: repeat the activity launch <COUNT> times.  Prior to each repeat,
+                the top activity will be finished.
+            -S: force stop the target app before starting the activity
+            --opengl-trace: enable tracing of OpenGL functions
+            --user <USER_ID> | current: Specify which user to run as; if not
+                specified then run as the current user.
         '''
         _pattern = re.compile(r'TotalTime: (\d+)')
         if activity is None:
             self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
         else:
-            output = self.adb_shell(['am', 'start', '-W', '-n', '%s/%s' % (package_name, activity)])
+            args = ['-W']
+            if stop:
+                args.append('-S')
+            output = self.adb_shell(['am', 'start'] + args + ['-n', '%s/%s' % (package_name, activity)])
             m = _pattern.search(output)
             if m:
                 return int(m.group(1))/1000.0

@@ -115,19 +115,19 @@ def main(path, serial=None, host=None, port=None, start=False):
         utils.http_download(urlpath, target)
 
     import atx.androaxml as apkparse
-    package_name, main_activity = apkparse.parse_apk(path)
-    log.info("APK package name: %s", package_name)
-    log.info("APK main activity: %s", main_activity)
+    manifest = apkparse.parse_apk(path)
+    log.info("APK package name: %s", manifest.package_name)
+    log.info("APK main activity: %s", manifest.main_activity)
 
     log.info("Push file to android device")
     adb_pushfile(adb, path, DEFAULT_REMOTE_PATH)
 
     log.info("Install ..., will take a few seconds")
-    adb_must_install(adb, DEFAULT_REMOTE_PATH, package_name)
+    adb_must_install(adb, DEFAULT_REMOTE_PATH, manifest.package_name)
     log.info("Remove _tmp.apk")
     adb_remove(adb, DEFAULT_REMOTE_PATH)
 
     if start:
-        log.info("Start app '%s'" % package_name)
-        adb.raw_cmd('shell', 'am', 'start', '-n', package_name+'/'+main_activity).wait()
+        log.info("Start app '%s'" % manifest.package_name)
+        adb.raw_cmd('shell', 'am', 'start', '-n', manifest.package_name+'/'+manifest.main_activity).wait()
     log.info("Success")
