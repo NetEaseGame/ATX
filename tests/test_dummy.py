@@ -79,11 +79,11 @@ def test_region_screenshot():
     assert rs is not None
     assert rs.size == (500, 200)
 
-def test_assert_exists():
-    d.assert_exists('media/system-app.png')
+# def test_assert_exists():
+#     d.assert_exists('media/system-app.png')
 
-    with pytest.raises(atx.AssertExistsError):
-        d.assert_exists('media/haima.png', timeout=0.1)
+#     with pytest.raises(atx.AssertExistsError):
+#         d.assert_exists('media/haima.png', timeout=0.1)
 
 def test_click():
     d.click(50, 70)
