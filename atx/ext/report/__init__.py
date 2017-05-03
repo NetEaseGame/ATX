@@ -83,9 +83,9 @@ class Report(object):
             cv_last_img = imutils.from_pillow(self.last_screenshot)
             cv_last_img = imutils.mark_point(cv_last_img, x, y)
             screen = imutils.to_pillow(cv_last_img)
-            screen_before = self._save_screenshot(screen=screen, append_gif=True)
+            screen_before = self._save_screenshot(screen=screen, name_prefix='click-before')
             # FIXME: maybe need sleep for a while
-            screen_after = self._save_screenshot(append_gif=True)
+            screen_after = self._save_screenshot(name_prefix='click-after')
 
             self.add_step('click',
                 screen_before=screen_before,
@@ -198,15 +198,20 @@ class Report(object):
             step['screenshot'] = self._take_screenshot(screenshot, name_prefix='error')
         self.steps.append(step)
 
-    def _save_screenshot(self, screen=None, name=None, name_prefix='screen', append_gif=False):
+    def _save_screenshot(self, screen=None, name=None, name_prefix='screen'):
         if screen is None:
             screen = self.d.screenshot()
         if name is None:
-            name = 'images/%s_%d.jpg' % (name_prefix, time.time())
+            name = 'images/%s_%d.jpg' % (name_prefix, time.time()*1000)
         relpath = os.path.join(self.save_dir, name)
-        screen.save(relpath)
-        if append_gif:
+        if hasattr(screen, 'convert'): # pillow image
+            png = screen.convert("RGBA")
+            bg = Image.new("RGB", png.size, (255, 255, 255))
+            bg.paste(png, mask=png.split()[3]) # 3 is alpha channel
+            bg.save(relpath, "JPEG", quality=80)
             self._add_to_gif(screen)
+        else: # pattern
+            screen.save(relpath)
         return name
 
     def _add_to_gif(self, image):

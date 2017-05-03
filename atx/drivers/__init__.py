@@ -15,6 +15,7 @@ Display = collections.namedtuple('Display', ['width', 'height'])
 
 
 __boundstuple = collections.namedtuple('Bounds', ['left', 'top', 'right', 'bottom'])
+
 class Bounds(__boundstuple):
     def __init__(self, *args, **kwargs):
         self._area = None
