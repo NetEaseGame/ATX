@@ -470,8 +470,17 @@ class DeviceMixin(object):
         return point
 
     def click_exists(self, *args, **kwargs):
-        """ Alias of click_nowait """
-        self.click_nowait(*args, **kwargs)
+        """ Click when target exists
+        Example usage:
+            - click_exists("button.png")
+            - click_exists(text="Update")
+        """
+        if len(args) > 0:
+            return self.click_nowait(*args, **kwargs)
+        else:
+            elem = self(**kwargs)
+            if elem.exists:
+                return elem.click()
 
     @hook_wrap(consts.EVENT_CLICK_IMAGE)
     def click_image(self, pattern, timeout=20.0, action='click', safe=False, desc=None, delay=None, **match_kwargs):
