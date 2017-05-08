@@ -197,14 +197,21 @@ d.swipe(sx, sy, ex, ey)
 # swipe from (sx, sy) to (ex, ey) with 10 steps
 d.swipe(sx, sy, ex, ey, steps=10)
 
-## 文本的输入 (only Android)
-
+## 文本的输入
 ```py
 d.type("hello world")
 d.type("atx", enter=True) # perform enter after input
 d.type("atx", next=True) # jump to next after input
 d.clear_text() # clear input
 ```
+
+安卓手机因为输入法的众多，接口不统一，所以为了方便我们的自动化，就专门做了一个输入法。下载安装ATX助手即可
+
+```
+python -matx install atx-assistant
+```
+
+通常直接调用 `d.type`是不会出问题的，但也不是绝对的。最好在测试之前调用 `d.prepare_ime()` 将输入法切换到我们定制的**ATX助手输入法**
 
 ## Common settings
 	

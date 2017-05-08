@@ -510,9 +510,20 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
         Args:
             - ime(string): for example "android.unicode.ime/.Utf7ImeService"
+
+        Raises:
+            RuntimeError
         """
         self.adb_shell(['ime', 'enable', ime])
         self.adb_shell(['ime', 'set', ime])
+
+        from_time = time.time()
+        while time.time() - from_time < 10.0:
+            if ime == self.current_ime(): # and self._adb_device.is_keyboard_shown():
+                return
+            time.sleep(0.2)
+        else:
+            raise RuntimeError("Error switch to input-method (%s)." % ime)
 
     def _is_utf7ime(self, ime=None):
         if ime is None:
@@ -522,14 +533,19 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             'com.netease.atx.assistant/.ime.Utf7ImeService',
             'com.netease.nie.yosemite/.ime.ImeService']
 
-    def _prepare_ime(self):
+    def prepare_ime(self):
+        """
+        Change current method to adb-keyboard
+
+        Raises:
+            RuntimeError
+        """
         if self._is_utf7ime():
             return True
 
         for ime in self.input_methods():
             if self._is_utf7ime(ime):
                 self.enable_ime(ime)
-                return True
         return False
         # raise RuntimeError("Input method for programers not detected.\n" +
         #     "\tInstall with: python -m atx install atx-assistant")
@@ -564,7 +580,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         app source see here: https://github.com/openatx/android-unicode
         """
         utext = strutils.decode(text)
-        if self._prepare_ime():
+        if self.prepare_ime():
             estext = base64.b64encode(utext.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
         else:
@@ -581,7 +597,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         Args:
             - count (int): send KEY_DEL count
         """
-        self._prepare_ime()
+        self.prepare_ime()
         self.keyevent('KEYCODE_MOVE_END')
         self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
 
