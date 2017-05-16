@@ -12,4 +12,4 @@ facebook-wda==0.1.1.dev1
 atx-uiautomator==0.2.12.dev6
 imageio==1.5
 colorama==0.3.7
-AxmlParserPY==0.0.2
+AxmlParserPY==0.0.3
