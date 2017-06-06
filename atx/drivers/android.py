@@ -481,11 +481,11 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         warnings.warn("deprecated, source() instead", DeprecationWarning)
         return self._uiauto.dump()
 
-    def source(self):
+    def source(self, *args, **kwargs):
         """
         Dump page xml
         """
-        return self._uiauto.dump()
+        return self._uiauto.dump(*args, **kwargs)
 
     def _escape_text(self, s, utf7=False):
         s = s.replace(' ', '%s')

@@ -127,7 +127,8 @@ class Device(object):
         Return:
             - int [0-4]
         """
-        return self.display.rotation
+        if self.display:
+            return self.display.rotation
     
     def properties(self):
         '''
