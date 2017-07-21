@@ -129,7 +129,15 @@ class IOSDevice(DeviceMixin):
             text(string): input text
         """
         self.session.send_keys(text)
-        
+    
+    def clear_text(self, count=30):
+        """Clear text with specified count
+        Args:
+            - count (int): send KEY_DEL count
+        """
+        pass
+        self.session.send_keys("\b"*count)
+
     def click(self, x, y):
         """Simulate click operation
         Args:

@@ -1,6 +1,6 @@
 ![logo](images/logo.png)
 
-# AutomatorX (atx) (中文版)
+# ATX(AutomatorX) (中文版)
 [![Build Status](https://travis-ci.org/NetEaseGame/AutomatorX.svg?branch=master)](https://travis-ci.org/NetEaseGame/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
@@ -8,10 +8,12 @@
 [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## 简介
-该项目是为了让手机应用的一些常规测试可以自动化起来，让测试人员摆脱那些枯燥的重复性工作。
-基于OpenCV的图像识别技术，有点类似于SikuliX(这东西挺好用的，只是没说要支持手机端)
+ATX是一款开源的自动化测试工具，支持测试iOS平台和Android平台的原生应用、游戏、Web应用。
+使用Python来编写测试用例，混合使用图像识别，控件定位技术来完成游戏的自动化。附加专用的IDE来完成脚本的快速编写。
 
-This project is to make mobile test automated, free people from the boring of repeated job. **AutomatorX** is a python library base on `python-opencv` and a lot of outstanding python libs.
+希望该项目可以让手机手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
+
+This project is to make mobile test automated, free people from the boring of repeated job. **ATX** is a python library base on `python-opencv` and a lot of outstanding python libs.
 
 ATX is short for _AutomatorX_
 
