@@ -8,9 +8,9 @@ PyYAML==3.11
 numpy>=1.11.0
 Pillow>=2.7.0
 requests>=2.9.1
-facebook-wda==0.1.1.dev1
+facebook-wda>=0.1.2.dev4
 atx-uiautomator==0.2.12.dev6
-imageio==1.5
-colorama==0.3.7
+imageio>=1.5
+colorama>=0.3.7
 AxmlParserPY==0.0.3
 #atx-webide>=0.1.1.dev72

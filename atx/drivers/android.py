@@ -164,12 +164,18 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         else:
             self.delay(secs)
 
+    def _display_with_orientation(self):
+        _Display = collections.namedtuple('Display', ['width', 'height'])
+        if self.rotation in (1, 3):
+            return _Display(*reversed(self.__display))
+        return self.__display
+
     @property
     def display(self):
         """Virtual keyborad may get small d.info['displayHeight']
         """
         if self.__display:
-            return self.__display
+            return self._display_with_orientation()
         w, h = (0, 0)
         for line in self.adb_shell('dumpsys display').splitlines():
             m = _DISPLAY_RE.search(line, 0)
@@ -180,12 +186,12 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             # o = int(m.group('orientation'))
             w, h = min(w, h), max(w, h)
             self.__display = collections.namedtuple('Display', ['width', 'height'])(w, h)
-            return self.__display
-
-        w, h = self.info['displayWidth'], self.info['displayHeight']
-        w, h = min(w, h), max(w, h)
-        self.__display = collections.namedtuple('Display', ['width', 'height'])(w, h)
-        return self.__display
+            break
+        else:
+            w, h = self.info['displayWidth'], self.info['displayHeight']
+            w, h = min(w, h), max(w, h)
+            self.__display = collections.namedtuple('Display', ['width', 'height'])(w, h)
+        return self._display_with_orientation()
     
     @property
     def rotation(self):
