@@ -59,7 +59,7 @@ class Report(object):
         self.result = None
 
         self.__gif_path = os.path.join(save_dir, 'output.gif')
-        self.__gif = imageio.get_writer(self.__gif_path, fps=2)
+        self.__gif = imageio.get_writer(self.__gif_path, format='GIF', fps=2)
         self.__uia_last_position = None
         self.__last_screenshot = None
         self.__closed = False

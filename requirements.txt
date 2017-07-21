@@ -13,4 +13,4 @@ atx-uiautomator==0.2.12.dev6
 imageio==1.5
 colorama==0.3.7
 AxmlParserPY==0.0.3
-atx-webide>=0.1.1.dev72
+#atx-webide>=0.1.1.dev72
