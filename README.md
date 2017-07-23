@@ -1,5 +1,3 @@
-![logo](images/logo.png)
-
 # ATX(AutomatorX) (中文版)
 [![Build Status](https://travis-ci.org/NetEaseGame/AutomatorX.svg?branch=master)](https://travis-ci.org/NetEaseGame/AutomatorX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
@@ -7,104 +5,107 @@
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
 [![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-## 简介
-ATX是一款开源的自动化测试工具，支持测试iOS平台和Android平台的原生应用、游戏、Web应用。
+## Introduction (简介)
+ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台和Android平台的原生应用、游戏、Web应用。
 使用Python来编写测试用例，混合使用图像识别，控件定位技术来完成游戏的自动化。附加专用的IDE来完成脚本的快速编写。
 
+## Hope (愿景)
 希望该项目可以让手机手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 
-This project is to make mobile test automated, free people from the boring of repeated job. **ATX** is a python library base on `python-opencv` and a lot of outstanding python libs.
-
-ATX is short for _AutomatorX_
-
-If you are new to atx, it better to start from _Quick start tutorial_ or just view [API documentation link](docs/API.md)
-
 ## Features
-1. 完全的黑盒测试框架，无需知道项目代码，非侵入式
-1. 支持iOS, Android，模拟器的自动化测试，两个平台都支持测试第三方应用
-1. 使用图像识别完成游戏的自动化
-1. 支持WebView（Android）
-1. 脚本编辑器用于快速的写脚本
-1. 漂亮的测试报告
-1. 可以用来测试Windows应用 (这部分没有文档)
-
-![demo-gif](images/demo.gif)
+- [x] 支持iOS, Android 双平台的原生应用，Web应用和游戏
+- [x] 支持通过图像识别来定位元素的位置
+- [x] 内置自动生成测试报告的功能
+- [x] 网页版的脚本编辑器，来帮助快速的写代码
 
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
-- [Gitter Chat Room](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 - QQ: `497460177` PS: 因为我们公司上不了QQ, 所以不会经常上
-- 网易内部用户目前请直接联系 `hzsunshx` 或加群 `1347390`
+- 网易内部用户加Popo群 `1347390` 群主 `hzsunshx`
+- [Testerhome社区](https://testerhome.com/topics/node78)
+- ~~[Gitter Chat Room](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)~~
 
-## 限制
-- Python版本限制 >= 2.7 && <= 3.5
+## Limitation (限制)
+- Python >= 2.7 && <= 3.5
 - Android 4.1+
-- iOS 9.0+
-- iOS测试必须要有一个Mac
+- iOS 9.0+ with Mac
 
-## Installation
-1. 安装ATX
+## Installation (安装)
+准备Python虚拟环境 [Virtualenv]((http://www.jianshu.com/p/08c657bd34f1))
 
-	最好在virtualenv的环境下安装, 不懂这是啥的可以学习下Andrew_liu写的文章[Python--Virtualenv简明教程](http://www.jianshu.com/p/08c657bd34f1)
+```bash
+pip install virtualenv
+virtualenv venv
 
-	```bash
-	# virtualenv venv && . venv/bin/activate
-	pip install --upgrade --pre atx
-	pip install opencv_contrib_python
-	```
+# Linux or Mac
+. venv/bin/activate
 
-	为了加快下载速度，国内用户可以使用额外的pip参数`-i https://pypi.doubanio.com/simple/`
+# Windows
+venv\Scripts\activate.bat 
+```
 
-	装完之后用命令行简单测试下安装是否成功
+安装相关的python库
 
-	- `python -m atx version` 查看atx版本号
-	- `python -m atx doctor` 检查环境配置是否正常
+```bash
+# install the lastest version of atx
+# if feel to slow use douban pypi mirror https://pypi.doubanio.com/simple/
+pip install --upgrade --pre atx
 
-1. Android测试依赖
+# install opencv dependencies
+pip install opencv_contrib_python
+```
 
-	安装[ATX手机助手.apk](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)到手机, 或者手机连接到电脑上用命令行安装 `python -m atx install atx-assistant`
+**Android测试依赖**
+
+- ADB
+
+	* [Windows adb安装指南](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
+	* Mac上的adb可以通过命令行安装 `brew install android-platform-tools`
+
+- [ATX手机助手.apk](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)
 
 	该App为自动化提供了输入法的功能，屏幕常量等功能
+	命令行安装 `python -m atx install atx-assistant`
 
-1. iOS测试依赖
+**iOS测试依赖**
+
+- WebDriverAgent
 
 	你的iPhone手机需要连接到Mac上，然后Mac安装[WebDriverAgent](https://github.com/facebook/WebDriverAgent)，通常对Xcode部署的人搭WDA的人会遇到不少问题，搞不定继续参考这里 <https://testerhome.com/topics/7220>
 
 	WDA成功启动后，会生成一个用于ATX连接的http地址，比如`http://localhost:8100`
-	
-1. 额外补充的信息
 
-	- [Win安装](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
-	- [Mac安装](https://github.com/NetEase/AutomatorX/wiki/Mac-installation)
+**检查安装是否成功**
 
-1. 脚本编辑器
+```bash
+# 查看atx版本号
+python -m atx version
+# 检查环境配置是否正常
+python -m atx doctor
+```
 
-	为了方便快速的写出脚本，提供了两个Web编辑器。
+**脚本编辑器**(可选)
 
-	- [atx-webide](https://github.com/openatx/atx-webide) 用于写游戏脚本，包括截图，代码编辑
-	- [weditor](https://github.com/openatx/weditor) __beta__ 针对Android和iOS原生应用快速定位元素，自动生成代码
+为了方便快速的写出脚本，提供了两个Web编辑器。
+
+- [atx-webide](https://github.com/openatx/atx-webide) 用于写游戏脚本，包括截图，代码编辑
+- [weditor](https://github.com/openatx/weditor) __beta__ 针对Android和iOS原生应用快速定位元素，自动生成代码
 
 ## Getting Started （必看）
-* To get started, it is better to look at the [QUICK START](docs/QUICKSTART.md)
-* More about the ATX [API HERE](docs/API.md)
-* iOS的接口文档被放到了testerhome上 <https://testerhome.com/topics/7204>
+* [快速入门文档](docs/QUICKSTART.md)
+* [如何使用内置的测试报告功能](atx/ext/report/README.md)
+* [ATX资料快速索引](https://testerhome.com/topics/9091)
+* [Testerhome上的ATX有关的文章列表](https://testerhome.com/topics/node78)
 
-There is also a doc for professional users. [API ADVANCED](README_ADVANCED.md)
+## APIs (接口文档)
+* [常用接口](docs/API.md)
+* [iOS的接口文档](https://testerhome.com/topics/7204)
 
-## Command Line Tools
-There are a lot of command tools along with atx, eg
+## Other (其他)
+* ATX自带的命令行工具 <https://github.com/NetEase/AutomatorX/wiki/Command-Line-Tools>
 
-* Screenshot
-* Screenrecord
-* Install minicap to android
-* Apk file parser
-* Show phone info with JSON
-* Enable iPhone developer mode
-
-etc... To see the whole list click [here](https://github.com/NetEase/AutomatorX/wiki/Command-Line-Tools)
-
-## Known Issues
+## Known Issues (常见问题)
 If you are having some issues please checkout [wiki](https://github.com/NetEase/AutomatorX/wiki/Common-Issues) first.
 
 为了避免潜在的Python编码问题，代码文件都应该用UTF-8编码格式保存。
@@ -127,14 +128,6 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 	```
 
 ## ATX Extentions （扩展功能）
-该部分属于atx的扩展插件实现的功能
-
-插件说明
-
-* [HTML Report](atx/ext/report/README.md)
-	
-	利用此插件可以在ATX自动化跑完之后，自动生成可以HTML报告，详细记录每一步的执行情况
-
 * WebView
 
 	目前仅限安卓, 具体参考 <https://testerhome.com/topics/7232>
@@ -191,13 +184,13 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
 ## 代码导读
-`connect` 函数负责根据平台返回相应的类(AndroidDevice or IOSDevice)
+`connect` 函数负责根据平台返回相应的类(`AndroidDevice` or `IOSDevice`)
 
 图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还凑合能用吧
 
 每个平台相关的库都放到了 目录 `atx/device`下，公用的方法在`atx/device/device_mixin.py`里实现。第三方扩展位于`atx/ext`目录下。
 
-## 相关的项目
+## Related projects (相关的项目)
 1. 基于opencv的图像识别库 <https://github.com/netease/aircv>
 2. 感谢作者 <https://github.com/xiaocong> 提供的uiautomator的python封装，相关项目已经fork到了
 
@@ -207,21 +200,12 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 3. SikuliX <http://sikulix-2014.readthedocs.org/en/latest/index.html>
 4. Blockly <https://github.com/codeskyblue/blockly>
 
-## Articles
-1. [让adb install显示进度](https://testerhome.com/topics/4772)
-2. [Android 屏幕同步和录制工具](https://testerhome.com/topics/5006)
-3. [安卓手机的快速截图](https://testerhome.com/topics/5004)
-4. 更多的系列文章 <https://testerhome.com/topics/node78>
-
-## Developer dashboards
-1. Platform Versions, Screen Size, Open GL Version <http://developer.android.com/intl/zh-cn/about/dashboards/index.html>
-
-## Contribution
+## Contribution (参与贡献)
 如何才能让软件变的更好，这其中也一定需要你的参与才行，发现问题去在github提个issue, 一定会有相应的开发人员看到并处理的。文档有错误的话，直接提Issue，或者提PR都可以。
 由于我平常使用该项目的概率并不怎么高，所有不少问题即使存在我也不会发现，请养成看到问题提Issue的习惯，所有的Issue我都会去处理的，即使当时处理不了，等技术成熟了，我还是会处理。但是如果不提交Issue，说不定我真的会忘掉。
 
 BTW: 有开发能力的也可以先跟开发者讨论下想贡献的内容，并提相应的PR由开发人员审核。
 
-## License
+## License (协议)
 This project is under the Apache 2.0 License. See the [LICENSE](LICENSE) file for the full license text.
 
