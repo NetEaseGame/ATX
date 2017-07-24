@@ -116,8 +116,8 @@
               Actions <span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
-              <li v-for="step in steps">
-                <a href="#{{step.time}}">{{step.time}} {{step.action}}  {{step.description}}</a>
+              <li v-for="(index, step) in steps">
+                <a href="#{{step.time}}">{{index+1}} {{step.action}}  {{step.description}}({{ step.time }}s)</a>
               </li>
             </ul>
           </li>
@@ -153,10 +153,10 @@
     </div>
     <!-- steps -->
     <div id="steps">
-      <div v-for="step in steps" class="panel" v-bind:class="step.success ? 'panel-success': 'panel-danger'">
+      <div v-for="(index, step) in steps" class="panel" v-bind:class="step.success ? 'panel-success': 'panel-danger'">
         <div class="panel-heading">
           <a class="anchor" href="#{{step.time}}" name="{{step.time}}">$</a>
-          <i>{{step.time}}s</i> {{step.action | translate }} {{step.description}}
+          <i>{{index+1}}</i> {{step.action | translate }} {{step.description}}({{ step.time }}s)
         </div>
         <div class="panel-body">
           <template v-if="step.action == 'assert_image_exists'">
@@ -237,9 +237,11 @@
             </div>
           </template>
           <template v-if="step.action == 'info'">
-            <div class="image-wrapper" v-if="step.screenshot">
-              <img width="100%" v-bind:src="step.screenshot" />
-            </div>
+            <a class="fancybox" title="Screenshot" rel="{{step.time}}" v-bind:href="step.screenshot" v-if="step.screenshot">
+              <div class="image-wrapper">
+                <img width="100%" v-bind:src="step.screenshot" />
+              </div>
+            </a>
           </template>
           <template v-if="step.action == 'assert'">
             <div class="col-md-6">
