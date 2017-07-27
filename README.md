@@ -1,9 +1,9 @@
 # ATX(AutomatorX) (中文版)
-[![Build Status](https://travis-ci.org/NetEaseGame/AutomatorX.svg?branch=master)](https://travis-ci.org/NetEaseGame/AutomatorX)
+[![Build Status](https://travis-ci.org/NetEaseGame/ATX.svg?branch=master)](https://travis-ci.org/NetEaseGame/ATX)
 [![Documentation Status](https://readthedocs.org/projects/atx/badge/?version=latest)](http://atx.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/atx.svg)](https://pypi.python.org/pypi/atx)
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
-[![Gitter](https://badges.gitter.im/codeskyblue/AutomatorX.svg)](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/codeskyblue/ATX.svg)](https://gitter.im/codeskyblue/ATX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Introduction (简介)
 ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台和Android平台的原生应用、游戏、Web应用。
@@ -87,10 +87,15 @@ python -m atx doctor
 
 **脚本编辑器**(可选)
 
-为了方便快速的写出脚本，提供了两个Web编辑器。
+为了方便快速的写出脚本，提供了三个Web编辑器。
 
-- [atx-webide](https://github.com/openatx/atx-webide) 用于写游戏脚本，包括截图，代码编辑
+- 自带GUI
+
+	自带的使用Tkinter写的编辑器，只提供截图功能，但是比较稳定，启动方法 `python -m atx gui -s ${SERIAL or WDA_URL}`
+	使用 `python -m atx gui -h` 可以查看更多的选项
+
 - [weditor](https://github.com/openatx/weditor) __beta__ 针对Android和iOS原生应用快速定位元素，自动生成代码
+- [atx-webide](https://github.com/openatx/atx-webide) 用于写游戏脚本，包括截图，代码编辑（这个项目最近不怎么太平，问题有点多）
 
 ## Getting Started （必看）
 * [快速入门文档](docs/QUICKSTART.md)
