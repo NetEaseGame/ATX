@@ -109,6 +109,10 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 
 为了避免潜在的Python编码问题，代码文件都应该用UTF-8编码格式保存。
 
+- 测试中出现的弹窗如何处理？
+
+	写了一篇文章，仅供参考 https://testerhome.com/topics/9540
+
 - 对于python2.7 字符串前应该加上u开头，例如`u'你好'`
 
 	文件的开头可以加上下面这段代码，强制使用python3的编码体系(默认全部都是unicode)
