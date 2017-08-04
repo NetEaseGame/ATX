@@ -72,6 +72,12 @@ pip install opencv_contrib_python
 
 - WebDriverAgent
 
+	由于WebDriverAgent更新过快，atx的一个依赖库[facebook-wda](https://github.com/openatx/facebook-wda)还跟不上他更新的速度，下载完WDA后，请切换到这个版本
+
+	```
+	git reset --hard a8def24ca67f8a74dd709b899c8ea539c9c488ea
+	```
+
 	你的iPhone手机需要连接到Mac上，然后Mac安装[WebDriverAgent](https://github.com/facebook/WebDriverAgent)，通常对Xcode部署的人搭WDA的人会遇到不少问题，搞不定继续参考这里 <https://testerhome.com/topics/7220>
 
 	WDA成功启动后，会生成一个用于ATX连接的http地址，比如`http://localhost:8100`

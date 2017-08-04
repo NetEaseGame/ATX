@@ -538,6 +538,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         for ime in self.input_methods():
             if self._is_utf7ime(ime):
                 self.enable_ime(ime)
+                return True
         return False
         # raise RuntimeError("Input method for programers not detected.\n" +
         #     "\tInstall with: python -m atx install atx-assistant")
