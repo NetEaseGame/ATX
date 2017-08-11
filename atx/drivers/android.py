@@ -556,12 +556,12 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             estext = self._escape_text(s)
             self.adb_shell(['input', 'text', estext])
 
-    def type(self, text, enter=False, next=False, clear=False, **ui_select_kwargs):
+    def type(self, s, enter=False, next=False, clear=False, **ui_select_kwargs):
         """Input some text, this method has been tested not very stable on some device.
         "Hi world" maybe spell into "H iworld"
 
         Args:
-            - text: string (text to input), better to be unicode
+            - s: string (text to input), better to be unicode
             - enter(bool): input enter at last
             - next(bool): perform editor action Next
             - clear(bool): clear text before type
@@ -581,7 +581,7 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         if clear:
             self.clear_text()
 
-        utext = strutils.decode(text)
+        utext = strutils.decode(s)
         if self.prepare_ime():
             estext = base64.b64encode(utext.encode('utf-7'))
             self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
