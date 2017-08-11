@@ -67,10 +67,10 @@ def getenvs(*names):
 
 
 class AndroidDevice(DeviceMixin, UiaDevice):
-    def __init__(self, serialno=None, **kwargs):
+    def __init__(self, serial=None, **kwargs):
         """Initial AndroidDevice
         Args:
-            serialno: string specify which device
+            serial: string specify which device
 
         Returns:
             AndroidDevice object
@@ -79,17 +79,17 @@ class AndroidDevice(DeviceMixin, UiaDevice):
             EnvironmentError
         """
         self.__display = None
-        serialno = serialno or getenvs('ATX_ADB_SERIALNO', 'ANDROID_SERIAL')
+        serial = serial or getenvs('ATX_ADB_SERIALNO', 'ANDROID_SERIAL')
         self._host = kwargs.get('host') or getenvs('ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1'
         self._port = int(kwargs.get('port') or getenvs('ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037)
 
         self._adb_client = adbkit.Client(self._host, self._port)
-        self._adb_device = self._adb_client.device(serialno)
+        self._adb_device = self._adb_client.device(serial)
         self._adb_shell_timeout = 30.0 # max adb shell exec time
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
-        UiaDevice.__init__(self, serialno, **kwargs)
+        UiaDevice.__init__(self, serial, **kwargs)
         DeviceMixin.__init__(self)
 
         self._randid = base.id_generator(5)

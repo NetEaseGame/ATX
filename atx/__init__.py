@@ -79,6 +79,7 @@ def connect(*args, **kwargs):
     return c
 
 
+
 # def _sig_handler(signum, frame):
 #     print >>sys.stderr, 'Signal INT catched !!!'
 #     sys.exit(1)
