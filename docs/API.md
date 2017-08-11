@@ -100,7 +100,7 @@ d.click_image("button.png", safe=True)
 d.click_image("button.png", action='long_click')
 
 # 不等待的图片点击, 如果图片不存在直接返回None
-d.click_nowait('button.png')
+d.click_exists('button.png')
 
 # 文件名添加截图手机的分辨率, 脚本运行在其他分辨率的手机上时可以自动适应
 d.click_image("button.1920x1080.png")
@@ -203,6 +203,17 @@ d.type("hello world")
 d.type("atx", enter=True) # perform enter after input
 d.type("atx", next=True) # jump to next after input
 d.clear_text() # clear input
+```
+
+为了更简化代码，现提供如下操作
+
+```python
+d.type("www.baidu.com", clear=True, resourceId="com.android.browser:id/url_bar")
+# 一行代码等价于下面4行代码
+d(resourceId="com.android.browser:id/url_bar").click()
+d.clear_text()
+d.type("www.baidu.com")
+d.keyevent("ENTER")
 ```
 
 安卓手机因为输入法的众多，接口不统一，所以为了方便我们的自动化，就专门做了一个输入法。下载安装ATX助手即可
