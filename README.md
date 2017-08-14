@@ -30,6 +30,7 @@ ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台�
 - Python >= 2.7 && <= 3.5
 - Android 4.1+
 - iOS 9.0+ with Mac
+- adb >= 1.0.36
 
 ## Installation (安装)
 准备Python虚拟环境 [Virtualenv]((http://www.jianshu.com/p/08c657bd34f1))
@@ -123,7 +124,7 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 
 - 测试中出现的弹窗如何处理？
 
-	写了一篇文章，仅供参考 https://testerhome.com/topics/9540
+	《iOS弹窗如何自动处理》，仅供参考 https://testerhome.com/topics/9540
 
 - 对于python2.7 字符串前应该加上u开头，例如`u'你好'`
 
@@ -199,7 +200,7 @@ If you are having some issues please checkout [wiki](https://github.com/NetEase/
 	该部分代码位于 [atx/ext/gt.py](atx/ext/gt.py), 这部分代码目前在我看来，易用性一般般，希望使用者能根据具体情况，进行修改，如果是修改具有通用性，欢迎提交PR，我们会负责Review代码。
 
 ## 代码导读
-`connect` 函数负责根据平台返回相应的类(`AndroidDevice` or `IOSDevice`)
+`connect` 函数负责根据平台返回相应的类(`atx.drivers.android.AndroidDevice` or `atx.drivers.ios_webdriveragent.IOSDevice`)
 
 图像识别依赖于另一个库 [aircv](https://github.com/netease/aircv), 虽然这个库还不怎么稳定，也还凑合能用吧
 

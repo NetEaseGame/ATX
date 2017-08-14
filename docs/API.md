@@ -5,7 +5,7 @@
 
 ## Initial android device connect (Only Android)
 
-```py
+```python
 import atx
 
 d = atx.connect()
@@ -15,7 +15,7 @@ d = atx.connect()
 
 目前支持4个环境变量
 
-```sh
+```bash
 ATX_PLATFORM  # 默认是 android
 ATX_CONNECT_URL # 设备连接地址，可以是serialno或者wdaUrl
 ATX_ADB_HOST
@@ -23,17 +23,26 @@ ATX_ADB_PORT
 ATX_ADB_SERIALNO # 建议使用 ATX_CONNECT_URL 代替
 ```
 
-```sh
-$ python -c 'import atx; atx.connect("EFF153")'
+假设手机序列号是 `EFF153`, 连接命令
 
-# 等价写法
+```bash
+$ python -c 'import atx; atx.connect("EFF153")'
+```
+
+等价写法
+
+```bash
+# linux
 $ export ATX_CONNECT_URL="EFF153"
+# windows
+C:\> set ATX_CONNECT_URL=EFF153
+
 $ python -c 'import atx; atx.connect()'
 ```
 
 ## App start and stop
 
-```py
+```python
 package_name = 'com.example.game'
 
 d.stop_app(package_name)
@@ -160,17 +169,17 @@ print nd.match('folder.png')
 ## 锁定当前屏幕（主要用于提高查询效率）
 ```
 d.keep_screen()
-d.click_nowait("button1.png")
-d.click_nowait("button2.png")
+d.click_exists("button1.png")
+d.click_exists("button2.png")
 d.free_screen()
 ```
 
-这种操作，执行第二次`click_nowait`时，就不会再次截图。另外上面的代码也可以这样写
+这种操作，执行第二次`click_exists`时，就不会再次截图。另外上面的代码也可以这样写
 
 ```
 with d.keep_screen():
-	d.click_nowait("button1.png")
-	d.click_nowait("button2.png")
+	d.click_exists("button1.png")
+	d.click_exists("button2.png")
 ```
 
 ## 图片等待操作
