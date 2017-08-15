@@ -19,6 +19,11 @@ except pkg_resources.DistributionNotFound:
 from atx.consts import *
 from atx.errors import *
 from atx.drivers import Pattern, Bounds, ImageCrop
+import atx.adbkit.client
+
+
+# make a global var for easily use
+adb_client = atx.adbkit.client.Client()
 
 
 def _connect_url(*args):
