@@ -178,6 +178,23 @@ class DeviceMixin(object):
     def touch(self, x, y):
         """ Alias for click """
         self.click(x, y)
+    
+    def click(self, x, y):
+        """
+        Args:
+            x, y (float): position to tap
+        
+        Example:
+            if x, y both less than 1.0. then x, y means percentage position
+
+                d.click(0.5, 0.5) # click center of screen
+                d.click(20, 10) # click position(20, 10)
+        """
+        if x < 1 and y < 1:
+            display = self.display
+            x *= display.width
+            y *= display.height
+        return self.do_tap(x, y)
 
     def _cal_scale(self, pattern=None):
         scale = 1.0

@@ -76,6 +76,16 @@ print d.current_app() # 获取当前运行应用的package name和activity以及
 # Expect: AppInfo(package='com.miui.mihome2', activity='com.android.launcher2.Launcher', pid=634)
 ```
 
+可以使用`atx.adb_client`变量, 更方便的操作adb， 暂时没写文档，具体参考代码[adbkit/client.py](https://github.com/NetEaseGame/ATX/blob/master/atx/adbkit/client.py)
+
+先给几个例子
+
+```python
+c = atx.adb_client
+c.version() # adb version
+c.devices() # list of devices
+```
+
 ## 图片查找与点击
 
 ```py
@@ -88,6 +98,9 @@ d.screenshot('screen.1920x1080.png') # Save screenshot as file
 
 # click position
 d.click(50, 100) # 模拟点击 x, y
+
+# click percentage of screen (when pos.x and pox.y < 0)
+d.click(0.5, 0.5) # click center of screen
 
 # long click
 d.long_click(50, 100) # only works on android for now

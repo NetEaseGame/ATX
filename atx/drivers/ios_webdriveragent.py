@@ -138,7 +138,7 @@ class IOSDevice(DeviceMixin):
         pass
         self.session.send_keys("\b"*count)
 
-    def click(self, x, y):
+    def do_tap(self, x, y):
         """Simulate click operation
         Args:
             x, y(int): position

@@ -20,7 +20,7 @@ import logging
 import uuid
 import xml.dom.minidom
 
-from uiautomator import Device as UiaDevice
+from uiautomator import AutomatorDevice as UiaDevice
 from uiautomator import AutomatorDeviceObject
 from PIL import Image
 
@@ -66,7 +66,7 @@ def getenvs(*names):
             return os.getenv(name)
 
 
-class AndroidDevice(DeviceMixin, UiaDevice):
+class AndroidDevice(DeviceMixin):
     def __init__(self, serial=None, **kwargs):
         """Initial AndroidDevice
         Args:
@@ -89,14 +89,25 @@ class AndroidDevice(DeviceMixin, UiaDevice):
 
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
-        UiaDevice.__init__(self, serial, **kwargs)
+
+        self._uiauto = UiaDevice(serial, **kwargs)
         DeviceMixin.__init__(self)
 
         self._randid = base.id_generator(5)
-        self._uiauto = super(AndroidDevice, self) # also will call DeviceMixin method, not very good
 
         self.screen_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
+
+    @property
+    def info(self):
+        return self._uiauto.info
+
+    @property
+    def press(self):
+        return self._uiauto.press
+
+    def __call__(self, *args, **kwargs):
+        return self._uiauto(*args, **kwargs)
 
     @property
     def serial(self):
@@ -247,8 +258,8 @@ class AndroidDevice(DeviceMixin, UiaDevice):
         finally:
             base.remove_force(tmp_file)
 
-    @hook_wrap(consts.EVENT_CLICK)
-    def click(self, x, y):
+    # @hook_wrap(consts.EVENT_CLICK)
+    def do_tap(self, x, y):
         """
         Touch specify position
 
