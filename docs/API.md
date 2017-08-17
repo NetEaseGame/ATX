@@ -106,6 +106,15 @@ d.click(0.5, 0.5) # click center of screen
 d.long_click(50, 100) # only works on android for now
 ```
 
+## 滑动与拖动
+```py
+d.swipe(fromX, fromY, toX, toY, steps=100)
+# steps 默认100, 一个step执行大约5ms，所有100的steps相当于0.5s
+
+# 接口跟swipe很类似, 效果相当于先长按一下然后swipe
+d.drag(fromX, fromY, toX, toY, steps=100)
+```
+
 ## click_image函数
 
 ```py
@@ -283,3 +292,7 @@ d.screenshot()
 # expect output:
 # out: HookEvent(flag=8, args=(), kwargs={})
 ```
+
+## Other methods 其他的方法
+ATX对安卓手机的所有操作(eg: click, swipe) 都是通过这个库 <https://github.com/openatx/atx-uiautomator> 实现的
+通过 `d.uiautomator` 可以获取到该库的实例，使用该库上提到的所有方法。

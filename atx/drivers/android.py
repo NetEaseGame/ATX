@@ -98,18 +98,37 @@ class AndroidDevice(DeviceMixin):
         self.screen_rotation = None
         self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
 
+        # inherts from atx-uiautomator
+        self.swipe = self._uiauto.swipe
+        self.drag = self._uiauto.drag
+        self.press = self._uiauto.press
+        self.long_click = self._uiauto.long_click
+        self.dump = self._uiauto.dump
+
     @property
     def info(self):
         return self._uiauto.info
 
     @property
-    def press(self):
-        return self._uiauto.press
+    def uiautomator(self):
+        """
+        Returns:
+            uiautomator: Device object describes in https://github.com/openatx/atx-uiautomator
+        """
+        return self._uiauto
 
-    @property
-    def dump(self):
-        return self._uiauto.dump
-
+    # TODO: not working in java-uiautomator
+    # def swipe_points(self, points, steps=100):
+    #     """
+    #     Args:
+    #         points: array of points, eg: [(10, 12), (40, 15)]
+    #         steps:  the number of steps for the gesture. Steps are injected about 5 milliseconds apart, so 100 steps may take around 0.5 seconds to complete.
+        
+    #     Returns:
+    #         a boolean value represents if all touch events for this gesture are injected successfully
+    #     """
+    #     return self._uiauto.swipePoints(points, steps)
+    
     def __call__(self, *args, **kwargs):
         return self._uiauto(*args, **kwargs)
 
