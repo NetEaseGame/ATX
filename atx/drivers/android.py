@@ -106,6 +106,10 @@ class AndroidDevice(DeviceMixin):
     def press(self):
         return self._uiauto.press
 
+    @property
+    def dump(self):
+        return self._uiauto.dump
+
     def __call__(self, *args, **kwargs):
         return self._uiauto(*args, **kwargs)
 
@@ -249,8 +253,7 @@ class AndroidDevice(DeviceMixin):
 
     def _screenshot_uiauto(self):
         tmp_file = self._mktemp()
-        UiaDevice.screenshot(self, tmp_file)
-        # self._uiauto.screenshot(tmp_file) # this will call Mixin.screenshot first, which may get too many loop
+        self._uiauto.screenshot(tmp_file)
         try:
             return imutils.open_as_pillow(tmp_file)
         except IOError:
