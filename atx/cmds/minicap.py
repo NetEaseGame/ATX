@@ -86,7 +86,7 @@ def main(serialno=None, host=None, port=None):
         logger.info("Minicap install finished !")
 
         logger.info("Downloading minitouch ....")
-        url = "https://github.com/openstf/stf/raw/master/vendor/minitouch/"+abi+"/minitouch"
+        url = "https://github.com/codeskyblue/stf-binaries/raw/master/node_modules/minitouch-prebuilt/prebuilt/"+abi+"/bin/minitouch"
         target_path = os.path.join(tmpdir, 'minitouch')
         http_download(url, target_path)
         logger.info("Push data to device ....")
@@ -95,7 +95,7 @@ def main(serialno=None, host=None, port=None):
 
         logger.info("Checking [dump device info] ...")
         print adb('shell', '/data/local/tmp/minitouch -h')
-        logger.info("Minitouch install finished !")
+        logger.info("Minitouch install successfully ^_^")
 
     except Exception, e:
         logger.error('error: %s', e)
