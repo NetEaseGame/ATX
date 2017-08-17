@@ -159,22 +159,27 @@ class Client(object):
         lines = self.run_cmd("forward", "--list").strip().splitlines()
         return [line.strip().split() for line in lines]
 
-    def forward(self, serial, local_port, remote_port=None):
+    def forward(self, serial, remote, local_port=None): #local_port, remote_port=None):
         '''
-        adb port forward. return local_port
-        TODO: not tested
+        Args:
+            serial (str): device serial number
+            remote (str|int): A int means device port, str can be localabstract:service-name
+            local_port (int): optional, if not given, a random port will be generated
+        
+        Returns:
+            local_port
+        
+        If forwards already exists and local_port not specified, just return current forwarded port
         '''
-        # Shift args, because remote_port is required while local_port is optional
-        if remote_port is None:
-            remote_port, local_port = local_port, None
+        if isinstance(remote, int):
+            remote = 'tcp:%d' % remote
         if not local_port:
             for s, lp, rp in self.forward_list():
-                if s == serial and rp == 'tcp:%d' % remote_port:
+                if s == serial and rp == remote:
                     return int(lp[4:])
-            return self.forward(serial, next_local_port(self.server_host), remote_port)
+            return self.forward(serial, remote, next_local_port(self.server_host))
         else:
-            print(serial, remote_port, local_port)
-            self.raw_cmd("-s", serial, "forward", "tcp:%d" % local_port, "tcp:%d" % remote_port).wait()
+            self.raw_cmd("-s", serial, "forward", 'tcp:%d' % local_port, remote).wait()
             return local_port
 
 

@@ -9,6 +9,7 @@ import re
 import json
 import collections
 import tempfile
+import functools
 
 from PIL import Image
 from atx import logutils, imutils
@@ -31,6 +32,9 @@ class Device(object):
         self._client = client
         self._serial = serial
         self._screenshot_method = 'minicap'
+
+        # inherited methods
+        self.forward = functools.partial(self._client.forward, self.serial)
 
     @property
     def serial(self):
@@ -70,7 +74,7 @@ class Device(object):
         # any output means rm failed.
         return False if output else True
 
-    def install(self, filename):
+    def app_install(self, filename):
         """
         TOOD(ssx): Install apk into device, show progress
 
@@ -79,7 +83,7 @@ class Device(object):
         """
         return self.run_cmd('install', '-rt', filename)
 
-    def uninstall(self, package_name, keep_data=False):
+    def app_uninstall(self, package_name, keep_data=False):
         """
         Uninstall package
 
@@ -236,13 +240,6 @@ class Device(object):
         FIXME(ssx): not tested on horizontal screen
         '''
         self.shell('input', 'tap', str(x), str(y))
-
-    def forward(self, local_port, remote_port):
-        '''
-        adb port forward. return local_port
-        TODO: not tested
-        '''
-        return self._client.forward(self.serial, local_port, remote_port)
 
     def is_locked(self):
         """
