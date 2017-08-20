@@ -6,10 +6,14 @@ from __future__ import absolute_import
 import functools
 import os
 import sys
-import subprocess32 as subprocess
 import tempfile
 import inspect
 import plistlib
+
+try:
+    import subprocess32 as subprocess
+except:
+    import subprocess
 
 from PIL import Image
 from atx import logutils
