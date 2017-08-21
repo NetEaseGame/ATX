@@ -50,7 +50,7 @@ venv\Scripts\activate.bat
 
 ```bash
 # install the lastest version of atx
-# if feel to slow use douban pypi mirror https://pypi.doubanio.com/simple/
+# If feed too slow use douban pypi mirror:  -i https://pypi.doubanio.com/simple/
 pip install --upgrade --pre atx
 
 # install opencv dependencies
