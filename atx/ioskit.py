@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import print_function
 
 import functools
 import os
@@ -200,7 +201,7 @@ class Device(object):
 if __name__ == '__main__':
     devices()
     dev = Device()
-    print dev.screenshot('i.png')
-    print dev.product_version
-    print dev.product_version
-    print dev.name
+    print(dev.screenshot('i.png'))
+    print(dev.product_version)
+    print(dev.product_version)
+    print(dev.name)
