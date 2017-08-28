@@ -296,3 +296,8 @@ d.screenshot()
 ## Other methods 其他的方法
 ATX对安卓手机的所有操作(eg: click, swipe) 都是通过这个库 <https://github.com/openatx/atx-uiautomator> 实现的
 通过 `d.uiautomator` 可以获取到该库的实例，使用该库上提到的所有方法。
+
+iOS的所有的操作则是通过<https://github.com/openatx/facebook-wda>这个库与WDA交互完成的。
+其中 `d.session` 对应 `wda.Session` 对象
+
+比如想获取屏幕的大小，库中提到的方法是`Session.window_size()`,换到ATX中是`d.session.window_size()`
