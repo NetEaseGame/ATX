@@ -12,6 +12,14 @@ ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台�
 ## Hope (愿景)
 希望该项目可以让手机手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 
+## 重要说明
+随着ATX不断的发展，UI层面的Android以及iOS操作已经分离出来两个不同的项目。
+
+1. 对于Android应用的测试，如果不需要用到图像识别，推荐使用这个项目[uiautomator2](https://github.com/openatx/uiautomator2)
+1. 对于iOS应用的测试，如果不需要用到图像识别，推荐使用这个项目[facebook-wda](https://github.com/openatx/facebook-wda)
+
+BTW: atx-webide已经不在维护
+
 ## Features
 - [x] 支持iOS, Android 双平台的原生应用，Web应用和游戏
 - [x] 支持通过图像识别来定位元素的位置
@@ -102,7 +110,6 @@ python -m atx doctor
 	使用 `python -m atx gui -h` 可以查看更多的选项
 
 - [weditor](https://github.com/openatx/weditor) __beta__ 针对Android和iOS原生应用快速定位元素，自动生成代码
-- [atx-webide](https://github.com/openatx/atx-webide) 用于写游戏脚本，包括截图，代码编辑（这个项目最近不怎么太平，问题有点多）
 
 ## Getting Started （必看）
 * [快速入门文档](docs/QUICKSTART.md)
