@@ -35,7 +35,7 @@ BTW: atx-webide已经不在维护
 - ~~[Gitter Chat Room](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)~~
 
 ## Limitation (限制)
-- Python >= 2.7 && <= 3.5
+- Python >= 2.7 && <= 3.6
 - Android 4.1+
 - iOS 9.0+ with Mac
 - adb >= 1.0.36
