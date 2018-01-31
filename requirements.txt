@@ -9,8 +9,9 @@ numpy>=1.11.0
 Pillow>=2.7.0
 requests>=2.9.1
 facebook-wda>=0.2.0
-atx-uiautomator==0.3.3
 imageio>=1.5
 colorama>=0.3.7
 AxmlParserPY==0.0.3
 #atx-webide>=0.1.1.dev72
+# atx-uiautomator==0.3.3
+uiautomator2

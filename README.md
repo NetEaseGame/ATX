@@ -13,7 +13,14 @@ ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台�
 希望该项目可以让手机手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 
 ## 重要说明
-随着ATX不断的发展，UI层面的Android以及iOS操作已经分离出来两个不同的项目。
+新版本以采用新的uiautomator2替换到原来的[atx-uiautomator](https://github.com/openatx/atx-uiautomator). 历史版本可以通过Tag查看[tag:1.1.3](https://github.com/NetEaseGame/ATX/tree/1.1.3)
+测试安卓应用前，需要先进行init操作
+
+```
+python -muiautomator2 init
+```
+
+用于安卓和iOS原生应用测试的库已经分离出来，可以单独使用（强烈推荐单独使用，一来依赖少、稳定性高，二来写代码的时候还能自动补全）
 
 1. 对于Android应用的测试，如果不需要用到图像识别，推荐使用这个项目[uiautomator2](https://github.com/openatx/uiautomator2)
 1. 对于iOS应用的测试，如果不需要用到图像识别，推荐使用这个项目[facebook-wda](https://github.com/openatx/facebook-wda)

@@ -21,7 +21,7 @@ import uuid
 import xml.dom.minidom
 
 from uiautomator import AutomatorDevice as UiaDevice
-from uiautomator import AutomatorDeviceObject
+import uiautomator2
 from PIL import Image
 
 from atx import consts
@@ -90,20 +90,22 @@ class AndroidDevice(DeviceMixin):
         kwargs['adb_server_host'] = kwargs.pop('host', self._host)
         kwargs['adb_server_port'] = kwargs.pop('port', self._port)
 
-        self._uiauto = UiaDevice(serial, **kwargs)
-        DeviceMixin.__init__(self)
+        # uiautomator2
+        self._uiauto = uiautomator2.connect_usb(serial)
+        if not self._uiauto.alive:
+            self._uiauto.healthcheck(unlock=False)
 
+        DeviceMixin.__init__(self)
         self._randid = base.id_generator(5)
 
         self.screen_rotation = None
-        self.screenshot_method = consts.SCREENSHOT_METHOD_AUTO
 
         # inherts from atx-uiautomator
         self.swipe = self._uiauto.swipe
         self.drag = self._uiauto.drag
         self.press = self._uiauto.press
         self.long_click = self._uiauto.long_click
-        self.dump = self._uiauto.dump
+        self.dump = self._uiauto.dump_hierarchy
 
     @property
     def info(self):
@@ -116,18 +118,6 @@ class AndroidDevice(DeviceMixin):
             uiautomator: Device object describes in https://github.com/openatx/atx-uiautomator
         """
         return self._uiauto
-
-    # TODO: not working in java-uiautomator
-    # def swipe_points(self, points, steps=100):
-    #     """
-    #     Args:
-    #         points: array of points, eg: [(10, 12), (40, 15)]
-    #         steps:  the number of steps for the gesture. Steps are injected about 5 milliseconds apart, so 100 steps may take around 0.5 seconds to complete.
-        
-    #     Returns:
-    #         a boolean value represents if all touch events for this gesture are injected successfully
-    #     """
-    #     return self._uiauto.swipePoints(points, steps)
     
     def __call__(self, *args, **kwargs):
         return self._uiauto(*args, **kwargs)
@@ -233,52 +223,9 @@ class AndroidDevice(DeviceMixin):
             raise TypeError("r must be int")
         self.screen_rotation = r
     
-    def _minicap_params(self):
-        """
-        Used about 0.1s
-        uiautomator d.info is now well working with device which has virtual menu.
-        """
-        rotation = self.rotation 
-
-        # rotation not working on SumSUNG 9502
-        return '{x}x{y}@{x}x{y}/{r}'.format(
-            x=self.display.width,
-            y=self.display.height,
-            r=rotation*90)
-    
     def _mktemp(self, suffix='.jpg'):
         prefix= 'atx-tmp-{}-'.format(uuid.uuid1())
         return tempfile.mktemp(prefix=prefix, suffix='.jpg')
-
-    def _screenshot_minicap(self):
-        phone_tmp_file = '/data/local/tmp/_atx_screen-{}.jpg'.format(self._randid)
-        local_tmp_file = self._mktemp()
-        command = 'LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -P {} -s > {}'.format(
-            self._minicap_params(), phone_tmp_file)
-        try:
-            self.adb_shell(command)
-            self.adb_cmd(['pull', phone_tmp_file, local_tmp_file])
-            image = imutils.open_as_pillow(local_tmp_file)
-            # Fix rotation not rotate right.
-            (width, height) = image.size
-            if self.screen_rotation in [1, 3] and width < height:
-                image = image.rotate(90, Image.BILINEAR, expand=True)
-            return image
-        except IOError:
-            raise IOError("Screenshot use minicap failed.")
-        finally:
-            self.adb_shell(['rm', phone_tmp_file])
-            base.remove_force(local_tmp_file)
-
-    def _screenshot_uiauto(self):
-        tmp_file = self._mktemp()
-        self._uiauto.screenshot(tmp_file)
-        try:
-            return imutils.open_as_pillow(tmp_file)
-        except IOError:
-            raise IOError("Screenshot use uiautomator failed.")
-        finally:
-            base.remove_force(tmp_file)
 
     # @hook_wrap(consts.EVENT_CLICK)
     def do_tap(self, x, y):
@@ -294,21 +241,7 @@ class AndroidDevice(DeviceMixin):
         return self._uiauto.click(x, y)
 
     def _take_screenshot(self):
-        screen = None
-        if self.screenshot_method == consts.SCREENSHOT_METHOD_UIAUTOMATOR:
-            screen = self._screenshot_uiauto()
-        elif self.screenshot_method == consts.SCREENSHOT_METHOD_MINICAP:
-            screen = self._screenshot_minicap()
-        elif self.screenshot_method == consts.SCREENSHOT_METHOD_AUTO:
-            try:
-                screen = self._screenshot_minicap()
-                self.screenshot_method = consts.SCREENSHOT_METHOD_MINICAP
-            except IOError:
-                screen = self._screenshot_uiauto()
-                self.screenshot_method = consts.SCREENSHOT_METHOD_UIAUTOMATOR
-        else:
-            raise TypeError('Invalid screenshot_method')
-        return screen
+        return self._uiauto.screenshot()
 
     def raw_cmd(self, *args, **kwargs):
         '''
@@ -417,13 +350,6 @@ class AndroidDevice(DeviceMixin):
             self.adb_shell(['am', 'force-stop', package_name])
         return self
 
-    def takeSnapshot(self, filename):
-        '''
-        Deprecated, use screenshot instead.
-        '''
-        warnings.warn("deprecated, use snapshot instead", DeprecationWarning)
-        return self.screenshot(filename)
-
     def _parse_xml_node(self, node):
         # ['bounds', 'checkable', 'class', 'text', 'resource_id', 'package']
         __alias = {
@@ -512,12 +438,6 @@ class AndroidDevice(DeviceMixin):
         """
         return self._uiauto.dump(*args, **kwargs)
 
-    def _escape_text(self, s, utf7=False):
-        s = s.replace(' ', '%s')
-        if utf7:
-            s = s.encode('utf-7')
-        return s
-
     def keyevent(self, keycode):
         """call adb shell input keyevent ${keycode}
 
@@ -529,67 +449,7 @@ class AndroidDevice(DeviceMixin):
         """
         self.adb_shell(['input', 'keyevent', keycode])
 
-    def enable_ime(self, ime):
-        """
-        Enable input methods
-
-        Args:
-            - ime(string): for example "android.unicode.ime/.Utf7ImeService"
-
-        Raises:
-            RuntimeError
-        """
-        self.adb_shell(['ime', 'enable', ime])
-        self.adb_shell(['ime', 'set', ime])
-
-        from_time = time.time()
-        while time.time() - from_time < 10.0:
-            if ime == self.current_ime(): # and self._adb_device.is_keyboard_shown():
-                return
-            time.sleep(0.2)
-        else:
-            raise RuntimeError("Error switch to input-method (%s)." % ime)
-
-    def _is_utf7ime(self, ime=None):
-        if ime is None:
-            ime = self.current_ime()
-        return ime in [
-            'android.unicode.ime/.Utf7ImeService',
-            'com.netease.atx.assistant/.ime.Utf7ImeService',
-            'com.netease.nie.yosemite/.ime.ImeService']
-
-    def prepare_ime(self):
-        """
-        Change current method to adb-keyboard
-
-        Raises:
-            RuntimeError
-        """
-        if self._is_utf7ime():
-            return True
-
-        for ime in self.input_methods():
-            if self._is_utf7ime(ime):
-                self.enable_ime(ime)
-                return True
-        return False
-        # raise RuntimeError("Input method for programers not detected.\n" +
-        #     "\tInstall with: python -m atx install atx-assistant")
-
-    def _shell_type(self, text):
-        first = True
-        for s in text.split('%s'):
-            if first:
-                first = False
-            else:
-                self.adb_shell(['input', 'text', '%'])
-                s = 's' + s
-            if s == '':
-                continue
-            estext = self._escape_text(s)
-            self.adb_shell(['input', 'text', estext])
-
-    def type(self, s, enter=False, next=False, clear=False, **ui_select_kwargs):
+    def type(self, s, enter=False, clear=False): #, next=False, clear=False, **ui_select_kwargs):
         """Input some text, this method has been tested not very stable on some device.
         "Hi world" maybe spell into "H iworld"
 
@@ -607,34 +467,24 @@ class AndroidDevice(DeviceMixin):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         app source see here: https://github.com/openatx/android-unicode
         """
-        if ui_select_kwargs:
-            ui_object = self(**ui_select_kwargs)
-            ui_object.click()
         
         if clear:
             self.clear_text()
 
-        utext = strutils.decode(s)
-        if self.prepare_ime():
-            estext = base64.b64encode(utext.encode('utf-7'))
-            self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'format', 'base64', '--es', 'msg', estext])
-        else:
-            self._shell_type(utext)
+        self._uiauto.send_keys(s)
 
         if enter:
             self.keyevent('KEYCODE_ENTER')
-        if next:
-            # FIXME(ssx): maybe KEYCODE_NAVIGATE_NEXT
-            self.adb_shell(['am', 'broadcast', '-a', 'ADB_EDITOR_CODE', '--ei', 'code', '5'])
+        # if next:
+        #     # FIXME(ssx): maybe KEYCODE_NAVIGATE_NEXT
+        #     self.adb_shell(['am', 'broadcast', '-a', 'ADB_EDITOR_CODE', '--ei', 'code', '5'])
 
     def clear_text(self, count=100):
         """Clear text
         Args:
             - count (int): send KEY_DEL count
         """
-        self.prepare_ime()
-        self.keyevent('KEYCODE_MOVE_END')
-        self.adb_shell(['am', 'broadcast', '-a', 'ADB_INPUT_CODE', '--ei', 'code', '67', '--ei', 'repeat', str(count)])
+        self._uiauto.clear_text()
 
     def input_methods(self):
         """
