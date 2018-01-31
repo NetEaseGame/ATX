@@ -17,10 +17,18 @@ import os
 import time
 import threading
 import logging
-import Tkinter as tk
-import tkSimpleDialog
-import tkFileDialog
-from Queue import Queue
+import six
+
+if six.PY3:
+    from queue import Queue
+    import tkinter as tk
+    from tkinter import simpledialog as tkSimpleDialog
+    from tkinter import filedialog as tkFileDialog
+else:
+    from Queue import Queue
+    import Tkinter as tk
+    import tkSimpleDialog
+    import tkFileDialog
 
 import atx
 from atx import logutils, ioskit
