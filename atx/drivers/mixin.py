@@ -19,7 +19,6 @@ import warnings
 import six
 import cv2
 import aircv as ac
-from uiautomator import AutomatorDeviceObject
 
 from atx import base
 from atx import consts
