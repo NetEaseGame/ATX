@@ -20,7 +20,6 @@ import logging
 import uuid
 import xml.dom.minidom
 
-from uiautomator import AutomatorDevice as UiaDevice
 import uiautomator2
 from PIL import Image
 
