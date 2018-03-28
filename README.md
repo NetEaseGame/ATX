@@ -36,7 +36,7 @@ BTW: atx-webide已经不在维护
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
-- QQ: `497460177` PS: 因为我们公司上不了QQ, 所以不会经常上
+- QQ: `499563266` PS: 因为我们公司上不了QQ, 所以不会经常上
 - 网易内部用户加Popo群 `1347390` 群主 `hzsunshx`
 - [Testerhome社区](https://testerhome.com/topics/node78)
 - ~~[Gitter Chat Room](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)~~
