@@ -120,9 +120,11 @@ python -m atx doctor
 
 ## Getting Started （必看）
 * [快速入门文档](docs/QUICKSTART.md)
-* [如何使用内置的测试报告功能](atx/ext/report/README.md)
+* [~~如何使用内置的测试报告功能~~](atx/ext/report/README.md)
 * [ATX资料快速索引](https://testerhome.com/topics/9091)
 * [Testerhome上的ATX有关的文章列表](https://testerhome.com/topics/node78)
+
+内置的测试报告暂时有点问题，最近没时间去修复了。因为ATX底层使用的[uiautomator2](https://github.com/openatx/uiautomator2)，测试报告可以用底层库自带的 [SimpleHTMLReport](https://github.com/openatx/uiautomator2/tree/master/uiautomator2/ext/htmlreport)
 
 ## APIs (接口文档)
 * [常用接口](docs/API.md)

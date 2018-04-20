@@ -1,9 +1,8 @@
-#!/usr/bin/env python
 # coding: utf-8
+#
 
-import zipfile
 from xml.dom import minidom
-from axmlparserpy.axmlprinter import AXMLPrinter
+from apkutils import APK
 
 
 class Manifest(object):
@@ -27,7 +26,6 @@ class Manifest(object):
     def permissions(self):
         if self._permissions is not None:
             return self._permissions
-
         self._permissions = []
         for item in self._dom.getElementsByTagName("uses-permission"):
             self._permissions.append(str(item.getAttribute("android:name")))
@@ -41,29 +39,32 @@ class Manifest(object):
         """
         x = set()
         y = set()
-
         for item in self._dom.getElementsByTagName("activity"):
             for sitem in item.getElementsByTagName("action"):
                 val = sitem.getAttribute("android:name")
                 if val == "android.intent.action.MAIN":
                     x.add(item.getAttribute("android:name"))
-
             for sitem in item.getElementsByTagName("category"):
                 val = sitem.getAttribute("android:name")
                 if val == "android.intent.category.LAUNCHER":
                     y.add(item.getAttribute("android:name"))
-
         z = x.intersection(y)
         if len(z) > 0:
             return z.pop()
         return None
 
 
-def parse_apk(filename):
+def parse_apkfile(file):
     '''
+    Args:
+        - file: filename or file object
     Returns:
         Manifest(Class)
     '''
-    with zipfile.ZipFile(filename, 'r') as file:
-        manifest = file.read('AndroidManifest.xml')
-    return Manifest(AXMLPrinter(manifest).getBuff())
+    apk = APK(file)
+    return Manifest(apk.get_org_manifest())
+
+
+if __name__ == '__main__':
+    m = parse_apkfile("your-apk.apk")
+    print(m.version_code)

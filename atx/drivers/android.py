@@ -18,6 +18,7 @@ import tempfile
 import warnings
 import logging
 import uuid
+import six
 import xml.dom.minidom
 
 import uiautomator2
@@ -48,7 +49,7 @@ _DEFAULT_IME = 'com.netease.atx.assistant/.ime.Utf7ImeService'
 
 UINode = collections.namedtuple('UINode', [
     'xml',
-    'bounds', 
+    'bounds',
     'selected', 'checkable', 'clickable', 'scrollable', 'focusable', 'enabled', 'focused', 'long_clickable',
     'password',
     'class_name',
@@ -69,7 +70,7 @@ class AndroidDevice(DeviceMixin):
     def __init__(self, serial=None, **kwargs):
         """Initial AndroidDevice
         Args:
-            serial: string specify which device
+            serial (str): serial or wlan ip
 
         Returns:
             AndroidDevice object
@@ -79,15 +80,14 @@ class AndroidDevice(DeviceMixin):
         """
         self.__display = None
         serial = serial or getenvs('ATX_ADB_SERIALNO', 'ANDROID_SERIAL')
-        self._host = kwargs.get('host') or getenvs('ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1'
-        self._port = int(kwargs.get('port') or getenvs('ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037)
+        self._host = kwargs.get('host') or getenvs(
+            'ATX_ADB_HOST', 'ANDROID_ADB_SERVER_HOST') or '127.0.0.1'
+        self._port = int(kwargs.get('port') or getenvs(
+            'ATX_ADB_PORT', 'ANDROID_ADB_SERVER_PORT') or 5037)
 
         self._adb_client = adbkit.Client(self._host, self._port)
         self._adb_device = self._adb_client.device(serial)
-        self._adb_shell_timeout = 30.0 # max adb shell exec time
-
-        kwargs['adb_server_host'] = kwargs.pop('host', self._host)
-        kwargs['adb_server_port'] = kwargs.pop('port', self._port)
+        # self._adb_shell_timeout = 30.0 # max adb shell exec time
 
         # uiautomator2
         self._uiauto = uiautomator2.connect_usb(serial)
@@ -117,27 +117,19 @@ class AndroidDevice(DeviceMixin):
             uiautomator: Device object describes in https://github.com/openatx/atx-uiautomator
         """
         return self._uiauto
-    
+
     def __call__(self, *args, **kwargs):
         return self._uiauto(*args, **kwargs)
 
     @property
     def serial(self):
         """ Android Device Serial Number """
-        return self._adb_device.serial
-
-    @property
-    def adb_server_host(self):
-        return self._host
-
-    @property
-    def adb_server_port(self):
-        return self._port
+        return self._uiauto.serial
 
     @property
     def adb_device(self):
         return self._adb_device
-    
+
     @property
     def wlan_ip(self):
         """ Wlan IP """
@@ -158,18 +150,12 @@ class AndroidDevice(DeviceMixin):
     def current_app(self):
         """Get current app (package, activity)
         Returns:
-            namedtuple ['package', 'activity', 'pid']
-            activity, pid maybe None
+            Return: dict(package, activity, pid?)
 
         Raises:
             RuntimeError
         """
-        AppInfo = collections.namedtuple('AppInfo', ['package', 'activity', 'pid'])
-        try:
-            ai = self._adb_device.current_app()
-            return AppInfo(ai['package'], ai['activity'], ai.get('pid'))
-        except RuntimeError:
-            return AppInfo(self.info['currentPackageName'], None, None)
+        return self._uiauto.current_app()
 
     @property
     def current_package_name(self):
@@ -180,12 +166,12 @@ class AndroidDevice(DeviceMixin):
         Check if app in running in foreground """
         return self.info['currentPackageName'] == package_name
 
-    def sleep(self, secs=None):
-        """Depreciated. use delay instead."""
-        if secs is None:
-            self._uiauto.sleep()
-        else:
-            self.delay(secs)
+    # def sleep(self, secs=None):
+    #     """Depreciated. use delay instead."""
+    #     if secs is None:
+    #         self._uiauto.sleep()
+    #     else:
+    #         self.delay(secs)
 
     @property
     def display(self):
@@ -201,7 +187,7 @@ class AndroidDevice(DeviceMixin):
         else:
             w, h = self.info['displayWidth'], self.info['displayHeight']
             return collections.namedtuple('Display', ['width', 'height'])(w, h)
-    
+
     @property
     def rotation(self):
         """
@@ -221,9 +207,9 @@ class AndroidDevice(DeviceMixin):
         if not isinstance(r, int):
             raise TypeError("r must be int")
         self.screen_rotation = r
-    
+
     def _mktemp(self, suffix='.jpg'):
-        prefix= 'atx-tmp-{}-'.format(uuid.uuid1())
+        prefix = 'atx-tmp-{}-'.format(uuid.uuid1())
         return tempfile.mktemp(prefix=prefix, suffix='.jpg')
 
     # @hook_wrap(consts.EVENT_CLICK)
@@ -263,20 +249,17 @@ class AndroidDevice(DeviceMixin):
             return self.adb_device.run_cmd(*list(command), **kwargs)
         return self.adb_device.run_cmd(command, **kwargs)
 
-    def adb_shell(self, command, **kwargs):
+    def adb_shell(self, *args):
         '''
         Run adb shell command
 
         Args:
-            command: string or list of string
+            args: string or list of string
 
         Returns:
             command output
         '''
-        if isinstance(command, list) or isinstance(command, tuple):
-            return self.adb_cmd(['shell'] + list(command), **kwargs)
-        else:
-            return self.adb_cmd(['shell'] + [command], **kwargs)
+        return self._uiauto.adb_shell(*args)
 
     @property
     def properties(self):
@@ -322,12 +305,14 @@ class AndroidDevice(DeviceMixin):
         '''
         _pattern = re.compile(r'TotalTime: (\d+)')
         if activity is None:
-            self.adb_shell(['monkey', '-p', package_name, '-c', 'android.intent.category.LAUNCHER', '1'])
+            self.adb_shell(['monkey', '-p', package_name, '-c',
+                            'android.intent.category.LAUNCHER', '1'])
         else:
             args = ['-W']
             if stop:
                 args.append('-S')
-            output = self.adb_shell(['am', 'start'] + args + ['-n', '%s/%s' % (package_name, activity)])
+            output = self.adb_shell(
+                ['am', 'start'] + args + ['-n', '%s/%s' % (package_name, activity)])
             m = _pattern.search(output)
             if m:
                 return int(m.group(1))/1000.0
@@ -448,7 +433,7 @@ class AndroidDevice(DeviceMixin):
         """
         self.adb_shell(['input', 'keyevent', keycode])
 
-    def type(self, s, enter=False, clear=False): #, next=False, clear=False, **ui_select_kwargs):
+    def type(self, s, enter=False, clear=False):
         """Input some text, this method has been tested not very stable on some device.
         "Hi world" maybe spell into "H iworld"
 
@@ -466,7 +451,7 @@ class AndroidDevice(DeviceMixin):
         https://android.googlesource.com/platform/frameworks/base/+/android-4.4.2_r1/cmds/input/src/com/android/commands/input/Input.java#159
         app source see here: https://github.com/openatx/android-unicode
         """
-        
+
         if clear:
             self.clear_text()
 

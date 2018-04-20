@@ -1,5 +1,5 @@
 aircv==1.4.6
-futures==3.0.5
+futures>=3.0.5
 tornado>=4.4
 maproxy==0.0.12
 subprocess32==3.2.7 ; python_version <= '2.7'
@@ -11,7 +11,6 @@ requests>=2.9.1
 facebook-wda>=0.2.0
 imageio>=1.5
 colorama>=0.3.7
-AxmlParserPY==0.0.3
-#atx-webide>=0.1.1.dev72
-# atx-uiautomator==0.3.3
+apkutils>=0.2.6 ; python_version >= '3.4'
 uiautomator2
+six
