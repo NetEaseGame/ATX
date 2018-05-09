@@ -10,7 +10,7 @@ ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台�
 使用Python来编写测试用例，混合使用图像识别，控件定位技术来完成游戏的自动化。附加专用的IDE来完成脚本的快速编写。
 
 ## Hope (愿景)
-希望该项目可以让手机手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
+希望该项目可以让手机应用测试自动化起来，让测试人员摆脱那些枯燥的重复性工作。
 
 ## 重要说明
 新版本以采用新的uiautomator2替换到原来的[atx-uiautomator](https://github.com/openatx/atx-uiautomator). 历史版本可以通过Tag查看[tag:1.1.3](https://github.com/NetEaseGame/ATX/tree/1.1.3)
