@@ -95,8 +95,9 @@ def adb_must_install(adb, remote_path, package_name):
 
 
 def main(path, serial=None, host=None, port=None, start=False):
-    adb = adbkit.Client(host, port).device(serial) #adbutils.Adb(serial, host, port)
-    
+    adb = adbkit.Client(host, port).device(
+        serial)  # adbutils.Adb(serial, host, port)
+
     # use qiniu paths
     if __apks.get(path):
         path = __apks.get(path)
@@ -104,7 +105,7 @@ def main(path, serial=None, host=None, port=None, start=False):
     if re.match(r'^https?://', path):
         tmpdir = tempfile.mkdtemp(prefix='atx-install-')
         log.info("Create temp directory: %s", tmpdir)
-        
+
         # FIXME(ssx): will not called when Ctrl+C pressed in windows git-bash
         atexit.register(clean, tmpdir)
 
@@ -114,8 +115,8 @@ def main(path, serial=None, host=None, port=None, start=False):
         log.info("Download from: %s", urlpath)
         utils.http_download(urlpath, target)
 
-    import atx.androaxml as apkparse
-    manifest = apkparse.parse_apk(path)
+    import atx.apkparse as apkparse
+    manifest = apkparse.parse_apkfile(path)
     log.info("APK package name: %s", manifest.package_name)
     log.info("APK main activity: %s", manifest.main_activity)
 
@@ -129,5 +130,6 @@ def main(path, serial=None, host=None, port=None, start=False):
 
     if start:
         log.info("Start app '%s'" % manifest.package_name)
-        adb.raw_cmd('shell', 'am', 'start', '-n', manifest.package_name+'/'+manifest.main_activity).wait()
+        adb.raw_cmd('shell', 'am', 'start', '-n',
+                    manifest.package_name+'/'+manifest.main_activity).wait()
     log.info("Success")
