@@ -36,14 +36,14 @@ BTW: atx-webide已经不在维护
 ## Discuss (讨论群)
 面向游戏行业测试人员，当然也开放给国际友人(PS：中文不知道他们看得懂不)
 
-- QQ: `499563266` PS: 因为我们公司上不了QQ, 所以不会经常上
-- 网易内部用户加Popo群 `1347390` 群主 `hzsunshx`
+- QQ: `499563266` PS: 因为群人数即将到达上限，所以目前进群有收取少量的群费,来募集扩大群规模的费用。
+- ~~网易内部用户加Popo群 `1347390` 群主 `hzsunshx`~~
 - [Testerhome社区](https://testerhome.com/topics/node78)
 - ~~[Gitter Chat Room](https://gitter.im/codeskyblue/AutomatorX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)~~
 
 ## Limitation (限制)
-- Python >= 2.7 && <= 3.6
-- Android 4.1+
+- Python 2.7 or 3.6
+- Android 4.4+
 - iOS 9.0+ with Mac
 - adb >= 1.0.36
 
