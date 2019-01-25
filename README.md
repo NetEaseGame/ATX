@@ -79,10 +79,10 @@ pip install opencv_contrib_python
 	* [Windows adb安装指南](https://github.com/NetEase/AutomatorX/wiki/Win-Installation)
 	* Mac上的adb可以通过命令行安装 `brew install android-platform-tools`
 
-- [ATX手机助手.apk](https://o8oookdsx.qnssl.com/atx-assistant-1.0.4.apk)
+- [ATX手机助手.apk](https://github.com/NetEaseGame/ATX/releases/download/1.0.12/atx-assistant-1.0.6.apk)
 
 	该App为自动化提供了输入法的功能，屏幕常量等功能
-	命令行安装 `python -m atx install atx-assistant`
+	~~命令行安装 `python -m atx install atx-assistant`~~
 
 **iOS测试依赖**
 
