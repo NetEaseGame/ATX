@@ -5,6 +5,15 @@
 [![PyPI](https://img.shields.io/pypi/l/atx.svg)]()
 [![Gitter](https://badges.gitter.im/codeskyblue/ATX.svg)](https://gitter.im/codeskyblue/ATX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+## 重要说明 ！！！
+
+ATX目前已经分成了两个项目
+
+- 安卓(Android) https://github.com/openatx/uiautomator2  简称u2
+- 苹果(iOS) https://github.com/openatx/facebook-wda
+
+旧项目不再维护。欢迎入群讨论 QQ: `499563266`
+
 ## Introduction (简介)
 ATX(AutomatorX) 是一款开源的自动化测试工具，支持测试iOS平台和Android平台的原生应用、游戏、Web应用。
 使用Python来编写测试用例，混合使用图像识别，控件定位技术来完成游戏的自动化。附加专用的IDE来完成脚本的快速编写。
